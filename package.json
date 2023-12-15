@@ -8,6 +8,7 @@
     "@anatine/zod-openapi": "file:.yalc/@anatine/zod-openapi",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
+    "@nestjs/microservices": "^10.2.10",
     "@nestjs/passport": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/schedule": "^4.0.0",
