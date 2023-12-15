@@ -1,0 +1,40 @@
+{
+  "scripts": {
+    "serve": "../../node_modules/.bin/dotenv -e .env.dev -- ../../node_modules/.bin/nx run flowda-api:serve",
+    "serve:prod": "../../node_modules/.bin/dotenv -e .env.dev -- ../../node_modules/.bin/nx run flowda-api:serve:production"
+  },
+  "name": "@flowda-projects/flowda-api",
+  "dependencies": {
+    "@anatine/zod-openapi": "file:.yalc/@anatine/zod-openapi",
+    "@nestjs/common": "^9.0.0",
+    "@nestjs/core": "^9.0.0",
+    "@nestjs/passport": "^9.0.0",
+    "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/schedule": "^4.0.0",
+    "axios": "1.1.0",
+    "bcrypt": "^5.1.0",
+    "cache-manager": "^5.2.4",
+    "class-validator": "^0.13.2",
+    "consola": "^3.2.3",
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6",
+    "inversify": "^6.0.1",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "nestjs-zod": "^2.3.2",
+    "openapi3-ts": "^2.0.0 || ^3.0.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "pluralize": "^8.0.0",
+    "qs": "^6.11.2",
+    "radash": "^11.0.0",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.0.0",
+    "typescript": "~4.9.5",
+    "znv": "^0.4.0",
+    "zod": "3.21.1",
+    "tslib": "^2.3.0",
+    "class-transformer": "^0.5.1"
+  }
+}
