@@ -10,6 +10,7 @@ importers:
       '@nestjs/passport': ^9.0.0
       '@nestjs/platform-express': ^9.0.0
       '@nestjs/schedule': ^4.0.0
+      '@trpc/server': ^10.44.1
       axios: 1.1.0
       bcrypt: ^5.1.0
       cache-manager: ^5.2.4
@@ -42,6 +43,7 @@ importers:
       '@nestjs/passport': 9.0.0_s6va3jdeufsye4wwu25es3p4om
       '@nestjs/platform-express': 9.2.0_pf2fb646rsvo5szivgkaevcpvi
       '@nestjs/schedule': 4.0.0_v5qdouhazba6t4koo63x35nolu
+      '@trpc/server': 10.44.1
       axios: 1.1.0
       bcrypt: 5.1.0
       cache-manager: 5.2.4
@@ -287,6 +289,11 @@ packages:
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@trpc/server/10.44.1:
+    resolution: {integrity: sha512-mF7B+K6LjuboX8I1RZgKE5GA/fJhsJ8tKGK2UBt3Bwik7hepEPb4NJgNr7vO6BK5IYwPdBLRLTctRw6XZx0sRg==}
+    engines: {node: '>=18.0.0'}
     dev: false
 
   /@types/body-parser/1.19.2:
