@@ -793,7 +793,7 @@ exports.SchemaRouter = SchemaRouter;
 var TrpcRouter_1;
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FlowdaTrpcClientSymbol = exports.TrpcRouter = void 0;
+exports.TrpcRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const inversify_1 = __webpack_require__("inversify");
 const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
@@ -821,7 +821,6 @@ TrpcRouter = TrpcRouter_1 = tslib_1.__decorate([
     tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, Function])
 ], TrpcRouter);
 exports.TrpcRouter = TrpcRouter;
-exports.FlowdaTrpcClientSymbol = Symbol.for('FlowdaTrpcClient');
 
 
 /***/ }),
@@ -3049,13 +3048,14 @@ exports.SchemaTransformer = SchemaTransformer;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DynamicTableSchemaTransformerSymbol = exports.SchemaServiceSymbol = exports.DataServiceSymbol = exports.PrismaUtilsSymbol = exports.SchemaTransformerSymbol = exports.PrismaSchemaServiceSymbol = void 0;
+exports.FlowdaTrpcClientSymbol = exports.DynamicTableSchemaTransformerSymbol = exports.SchemaServiceSymbol = exports.DataServiceSymbol = exports.PrismaUtilsSymbol = exports.SchemaTransformerSymbol = exports.PrismaSchemaServiceSymbol = void 0;
 exports.PrismaSchemaServiceSymbol = Symbol.for('PrismaSchemaService');
 exports.SchemaTransformerSymbol = Symbol.for('SchemaTransformer');
 exports.PrismaUtilsSymbol = Symbol.for('PrismaUtils');
 exports.DataServiceSymbol = Symbol.for('DataService');
 exports.SchemaServiceSymbol = Symbol.for('SchemaService');
 exports.DynamicTableSchemaTransformerSymbol = Symbol.for('DynamicTableSchemaTransformer');
+exports.FlowdaTrpcClientSymbol = Symbol.for('FlowdaTrpcClient');
 
 
 /***/ }),
