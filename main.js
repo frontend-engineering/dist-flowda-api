@@ -746,7 +746,7 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services-trpc-server
 
 
 var SchemaRouter_1;
-var _a, _b, _c;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SchemaRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -779,7 +779,7 @@ SchemaRouter = SchemaRouter_1 = tslib_1.__decorate([
     tslib_1.__param(1, (0, inversify_1.inject)(flowda_shared_1.SchemaServiceSymbol)),
     tslib_1.__param(2, (0, inversify_1.inject)(flowda_services_1.DynamicTableDefService)),
     tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_shared_1.SchemaService !== "undefined" && flowda_shared_1.SchemaService) === "function" ? _b : Object, typeof (_c = typeof flowda_services_1.DynamicTableDefService !== "undefined" && flowda_services_1.DynamicTableDefService) === "function" ? _c : Object, Function])
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, Object, typeof (_b = typeof flowda_services_1.DynamicTableDefService !== "undefined" && flowda_services_1.DynamicTableDefService) === "function" ? _b : Object, Function])
 ], SchemaRouter);
 exports.SchemaRouter = SchemaRouter;
 
