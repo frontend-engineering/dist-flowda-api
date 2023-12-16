@@ -717,9 +717,11 @@ const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.
 const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
 const trpc_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.router.ts");
 const schema_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/schema.router.ts");
+const user_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/user.router.ts");
 exports.flowdaServiceTrpcServerModule = new inversify_1.ContainerModule(bind => {
     bind(trpc_service_1.TrpcService).toSelf().inSingletonScope();
     bind(schema_router_1.SchemaRouter).toSelf().inSingletonScope();
+    bind(user_router_1.UserRouter).toSelf().inSingletonScope();
     (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, trpc_router_1.TrpcRouter);
 });
 
@@ -746,7 +748,7 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services-trpc-server
 
 
 var SchemaRouter_1;
-var _a, _b;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SchemaRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -777,9 +779,9 @@ SchemaRouter = SchemaRouter_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
     tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
     tslib_1.__param(1, (0, inversify_1.inject)(flowda_shared_1.SchemaServiceSymbol)),
-    tslib_1.__param(2, (0, inversify_1.inject)(flowda_services_1.DynamicTableDefService)),
+    tslib_1.__param(2, (0, inversify_1.inject)(flowda_services_1.DynamicTableDefServiceSymbol)),
     tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, Object, typeof (_b = typeof flowda_services_1.DynamicTableDefService !== "undefined" && flowda_services_1.DynamicTableDefService) === "function" ? _b : Object, Function])
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, Object, Object, Function])
 ], SchemaRouter);
 exports.SchemaRouter = SchemaRouter;
 
@@ -791,7 +793,7 @@ exports.SchemaRouter = SchemaRouter;
 
 
 var TrpcRouter_1;
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TrpcRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -799,11 +801,16 @@ const inversify_1 = __webpack_require__("inversify");
 const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
 const trpcExpress = tslib_1.__importStar(__webpack_require__("@trpc/server/adapters/express"));
 const schema_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/schema.router.ts");
+const user_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/user.router.ts");
 let TrpcRouter = TrpcRouter_1 = class TrpcRouter {
-    constructor(trpc, schemaRouter, loggerFactory) {
+    constructor(trpc, schemaRouter, userRouter, loggerFactory) {
         this.trpc = trpc;
         this.schemaRouter = schemaRouter;
-        this.appRouter = this.trpc.mergeRouters(this.schemaRouter.schemaRouter);
+        this.userRouter = userRouter;
+        this.appRouter = this.trpc.router({
+            schema: this.schemaRouter.schemaRouter,
+            user: this.userRouter.userRouter,
+        });
         this.logger = loggerFactory(TrpcRouter_1.name);
     }
     applyMiddleware(app, endpoint) {
@@ -817,8 +824,9 @@ TrpcRouter = TrpcRouter_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
     tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
     tslib_1.__param(1, (0, inversify_1.inject)(schema_router_1.SchemaRouter)),
-    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, Function])
+    tslib_1.__param(2, (0, inversify_1.inject)(user_router_1.UserRouter)),
+    tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, typeof (_c = typeof user_router_1.UserRouter !== "undefined" && user_router_1.UserRouter) === "function" ? _c : Object, Function])
 ], TrpcRouter);
 exports.TrpcRouter = TrpcRouter;
 
@@ -846,6 +854,54 @@ TrpcService = tslib_1.__decorate([
     (0, inversify_1.injectable)()
 ], TrpcService);
 exports.TrpcService = TrpcService;
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services-trpc-server/src/trpc/user.router.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var UserRouter_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserRouter = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
+const zod_1 = __webpack_require__("zod");
+const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
+let UserRouter = UserRouter_1 = class UserRouter {
+    constructor(trpc, userService, loggerFactory) {
+        this.trpc = trpc;
+        this.userService = userService;
+        this.userRouter = this.trpc.router({
+            validate: this.trpc.procedure
+                .input(zod_1.z.object({
+                username: zod_1.z.string(),
+                password: zod_1.z.string(),
+            }))
+                .output(zod_1.z.object({
+                username: zod_1.z.string(),
+                refresh_token: zod_1.z.string(),
+                access_token: zod_1.z.string(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const ret = yield this.userService.validate(input.username, input.password);
+                return ret;
+            })),
+        });
+        this.logger = loggerFactory(UserRouter_1.name);
+    }
+};
+UserRouter = UserRouter_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
+    tslib_1.__param(1, (0, inversify_1.inject)(flowda_services_1.UserService)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.UserService !== "undefined" && flowda_services_1.UserService) === "function" ? _b : Object, Function])
+], UserRouter);
+exports.UserRouter = UserRouter;
 
 
 /***/ }),
@@ -892,14 +948,15 @@ const user_service_1 = __webpack_require__("../../libs/flowda-services/src/servi
 const axios_1 = __webpack_require__("../../libs/flowda-services/src/axios.ts");
 const dynamic_table_def_service_1 = __webpack_require__("../../libs/flowda-services/src/services/dynamic-table-def.service.ts");
 const dynamic_table_data_service_1 = __webpack_require__("../../libs/flowda-services/src/services/dynamic-table-data.service.ts");
+const symbols_1 = __webpack_require__("../../libs/flowda-services/src/symbols.ts");
 exports.flowdaServiceModule = new inversify_1.ContainerModule((bind) => {
     bind(flowda_shared_1.PrismaZodSchemaSymbol).toConstantValue(prisma_flowda_1.zt);
     bind(flowda_shared_1.CustomZodSchemaSymbol).toConstantValue(schema);
     bind(flowda_shared_1.APISymbol).toConstantValue(axios_1.axiosApiInstance);
     (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, task_service_1.TaskService);
     (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, user_service_1.UserService);
-    (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, dynamic_table_def_service_1.DynamicTableDefService);
-    (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, dynamic_table_data_service_1.DynamicTableDataService);
+    (0, flowda_shared_1.bindServiceSymbol)(bind, flowda_shared_1.ServiceSymbol, symbols_1.DynamicTableDefServiceSymbol, dynamic_table_def_service_1.DynamicTableDefService);
+    (0, flowda_shared_1.bindServiceSymbol)(bind, flowda_shared_1.ServiceSymbol, symbols_1.DynamicTableDataServiceSymbol, dynamic_table_data_service_1.DynamicTableDataService);
 });
 
 
@@ -915,6 +972,7 @@ const zod_openapi_1 = __webpack_require__("@anatine/zod-openapi");
 const zod_1 = __webpack_require__("zod");
 (0, zod_openapi_1.extendZodWithOpenApi)(zod_1.z);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/flowdaServiceModule.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/symbols.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/lib/schema.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/task.service.ts"), exports);
@@ -972,41 +1030,37 @@ exports.FLOWDA_ENV = (0, znv_1.parseEnv)(process.env, {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DynamicTableDataResourceSchema = exports.DynamicTableDefColumnResourceSchema = exports.DynamicTableDefResourceSchema = exports.WorkflowUserResourceSchema = exports.ProcessDefinitionResourceSchema = exports.TaskResourceSchema = exports.TaskFormRelationResourceSchema = void 0;
+exports.DynamicTableDataResourceSchema = exports.DynamicTableDefColumnResourceSchema = exports.DynamicTableDefResourceSchema = exports.WorkflowUserResourceSchema = exports.ProcessDefinitionResourceSchema = exports.TaskResourceSchema = exports.TaskFormRelationResourceSchema = exports.TenantResourceSchema = exports.UserResourceSchema = void 0;
 const prisma_flowda_1 = __webpack_require__("../../libs/prisma-flowda/src/index.ts");
 const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
 const zod_1 = __webpack_require__("zod");
-/*
-todo: 迁移之前暂时不用这个
-export const UserResourceSchema = UserSchema.omit({
-  hashedPassword: true,
-  hashedRefreshToken: true,
+exports.UserResourceSchema = prisma_flowda_1.UserSchema.omit({
+    hashedPassword: true,
+    hashedRefreshToken: true,
 })
-  .extend({
-    password: z.string().openapi({
-      title: '密码',
-      prisma: false,
+    .extend({
+    password: zod_1.z.string().openapi({
+        title: '密码',
+        prisma: false,
     }),
-    __meta: meta({
-      extends: 'UserSchema',
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'UserSchema',
     }),
-  })
-  .openapi({
+})
+    .openapi({
     custom: {
-      route_prefix: '/admin',
+        route_prefix: '/admin',
     },
-  })
-
-export const TenantResourceSchema = TenantWithRelationsSchema.extend({
-  __meta: meta({
-    extends: 'TenantSchema',
-  }),
+});
+exports.TenantResourceSchema = prisma_flowda_1.TenantWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'TenantSchema',
+    }),
 }).openapi({
-  custom: {
-    route_prefix: '/admin',
-  },
-})
-*/
+    custom: {
+        route_prefix: '/admin',
+    },
+});
 exports.TaskFormRelationResourceSchema = prisma_flowda_1.TaskFormRelationSchema.extend({
     __meta: (0, flowda_shared_1.meta)({
         extends: 'TaskFormRelationSchema',
@@ -1614,6 +1668,18 @@ UserService = UserService_1 = tslib_1.__decorate([
     tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof db !== "undefined" && db.PrismaClient) === "function" ? _a : Object, Function])
 ], UserService);
 exports.UserService = UserService;
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services/src/symbols.ts":
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DynamicTableDefServiceSymbol = exports.DynamicTableDataServiceSymbol = void 0;
+exports.DynamicTableDataServiceSymbol = Symbol.for('DynamicTableDataService');
+exports.DynamicTableDefServiceSymbol = Symbol.for('DynamicTableDefService');
 
 
 /***/ }),
