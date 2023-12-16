@@ -3443,12 +3443,12 @@ const app_module_1 = __webpack_require__("./src/app/app.module.ts");
 const http_proxy_middleware_1 = __webpack_require__("http-proxy-middleware");
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
 const passport_jwt_1 = __webpack_require__("passport-jwt");
-console.log('started');
+common_1.Logger.log('starting...');
 function bootstrap() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const app = yield core_1.NestFactory.create(app_module_1.AppModule);
         app.enableCors();
-        const globalPrefix = 'api';
+        const globalPrefix = 'flowda-api';
         app.setGlobalPrefix(globalPrefix);
         const user = app.get(flowda_services_1.UserService);
         app.use((req, res, next) => {
@@ -3494,7 +3494,7 @@ function bootstrap() {
                 [`^/api/camunda/engine-rest/`]: '',
             },
         }));
-        const port = process.env.PORT || 3345;
+        const port = process.env.PORT || 3350;
         yield app.listen(port);
         common_1.Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
     });
