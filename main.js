@@ -52,7 +52,6 @@ const schedule_1 = __webpack_require__("@nestjs/schedule");
 const table_filter_controller_1 = __webpack_require__("./src/app/table-filter.controller.ts");
 const audit_controller_1 = __webpack_require__("./src/app/audit.controller.ts");
 const nestjs_zod_1 = __webpack_require__("nestjs-zod");
-const schema_controller_1 = __webpack_require__("./src/app/schema.controller.ts");
 const dynamic_table_def_controller_1 = __webpack_require__("./src/app/dynamic-table-def.controller.ts");
 const dynamic_table_data_controller_1 = __webpack_require__("./src/app/dynamic-table-data.controller.ts");
 const menu_controller_1 = __webpack_require__("./src/app/menu.controller.ts");
@@ -68,7 +67,6 @@ AppModule = tslib_1.__decorate([
             user_controller_1.UserController,
             table_filter_controller_1.TableFilterController,
             audit_controller_1.AuditController,
-            schema_controller_1.SchemaController,
             dynamic_table_def_controller_1.DynamicTableDefController,
             dynamic_table_data_controller_1.DynamicTableDataController,
             menu_controller_1.MenuController,
@@ -350,46 +348,6 @@ MenuController = tslib_1.__decorate([
     tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof flowda_services_1.MenuService !== "undefined" && flowda_services_1.MenuService) === "function" ? _a : Object])
 ], MenuController);
 exports.MenuController = MenuController;
-
-
-/***/ }),
-
-/***/ "./src/app/schema.controller.ts":
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SchemaController = void 0;
-const tslib_1 = __webpack_require__("tslib");
-const common_1 = __webpack_require__("@nestjs/common");
-const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
-const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
-let SchemaController = class SchemaController {
-    constructor(schema, defService) {
-        this.schema = schema;
-        this.defService = defService;
-    }
-    getSchema() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const zodSchema = this.schema.getSchema();
-            const dynamicSchema = yield this.defService.getSchema();
-            const ret = Object.assign({}, zodSchema, dynamicSchema);
-            return ret;
-        });
-    }
-};
-tslib_1.__decorate([
-    (0, common_1.Get)('/getSchema'),
-    tslib_1.__metadata("design:type", Function),
-    tslib_1.__metadata("design:paramtypes", []),
-    tslib_1.__metadata("design:returntype", Promise)
-], SchemaController.prototype, "getSchema", null);
-SchemaController = tslib_1.__decorate([
-    (0, common_1.Controller)('/apps'),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof flowda_shared_1.SchemaService !== "undefined" && flowda_shared_1.SchemaService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.DynamicTableDefService !== "undefined" && flowda_services_1.DynamicTableDefService) === "function" ? _b : Object])
-], SchemaController);
-exports.SchemaController = SchemaController;
 
 
 /***/ }),
@@ -926,6 +884,14 @@ let UserRouter = UserRouter_1 = class UserRouter {
         this.trpc = trpc;
         this.userService = userService;
         this.userRouter = this.trpc.router({
+            getTenant: this.trpc.procedure
+                .input(zod_1.z.object({ tid: zod_1.z.number() }))
+                .output(zod_1.z.object({
+                name: zod_1.z.string(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.getTenantInfo(input.tid);
+            })),
             validate: this.trpc.procedure
                 .input(zod_1.z.object({
                 username: zod_1.z.string(),
@@ -1245,30 +1211,27 @@ let DynamicTableDataService = DynamicTableDataService_1 = class DynamicTableData
     }
     get(reqUser, path, query) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.logger.debug(`get: ${path}, query: ${JSON.stringify(query, null, 2)}`);
+            this.logger.debug(`get: ${path}, query: ${JSON.stringify(query, null, 2)}, reqUser: ${JSON.stringify(reqUser, null, 2)}`);
             const parsedPath = (0, flowda_shared_1.matchPath)(path);
             if (parsedPath.length === 0)
                 return Promise.resolve({});
             const { resource, id, resourceSchema } = parsedPath[parsedPath.length - 1];
             if (id == null) {
+                const where = {
+                    isDeleted: false,
+                    tenantId: reqUser.tid,
+                    dynamicTableDef: {
+                        name: resource,
+                        tenantId: reqUser.tid,
+                        isDeleted: false,
+                    },
+                };
                 const dbRet = yield this.prisma.$transaction([
                     this.prisma.dynamicTableData.findMany({
-                        where: {
-                            isDeleted: false,
-                            dynamicTableDef: {
-                                name: resource,
-                                isDeleted: false,
-                            },
-                        },
+                        where,
                     }),
                     this.prisma.dynamicTableData.count({
-                        where: {
-                            isDeleted: false,
-                            dynamicTableDef: {
-                                name: resource,
-                                isDeleted: false,
-                            },
-                        },
+                        where: where,
                     }),
                 ]);
                 const [data, count] = dbRet;
@@ -1298,7 +1261,7 @@ let DynamicTableDataService = DynamicTableDataService_1 = class DynamicTableData
     }
     put(reqUser, path, values) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.logger.debug(`put: ${path}, values: ${JSON.stringify(values, null, 2)}`);
+            this.logger.debug(`put: ${path}, values: ${JSON.stringify(values, null, 2)}, reqUser: ${JSON.stringify(reqUser, null, 2)}`);
             const parsedPath = (0, flowda_shared_1.matchPath)(path);
             if (parsedPath.length === 0)
                 return Promise.resolve({});
@@ -1309,6 +1272,7 @@ let DynamicTableDataService = DynamicTableDataService_1 = class DynamicTableData
                 },
                 select: {
                     id: true,
+                    tenantId: true,
                     data: true,
                 },
             });
@@ -1328,7 +1292,7 @@ let DynamicTableDataService = DynamicTableDataService_1 = class DynamicTableData
     }
     post(reqUser, path, values) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.logger.debug(`post: ${path}, values: ${JSON.stringify(values, null, 2)}`);
+            this.logger.debug(`post: ${path}, values: ${JSON.stringify(values, null, 2)}, reqUser: ${JSON.stringify(reqUser, null, 2)}`);
             const parsedPath = (0, flowda_shared_1.matchPath)(path);
             if (parsedPath.length === 0)
                 return Promise.resolve({});
@@ -1336,6 +1300,7 @@ let DynamicTableDataService = DynamicTableDataService_1 = class DynamicTableData
             const def = yield this.prisma.dynamicTableDef.findFirst({
                 where: {
                     name: resource,
+                    tenantId: reqUser.tid,
                 },
             });
             if (def == null) {
@@ -1354,7 +1319,7 @@ let DynamicTableDataService = DynamicTableDataService_1 = class DynamicTableData
     }
     remove(reqUser, path) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.logger.debug(`remove: ${path}`);
+            this.logger.debug(`remove: ${path}, reqUser: ${JSON.stringify(reqUser, null, 2)}`);
             const parsedPath = (0, flowda_shared_1.matchPath)(path);
             if (parsedPath.length === 0)
                 return Promise.resolve({});
@@ -1815,6 +1780,17 @@ let UserService = UserService_1 = class UserService {
             select: {
                 id: true,
                 username: true,
+            },
+        });
+    }
+    getTenantInfo(tid) {
+        return this.prisma.tenant.findUniqueOrThrow({
+            where: {
+                id: tid,
+            },
+            select: {
+                id: true,
+                name: true,
             },
         });
     }
