@@ -625,7 +625,7 @@ let UserJwtStrategy = UserJwtStrategy_1 = class UserJwtStrategy extends (0, pass
     }
     validate(payload) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.logger.debug(`[UserJwtStrategy] payload ${JSON.stringify(payload, null, 2)}`);
+            // this.logger.debug!(`[UserJwtStrategy] payload ${JSON.stringify(payload, null, 2)}`)
             return payload;
         });
     }
