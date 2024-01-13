@@ -878,7 +878,7 @@ exports.TrpcService = TrpcService;
 
 
 var UserRouter_1;
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -887,10 +887,13 @@ const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-serv
 const zod_1 = __webpack_require__("zod");
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
 const prisma_flowda_1 = __webpack_require__("../../libs/prisma-flowda/src/index.ts");
+const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
+const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
 let UserRouter = UserRouter_1 = class UserRouter {
-    constructor(trpc, userService, loggerFactory) {
+    constructor(trpc, userService, prisma, loggerFactory) {
         this.trpc = trpc;
         this.userService = userService;
+        this.prisma = prisma;
         this.userRouter = this.trpc.router({
             getTenant: this.trpc.procedure
                 .input(zod_1.z.object({ tid: zod_1.z.number() }))
@@ -936,6 +939,31 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 const ret = yield this.userService.validate(input.username, input.password);
                 return ret;
             })),
+            findMany: this.trpc.procedure
+                .input(zod_1.z.object({
+                userIds: zod_1.z.array(zod_1.z.number()),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const ret = yield this.prisma.user.findMany({
+                    where: {
+                        id: {
+                            in: input.userIds,
+                        },
+                    },
+                });
+                return ret;
+            })),
+            findUnique: this.trpc.procedure
+                .input(zod_1.z.object({
+                email: zod_1.z.string().optional(),
+                id: zod_1.z.number().optional(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const ret = yield this.prisma.user.findUnique({
+                    where: input,
+                });
+                return ret;
+            })),
         });
         this.logger = loggerFactory(UserRouter_1.name);
     }
@@ -944,8 +972,9 @@ UserRouter = UserRouter_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
     tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
     tslib_1.__param(1, (0, inversify_1.inject)(flowda_services_1.UserService)),
-    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.UserService !== "undefined" && flowda_services_1.UserService) === "function" ? _b : Object, Function])
+    tslib_1.__param(2, (0, inversify_1.inject)(flowda_shared_1.PrismaClientSymbol)),
+    tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.UserService !== "undefined" && flowda_services_1.UserService) === "function" ? _b : Object, typeof (_c = typeof db !== "undefined" && db.PrismaClient) === "function" ? _c : Object, Function])
 ], UserRouter);
 exports.UserRouter = UserRouter;
 
@@ -3568,7 +3597,7 @@ exports.TransactionIsolationLevelSchema = zod_1.z.enum(['ReadUncommitted', 'Read
 exports.TenantScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'name']);
 exports.TaskFormRelationScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'taskDefinitionKey', 'formKey']);
 exports.TableFilterScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'path', 'name', 'filterJSON']);
-exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'unionid', 'tenantId']);
+exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'unionid', 'email', 'tenantId']);
 exports.UserProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'fullName', 'tenantId']);
 exports.AuditsScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'auditId', 'auditType', 'userId', 'username', 'action', 'auditChanges', 'version']);
 exports.DynamicTableDefScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'name', 'extendedSchema', 'tenantId']);
@@ -3636,6 +3665,7 @@ exports.UserSchema = zod_1.z.object({
     hashedPassword: zod_1.z.string().nullable(),
     hashedRefreshToken: zod_1.z.string().nullable(),
     unionid: zod_1.z.string().nullable().openapi({ "title": "微信" }),
+    email: zod_1.z.string().nullable().openapi({ "title": "邮箱" }),
     tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
 }).openapi({ "display_name": "员工", "display_column": "username" });
 exports.UserWithRelationsSchema = exports.UserSchema.merge(zod_1.z.object({
