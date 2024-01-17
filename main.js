@@ -1096,7 +1096,7 @@ exports.FLOWDA_ENV = (0, znv_1.parseEnv)(process.env, {
     REFRESH_TOKEN_SECRET: zod_1.z.string().min(1),
     REFRESH_TOKEN_EXPIRE: zod_1.z.number().default(7 * 24 * 60 * 60),
     ACCESS_TOKEN_SECRET: zod_1.z.string().min(1),
-    ACCESS_TOKEN_EXPIRE: zod_1.z.number().default(60 * 60),
+    ACCESS_TOKEN_EXPIRE: zod_1.z.number().default(24 * 60 * 60),
     C7_REST_URL: zod_1.z.string().min(1),
 });
 
@@ -1739,6 +1739,7 @@ const bcrypt = tslib_1.__importStar(__webpack_require__("bcrypt"));
 const jwt = tslib_1.__importStar(__webpack_require__("jsonwebtoken"));
 const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
 const common_1 = __webpack_require__("@nestjs/common");
+const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
 exports.registerSchema = zod_1.z.object({
     username: zod_1.z.string(),
     password: zod_1.z.string(),
@@ -1834,7 +1835,7 @@ let UserService = UserService_1 = class UserService {
                 },
             });
             const at = this.generateJwt(payload, flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_SECRET, flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_EXPIRE);
-            this.logger.log(`validate pass, t: ${user.tenant.name}, u: ${user.username}`);
+            this.logger.log(`validate pass, t: ${user.tenant.name}, u: ${user.username}, e: ${(0, dayjs_1.default)().add(flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_EXPIRE, 's')}`);
             return {
                 username: user.username,
                 refresh_token: rt.token,
@@ -3843,6 +3844,13 @@ module.exports = require("axios");
 /***/ ((module) => {
 
 module.exports = require("bcrypt");
+
+/***/ }),
+
+/***/ "dayjs":
+/***/ ((module) => {
+
+module.exports = require("dayjs");
 
 /***/ }),
 
