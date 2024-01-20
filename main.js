@@ -952,6 +952,22 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 });
                 return ret;
             })),
+            updateUserInfo: this.trpc.procedure
+                .input(zod_1.z.object({
+                userId: zod_1.z.number(),
+                email: zod_1.z.string().optional(),
+                username: zod_1.z.string().optional(),
+                image: zod_1.z.string().optional(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const { username, email, image } = input;
+                return this.prisma.user.update({
+                    where: {
+                        id: input.userId,
+                    },
+                    data: Object.assign(Object.assign(Object.assign({}, (username && { username })), (email && { email })), (image && { image })),
+                });
+            })),
             findUnique: this.trpc.procedure
                 .input(zod_1.z.object({
                 email: zod_1.z.string().optional(),
@@ -3597,7 +3613,7 @@ exports.TransactionIsolationLevelSchema = zod_1.z.enum(['ReadUncommitted', 'Read
 exports.TenantScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'name']);
 exports.TaskFormRelationScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'taskDefinitionKey', 'formKey']);
 exports.TableFilterScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'path', 'name', 'filterJSON']);
-exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'unionid', 'email', 'tenantId']);
+exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'unionid', 'email', 'image', 'tenantId']);
 exports.UserProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'fullName', 'tenantId']);
 exports.AuditsScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'auditId', 'auditType', 'userId', 'username', 'action', 'auditChanges', 'version']);
 exports.DynamicTableDefScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'name', 'extendedSchema', 'tenantId']);
@@ -3666,6 +3682,7 @@ exports.UserSchema = zod_1.z.object({
     hashedRefreshToken: zod_1.z.string().nullable(),
     unionid: zod_1.z.string().nullable().openapi({ "title": "微信" }),
     email: zod_1.z.string().nullable().openapi({ "title": "邮箱" }),
+    image: zod_1.z.string().nullable().openapi({ "title": "头像" }),
     tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
 }).openapi({ "display_name": "员工", "display_column": "username" });
 exports.UserWithRelationsSchema = exports.UserSchema.merge(zod_1.z.object({
