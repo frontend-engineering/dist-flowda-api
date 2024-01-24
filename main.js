@@ -888,11 +888,11 @@ exports.createContext = void 0;
 const tslib_1 = __webpack_require__("tslib");
 function createContext({ req, res }) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        console.log('-------- request --------');
-        console.log(req.url, {
-            'x-from': req.headers['x-from'],
-        });
-        console.log('-------- end request --------');
+        console.log('======================================== Start ========================================');
+        console.log('url                  :', req.url);
+        console.log('from                 :', req.headers['x-from']);
+        console.log('request args         :', req.params, req.query);
+        console.log('======================================== End ========================================\n');
         return {
             _meta: {
                 'x-from': req.headers['x-from'],
