@@ -727,10 +727,12 @@ const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-serv
 const trpc_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.router.ts");
 const schema_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/schema.router.ts");
 const user_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/user.router.ts");
+const hello_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/hello.router.ts");
 exports.flowdaServiceTrpcServerModule = new inversify_1.ContainerModule(bind => {
     bind(trpc_service_1.TrpcService).toSelf().inSingletonScope();
     bind(schema_router_1.SchemaRouter).toSelf().inSingletonScope();
     bind(user_router_1.UserRouter).toSelf().inSingletonScope();
+    bind(hello_router_1.HelloRouter).toSelf().inSingletonScope();
     (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, trpc_router_1.TrpcRouter);
 });
 
@@ -748,6 +750,86 @@ const zod_1 = __webpack_require__("zod");
 (0, zod_openapi_1.extendZodWithOpenApi)(zod_1.z);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services-trpc-server/src/flowdaServiceTrpcServer.module.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.router.ts"), exports);
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services-trpc-server/src/trpc/hello.router.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var HelloRouter_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HelloRouter = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
+const zod_1 = __webpack_require__("zod");
+const _ = tslib_1.__importStar(__webpack_require__("radash"));
+let HelloRouter = HelloRouter_1 = class HelloRouter {
+    constructor(trpc, loggerFactory) {
+        this.trpc = trpc;
+        this.helloRouter = this.trpc.router({
+            createRoot: this.trpc.procedure.input(zod_1.z.any()).query((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return {
+                    id: 'WorkspaceNodeId',
+                    name: 'WorkspaceNode',
+                    visible: false,
+                    children: [
+                        {
+                            id: '0',
+                            name: 'resources',
+                            selected: false,
+                            expanded: false,
+                            children: [],
+                        },
+                        {
+                            id: '1',
+                            name: 'workflows',
+                            selected: false,
+                            expanded: false,
+                            children: [],
+                        },
+                        {
+                            id: '2',
+                            name: 'reports',
+                            selected: false,
+                            expanded: false,
+                            children: [],
+                        },
+                    ],
+                };
+            })),
+            resolveChildren: this.trpc.procedure
+                .input(zod_1.z.object({
+                pid: zod_1.z.string(),
+            }))
+                .query((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const id = _.uid(4);
+                return [
+                    {
+                        id: id,
+                        name: '服务器管理' + id,
+                        selected: false,
+                        uri: {
+                            scheme: 'resource',
+                            name: '服务器管理' + id,
+                        },
+                    },
+                ];
+            })),
+        });
+        this.logger = loggerFactory(HelloRouter_1.name);
+    }
+};
+exports.HelloRouter = HelloRouter;
+exports.HelloRouter = HelloRouter = HelloRouter_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
+    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, Function])
+], HelloRouter);
 
 
 /***/ }),
@@ -797,12 +879,38 @@ exports.SchemaRouter = SchemaRouter = SchemaRouter_1 = tslib_1.__decorate([
 
 /***/ }),
 
+/***/ "../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createContext = void 0;
+const tslib_1 = __webpack_require__("tslib");
+function createContext({ req, res }) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        console.log('-------- request --------');
+        console.log(req.url, {
+            'x-from': req.headers['x-from'],
+        });
+        console.log('-------- end request --------');
+        return {
+            _meta: {
+                'x-from': req.headers['x-from'],
+            },
+        };
+    });
+}
+exports.createContext = createContext;
+
+
+/***/ }),
+
 /***/ "../../libs/flowda-services-trpc-server/src/trpc/trpc.router.ts":
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 var TrpcRouter_1;
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TrpcRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -811,15 +919,19 @@ const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-serv
 const trpcExpress = tslib_1.__importStar(__webpack_require__("@trpc/server/adapters/express"));
 const schema_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/schema.router.ts");
 const user_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/user.router.ts");
+const hello_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/hello.router.ts");
+const trpc_context_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts");
 // import { createOpenApiExpressMiddleware } from 'trpc-openapi'
 let TrpcRouter = TrpcRouter_1 = class TrpcRouter {
-    constructor(trpc, schemaRouter, userRouter, loggerFactory) {
+    constructor(trpc, schemaRouter, userRouter, helloRouter, loggerFactory) {
         this.trpc = trpc;
         this.schemaRouter = schemaRouter;
         this.userRouter = userRouter;
+        this.helloRouter = helloRouter;
         this.appRouter = this.trpc.router({
             schema: this.schemaRouter.schemaRouter,
             user: this.userRouter.userRouter,
+            hello: this.helloRouter.helloRouter,
         });
         this.logger = loggerFactory(TrpcRouter_1.name);
     }
@@ -828,6 +940,7 @@ let TrpcRouter = TrpcRouter_1 = class TrpcRouter {
         // app.use(`/${globalPrefix}/trpc-api`, createOpenApiExpressMiddleware({ router: this.appRouter }))
         app.use(`/${globalPrefix}/trpc`, trpcExpress.createExpressMiddleware({
             router: this.appRouter,
+            createContext: trpc_context_1.createContext,
         }));
     }
 };
@@ -837,8 +950,9 @@ exports.TrpcRouter = TrpcRouter = TrpcRouter_1 = tslib_1.__decorate([
     tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
     tslib_1.__param(1, (0, inversify_1.inject)(schema_router_1.SchemaRouter)),
     tslib_1.__param(2, (0, inversify_1.inject)(user_router_1.UserRouter)),
-    tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, typeof (_c = typeof user_router_1.UserRouter !== "undefined" && user_router_1.UserRouter) === "function" ? _c : Object, Function])
+    tslib_1.__param(3, (0, inversify_1.inject)(hello_router_1.HelloRouter)),
+    tslib_1.__param(4, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, typeof (_c = typeof user_router_1.UserRouter !== "undefined" && user_router_1.UserRouter) === "function" ? _c : Object, typeof (_d = typeof hello_router_1.HelloRouter !== "undefined" && hello_router_1.HelloRouter) === "function" ? _d : Object, Function])
 ], TrpcRouter);
 
 
@@ -857,6 +971,7 @@ const inversify_1 = __webpack_require__("inversify");
 let TrpcService = class TrpcService {
     constructor() {
         this.trpc = server_1.initTRPC
+            .context()
             // .meta<OpenApiMeta>()
             .create();
         this.procedure = this.trpc.procedure;
