@@ -529,7 +529,7 @@ exports.ServicesModule = ServicesModule = tslib_1.__decorate([
 
 
 var UserController_1;
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserController = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -545,6 +545,9 @@ let UserController = UserController_1 = class UserController {
     }
     register(dto) {
         return this.service.register(dto);
+    }
+    resetPassword(req, dto) {
+        return this.service.resetPassword(req.user, dto);
     }
     login(req) {
         return req.user;
@@ -568,6 +571,15 @@ tslib_1.__decorate([
     tslib_1.__metadata("design:paramtypes", [typeof (_b = typeof flowda_services_1.RegisterDto !== "undefined" && flowda_services_1.RegisterDto) === "function" ? _b : Object]),
     tslib_1.__metadata("design:returntype", void 0)
 ], UserController.prototype, "register", null);
+tslib_1.__decorate([
+    (0, common_1.UseGuards)(userJwtAuth_guard_1.UserJwtAuthGuard),
+    (0, common_1.Post)('resetPassword'),
+    tslib_1.__param(0, (0, common_1.Request)()),
+    tslib_1.__param(1, (0, common_1.Body)()),
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [Object, typeof (_c = typeof flowda_services_1.resetPasswordSchemaDto !== "undefined" && flowda_services_1.resetPasswordSchemaDto) === "function" ? _c : Object]),
+    tslib_1.__metadata("design:returntype", void 0)
+], UserController.prototype, "resetPassword", null);
 tslib_1.__decorate([
     (0, common_1.UseGuards)(userLocalAuth_guard_1.UserLocalAuthGuard),
     (0, common_1.Post)('login'),
@@ -1053,6 +1065,16 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 const ret = yield this.userService.validate(input.username, input.password);
                 return ret;
             })),
+            validateByEmail: this.trpc.procedure
+                .input(zod_1.z.object({
+                email: zod_1.z.string(),
+                tenantId: zod_1.z.number(),
+                password: zod_1.z.string(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const ret = yield this.userService.validateByEmail(input.tenantId, input.email, input.password);
+                return ret;
+            })),
             findMany: this.trpc.procedure
                 .input(zod_1.z.object({
                 userIds: zod_1.z.array(zod_1.z.number()),
@@ -1183,6 +1205,7 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/symbols
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/lib/schema.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/task.service.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/user.dto.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/user.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/dynamic-table-def.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/dynamic-table-data.service.ts"), exports);
@@ -1247,7 +1270,9 @@ exports.UserResourceSchema = prisma_flowda_1.UserSchema.omit({
     hashedRefreshToken: true,
 })
     .extend({
-    password: zod_1.z.string().openapi({
+    // todo: 暂时先 optional, 否则 编辑 不填 password 无法通过
+    // 这个 extend password 是为了配合 createRequestUrl
+    password: zod_1.z.string().optional().openapi({
         title: '密码',
         prisma: false,
     }),
@@ -1850,26 +1875,14 @@ exports.TaskService = TaskService = TaskService_1 = tslib_1.__decorate([
 
 /***/ }),
 
-/***/ "../../libs/flowda-services/src/services/user.service.ts":
+/***/ "../../libs/flowda-services/src/services/user.dto.ts":
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
-var UserService_1;
-var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserService = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = void 0;
-const tslib_1 = __webpack_require__("tslib");
-const inversify_1 = __webpack_require__("inversify");
-const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
-const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
+exports.resetPasswordSchemaDto = exports.resetPasswordSchema = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = void 0;
 const zod_1 = __webpack_require__("zod");
 const nestjs_zod_1 = __webpack_require__("nestjs-zod");
-const error_code_1 = __webpack_require__("../../libs/flowda-services/src/lib/error-code.ts");
-const bcrypt = tslib_1.__importStar(__webpack_require__("bcrypt"));
-const jwt = tslib_1.__importStar(__webpack_require__("jsonwebtoken"));
-const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
-const common_1 = __webpack_require__("@nestjs/common");
-const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
 exports.registerSchema = zod_1.z.object({
     username: zod_1.z.string(),
     password: zod_1.z.string(),
@@ -1905,6 +1918,36 @@ exports.registerByUnionIdSchema = zod_1.z.object({
 class RegisterByUnionIdSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.registerByUnionIdSchema) {
 }
 exports.RegisterByUnionIdSchemaDto = RegisterByUnionIdSchemaDto;
+exports.resetPasswordSchema = zod_1.z.object({
+    userId: zod_1.z.number(),
+    tenantId: zod_1.z.number(),
+    password: zod_1.z.string(),
+});
+class resetPasswordSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.resetPasswordSchema) {
+}
+exports.resetPasswordSchemaDto = resetPasswordSchemaDto;
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services/src/services/user.service.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var UserService_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserService = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
+const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
+const error_code_1 = __webpack_require__("../../libs/flowda-services/src/lib/error-code.ts");
+const bcrypt = tslib_1.__importStar(__webpack_require__("bcrypt"));
+const jwt = tslib_1.__importStar(__webpack_require__("jsonwebtoken"));
+const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
+const common_1 = __webpack_require__("@nestjs/common");
+const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
 let UserService = UserService_1 = class UserService {
     constructor(prisma, loggerFactory) {
         this.prisma = prisma;
@@ -1934,6 +1977,44 @@ let UserService = UserService_1 = class UserService {
                 id: aUser.id,
                 username: aUser.username,
             };
+        });
+    }
+    resetPassword(reqUser, dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const tenantRet = yield this.prisma.tenant.findUniqueOrThrow({
+                where: {
+                    id: reqUser.tid,
+                },
+            });
+            if (tenantRet.name !== 'superadmin') {
+                throw new Error('Not allowed');
+            }
+            yield this.prisma.user.findFirstOrThrow({
+                where: {
+                    id: dto.userId,
+                    tenantId: dto.tenantId,
+                },
+            });
+            const hashedPassword = yield bcrypt.hash(dto.password, 10);
+            return this.prisma.user.update({
+                where: {
+                    id: dto.userId,
+                },
+                data: {
+                    hashedPassword,
+                },
+            });
+        });
+    }
+    validateByEmail(tenantId, email, password) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const userRet = yield this.prisma.user.findFirstOrThrow({
+                where: {
+                    email: email,
+                    tenantId: tenantId,
+                },
+            });
+            return this.validate(userRet.username, password);
         });
     }
     validate(username, password) {
@@ -1997,6 +2078,7 @@ let UserService = UserService_1 = class UserService {
             select: {
                 id: true,
                 username: true,
+                unionid: true,
             },
         });
     }
