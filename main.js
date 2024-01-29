@@ -467,11 +467,14 @@ exports.TaskController = TaskController = tslib_1.__decorate([
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.loadModule = void 0;
+const tslib_1 = __webpack_require__("tslib");
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
 const client_flowda_1 = __webpack_require__("@prisma/client-flowda");
 const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
 const flowda_shared_node_1 = __webpack_require__("../../libs/flowda-shared-node/src/index.ts");
 const flowda_services_trpc_server_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/index.ts");
+const tencentcloud = tslib_1.__importStar(__webpack_require__("tencentcloud-sdk-nodejs"));
+const smsClient = tencentcloud.sms.v20210111.Client;
 const prisma = new client_flowda_1.PrismaClient({
     log: [
         // 'query',
@@ -483,6 +486,13 @@ const prisma = new client_flowda_1.PrismaClient({
 console.log('---------- ENV --------------');
 console.log('---------- ENV --------------');
 function loadModule(container) {
+    container.bind(flowda_services_1.SmsClientSymbol).toConstantValue(new smsClient({
+        credential: {
+            secretId: process.env.SMS_SECRET_ID,
+            secretKey: process.env.SMS_SECRET_KEY,
+        },
+        region: 'ap-nanjing',
+    }));
     container.bind(flowda_shared_1.PrismaClientSymbol).toConstantValue(prisma);
     container.load(flowda_shared_1.flowdaSharedModule);
     container.load(flowda_shared_node_1.flowdaSharedNodeModule);
@@ -1033,10 +1043,7 @@ let UserRouter = UserRouter_1 = class UserRouter {
             verifyMobile: this.trpc.procedure.input(flowda_services_1.verifyMobileSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.verifyMobile(input);
             })),
-            accountExists: this.trpc.procedure
-                .input(flowda_services_1.accountExistsSchema)
-                .output(prisma_flowda_1.UserSchema)
-                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            accountExists: this.trpc.procedure.input(flowda_services_1.accountExistsSchema).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.accountExists(input);
             })),
             findByUnionIdAndTenantId: this.trpc.procedure
@@ -1061,11 +1068,6 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .input(zod_1.z.object({
                 username: zod_1.z.string(),
                 password: zod_1.z.string(),
-            }))
-                .output(zod_1.z.object({
-                username: zod_1.z.string(),
-                refresh_token: zod_1.z.string(),
-                access_token: zod_1.z.string(),
             }))
                 .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const ret = yield this.userService.validate(input.username, input.password);
@@ -1257,6 +1259,8 @@ exports.FLOWDA_ENV = (0, znv_1.parseEnv)(process.env, {
     ACCESS_TOKEN_SECRET: zod_1.z.string().min(1),
     ACCESS_TOKEN_EXPIRE: zod_1.z.number().default(24 * 60 * 60),
     C7_REST_URL: zod_1.z.string().min(1),
+    SMS_SECRET_ID: zod_1.z.string().min(1),
+    SMS_SECRET_KEY: zod_1.z.string().min(1),
 });
 
 
@@ -1964,16 +1968,11 @@ const jwt = tslib_1.__importStar(__webpack_require__("jsonwebtoken"));
 const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
 const common_1 = __webpack_require__("@nestjs/common");
 const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-// const { Vonage } = require('@vonage/server-sdk')
-//
-// const vonage = new Vonage({
-//   apiKey: '52fb09db',
-//   apiSecret: 'YS9KP0aW9fbX6qoq',
-// })
+const symbols_1 = __webpack_require__("../../libs/flowda-services/src/symbols.ts");
 let UserService = UserService_1 = class UserService {
-    constructor(prisma, loggerFactory) {
+    constructor(prisma, smsClient, loggerFactory) {
         this.prisma = prisma;
+        this.smsClient = smsClient;
         this.logger = loggerFactory(UserService_1.name);
     }
     register(dto) {
@@ -2116,14 +2115,21 @@ let UserService = UserService_1 = class UserService {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const code = generateVerificationCode();
             this.logger.debug(`[sendSmsVerifyCode] ${mobile} ${code}`);
-            // const body = { mobile: '86' + mobile, from: 'Vonage APIs', text: `Verify code: ${code}` }
-            // try {
-            //   await vonage.sms.send(body)
-            //   this.logger.debug!(`[sendSmsVerifyCode] send sms succeed ${mobile} ${code}`)
-            // } catch (e) {
-            //   this.logger.error!(`[sendSmsVerifyCode] send sms to failed, ${JSON.stringify(body)}`)
-            //   console.error(e)
-            // }
+            try {
+                const res = yield this.smsClient.SendSms({
+                    SmsSdkAppId: '1400886368',
+                    PhoneNumberSet: ['+86' + mobile],
+                    TemplateId: '2062585',
+                    SignName: '上海只冲网络科技有限公司',
+                    TemplateParamSet: [code],
+                });
+                this.logger.debug('[sendSmsVerifyCode]');
+                console.log(res);
+            }
+            catch (e) {
+                throw new Error(e);
+                console.error(e);
+            }
             return this.prisma.sentSms.create({
                 data: {
                     mobile,
@@ -2225,8 +2231,9 @@ exports.UserService = UserService;
 exports.UserService = UserService = UserService_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
     tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_1.PrismaClientSymbol)),
-    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof db !== "undefined" && db.PrismaClient) === "function" ? _a : Object, Function])
+    tslib_1.__param(1, (0, inversify_1.inject)(symbols_1.SmsClientSymbol)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof db !== "undefined" && db.PrismaClient) === "function" ? _a : Object, Object, Function])
 ], UserService);
 function generateVerificationCode() {
     let verificationCode = '';
@@ -2248,10 +2255,11 @@ function generateVerificationCode() {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MenuServiceSymbol = exports.DynamicTableDefServiceSymbol = exports.DynamicTableDataServiceSymbol = void 0;
+exports.SmsClientSymbol = exports.MenuServiceSymbol = exports.DynamicTableDefServiceSymbol = exports.DynamicTableDataServiceSymbol = void 0;
 exports.DynamicTableDataServiceSymbol = Symbol.for('DynamicTableDataService');
 exports.DynamicTableDefServiceSymbol = Symbol.for('DynamicTableDefService');
 exports.MenuServiceSymbol = Symbol.for('MenuService');
+exports.SmsClientSymbol = Symbol.for('SmsClient');
 
 
 /***/ }),
@@ -4229,6 +4237,13 @@ module.exports = require("pluralize");
 /***/ ((module) => {
 
 module.exports = require("radash");
+
+/***/ }),
+
+/***/ "tencentcloud-sdk-nodejs":
+/***/ ((module) => {
+
+module.exports = require("tencentcloud-sdk-nodejs");
 
 /***/ }),
 
