@@ -750,8 +750,10 @@ const trpc_router_1 = __webpack_require__("../../libs/flowda-services-trpc-serve
 const schema_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/schema.router.ts");
 const user_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/user.router.ts");
 const hello_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/hello.router.ts");
+const trpc_context_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts");
 exports.flowdaServiceTrpcServerModule = new inversify_1.ContainerModule(bind => {
     bind(trpc_service_1.TrpcService).toSelf().inSingletonScope();
+    bind(trpc_context_1.ContextFactory).toSelf().inSingletonScope();
     bind(schema_router_1.SchemaRouter).toSelf().inSingletonScope();
     bind(user_router_1.UserRouter).toSelf().inSingletonScope();
     bind(hello_router_1.HelloRouter).toSelf().inSingletonScope();
@@ -823,7 +825,7 @@ let HelloRouter = HelloRouter_1 = class HelloRouter {
                     ],
                 };
             })),
-            resolveChildren: this.trpc.procedure
+            resolveChildren: this.trpc.protectedProcedure
                 .input(zod_1.z.object({
                 pid: zod_1.z.string(),
             }))
@@ -905,24 +907,47 @@ exports.SchemaRouter = SchemaRouter = SchemaRouter_1 = tslib_1.__decorate([
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
+var ContextFactory_1;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createContext = void 0;
+exports.ContextFactory = void 0;
 const tslib_1 = __webpack_require__("tslib");
-function createContext({ req, res }) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        console.log('======================================== Start ========================================');
-        console.log('url                  :', req.url);
-        console.log('from                 :', req.headers['x-from']);
-        console.log('request args         :', req.params, req.query);
-        console.log('======================================== End ========================================\n');
-        return {
-            _meta: {
-                'x-from': req.headers['x-from'],
-            },
-        };
-    });
-}
-exports.createContext = createContext;
+const inversify_1 = __webpack_require__("inversify");
+const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
+let ContextFactory = ContextFactory_1 = class ContextFactory {
+    constructor(userService, loggerFactory) {
+        this.userService = userService;
+        this.createContext = ({ req, res }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            console.log('======================================== Start ========================================');
+            console.log('url         :', req.url);
+            console.log('from        :', req.headers['x-from']);
+            console.log('request args:', req.params, req.query);
+            let user = null;
+            if (req.headers.authorization) {
+                const jwt = req.headers.authorization.split(' ')[1];
+                if (jwt) {
+                    user = this.userService.verifyAccessToken(jwt);
+                }
+            }
+            console.log('user        :', user);
+            console.log('======================================== End ========================================\n');
+            return {
+                user,
+                _meta: {
+                    'x-from': req.headers['x-from'],
+                },
+            };
+        });
+        this.logger = loggerFactory(ContextFactory_1.name);
+    }
+};
+exports.ContextFactory = ContextFactory;
+exports.ContextFactory = ContextFactory = ContextFactory_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(flowda_services_1.UserService)),
+    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof flowda_services_1.UserService !== "undefined" && flowda_services_1.UserService) === "function" ? _a : Object, Function])
+], ContextFactory);
 
 
 /***/ }),
@@ -932,7 +957,7 @@ exports.createContext = createContext;
 
 
 var TrpcRouter_1;
-var _a, _b, _c, _d;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TrpcRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -945,11 +970,12 @@ const hello_router_1 = __webpack_require__("../../libs/flowda-services-trpc-serv
 const trpc_context_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts");
 // import { createOpenApiExpressMiddleware } from 'trpc-openapi'
 let TrpcRouter = TrpcRouter_1 = class TrpcRouter {
-    constructor(trpc, schemaRouter, userRouter, helloRouter, loggerFactory) {
+    constructor(trpc, schemaRouter, userRouter, helloRouter, contextFactory, loggerFactory) {
         this.trpc = trpc;
         this.schemaRouter = schemaRouter;
         this.userRouter = userRouter;
         this.helloRouter = helloRouter;
+        this.contextFactory = contextFactory;
         this.appRouter = this.trpc.router({
             schema: this.schemaRouter.schemaRouter,
             user: this.userRouter.userRouter,
@@ -962,7 +988,7 @@ let TrpcRouter = TrpcRouter_1 = class TrpcRouter {
         // app.use(`/${globalPrefix}/trpc-api`, createOpenApiExpressMiddleware({ router: this.appRouter }))
         app.use(`/${globalPrefix}/trpc`, trpcExpress.createExpressMiddleware({
             router: this.appRouter,
-            createContext: trpc_context_1.createContext,
+            createContext: this.contextFactory.createContext,
         }));
     }
 };
@@ -973,8 +999,9 @@ exports.TrpcRouter = TrpcRouter = TrpcRouter_1 = tslib_1.__decorate([
     tslib_1.__param(1, (0, inversify_1.inject)(schema_router_1.SchemaRouter)),
     tslib_1.__param(2, (0, inversify_1.inject)(user_router_1.UserRouter)),
     tslib_1.__param(3, (0, inversify_1.inject)(hello_router_1.HelloRouter)),
-    tslib_1.__param(4, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, typeof (_c = typeof user_router_1.UserRouter !== "undefined" && user_router_1.UserRouter) === "function" ? _c : Object, typeof (_d = typeof hello_router_1.HelloRouter !== "undefined" && hello_router_1.HelloRouter) === "function" ? _d : Object, Function])
+    tslib_1.__param(4, (0, inversify_1.inject)(trpc_context_1.ContextFactory)),
+    tslib_1.__param(5, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, typeof (_c = typeof user_router_1.UserRouter !== "undefined" && user_router_1.UserRouter) === "function" ? _c : Object, typeof (_d = typeof hello_router_1.HelloRouter !== "undefined" && hello_router_1.HelloRouter) === "function" ? _d : Object, typeof (_e = typeof trpc_context_1.ContextFactory !== "undefined" && trpc_context_1.ContextFactory) === "function" ? _e : Object, Function])
 ], TrpcRouter);
 
 
@@ -984,26 +1011,47 @@ exports.TrpcRouter = TrpcRouter = TrpcRouter_1 = tslib_1.__decorate([
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
+var TrpcService_1;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TrpcService = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const server_1 = __webpack_require__("@trpc/server");
 const inversify_1 = __webpack_require__("inversify");
+const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
 // import { OpenApiMeta } from 'trpc-openapi'
-let TrpcService = class TrpcService {
-    constructor() {
+let TrpcService = TrpcService_1 = class TrpcService {
+    constructor(userService, loggerFactory) {
+        this.userService = userService;
         this.trpc = server_1.initTRPC
             .context()
             // .meta<OpenApiMeta>()
             .create();
         this.procedure = this.trpc.procedure;
+        this.protectedProcedure = this.trpc.procedure.use(function (opts) {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const ctx = opts.ctx;
+                if (!ctx.user) {
+                    throw new server_1.TRPCError({ code: 'UNAUTHORIZED' });
+                }
+                return opts.next({
+                    ctx: {
+                        user: ctx.user,
+                    },
+                });
+            });
+        });
         this.router = this.trpc.router;
         this.mergeRouters = this.trpc.mergeRouters;
+        this.logger = loggerFactory(TrpcService_1.name);
     }
 };
 exports.TrpcService = TrpcService;
-exports.TrpcService = TrpcService = tslib_1.__decorate([
-    (0, inversify_1.injectable)()
+exports.TrpcService = TrpcService = TrpcService_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(flowda_services_1.UserService)),
+    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof flowda_services_1.UserService !== "undefined" && flowda_services_1.UserService) === "function" ? _a : Object, Function])
 ], TrpcService);
 
 
@@ -2133,7 +2181,7 @@ let UserService = UserService_1 = class UserService {
             return this.prisma.sentSms.create({
                 data: {
                     mobile,
-                    code: generateVerificationCode(),
+                    code: code,
                 },
             });
         });
