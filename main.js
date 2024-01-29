@@ -1027,6 +1027,12 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.getTenantInfo(input.tid);
             })),
+            sendSmsVerifyCode: this.trpc.procedure.input(zod_1.z.object({ mobile: zod_1.z.string() })).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.sendSmsVerifyCode(input.mobile);
+            })),
+            verifyMobile: this.trpc.procedure.input(flowda_services_1.verifyMobileSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.verifyMobile(input);
+            })),
             accountExists: this.trpc.procedure
                 .input(flowda_services_1.accountExistsSchema)
                 .output(prisma_flowda_1.UserSchema)
@@ -1880,7 +1886,7 @@ exports.TaskService = TaskService = TaskService_1 = tslib_1.__decorate([
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.resetPasswordSchemaDto = exports.resetPasswordSchema = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = void 0;
+exports.verifyMobileSchemaDto = exports.verifyMobileSchema = exports.resetPasswordSchemaDto = exports.resetPasswordSchema = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = void 0;
 const zod_1 = __webpack_require__("zod");
 const nestjs_zod_1 = __webpack_require__("nestjs-zod");
 exports.registerSchema = zod_1.z.object({
@@ -1926,6 +1932,16 @@ exports.resetPasswordSchema = zod_1.z.object({
 class resetPasswordSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.resetPasswordSchema) {
 }
 exports.resetPasswordSchemaDto = resetPasswordSchemaDto;
+exports.verifyMobileSchema = zod_1.z.object({
+    uid: zod_1.z.number(),
+    tid: zod_1.z.number(),
+    mobile: zod_1.z.string(),
+    code: zod_1.z.string(),
+    slug: zod_1.z.string(),
+});
+class verifyMobileSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.verifyMobileSchema) {
+}
+exports.verifyMobileSchemaDto = verifyMobileSchemaDto;
 
 
 /***/ }),
@@ -1948,6 +1964,13 @@ const jwt = tslib_1.__importStar(__webpack_require__("jsonwebtoken"));
 const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
 const common_1 = __webpack_require__("@nestjs/common");
 const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+// const { Vonage } = require('@vonage/server-sdk')
+//
+// const vonage = new Vonage({
+//   apiKey: '52fb09db',
+//   apiSecret: 'YS9KP0aW9fbX6qoq',
+// })
 let UserService = UserService_1 = class UserService {
     constructor(prisma, loggerFactory) {
         this.prisma = prisma;
@@ -2089,6 +2112,60 @@ let UserService = UserService_1 = class UserService {
             },
         });
     }
+    sendSmsVerifyCode(mobile) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const code = generateVerificationCode();
+            this.logger.debug(`[sendSmsVerifyCode] ${mobile} ${code}`);
+            // const body = { mobile: '86' + mobile, from: 'Vonage APIs', text: `Verify code: ${code}` }
+            // try {
+            //   await vonage.sms.send(body)
+            //   this.logger.debug!(`[sendSmsVerifyCode] send sms succeed ${mobile} ${code}`)
+            // } catch (e) {
+            //   this.logger.error!(`[sendSmsVerifyCode] send sms to failed, ${JSON.stringify(body)}`)
+            //   console.error(e)
+            // }
+            return this.prisma.sentSms.create({
+                data: {
+                    mobile,
+                    code: generateVerificationCode(),
+                },
+            });
+        });
+    }
+    verifyMobile(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const now = (0, dayjs_1.default)();
+            const tenMinutesAgo = now.subtract(10, 'minute');
+            yield this.prisma.sentSms.findFirstOrThrow({
+                where: {
+                    code: dto.code,
+                    mobile: dto.mobile,
+                    createdAt: {
+                        gte: tenMinutesAgo.toDate(),
+                        lte: now.toDate(),
+                    },
+                },
+            });
+            yield this.prisma.user.findFirstOrThrow({
+                where: {
+                    id: dto.uid,
+                    tenantId: dto.tid,
+                },
+            });
+            return this.prisma.user.update({
+                where: {
+                    id: dto.uid,
+                },
+                data: {
+                    mobile: dto.mobile,
+                },
+                select: {
+                    id: true,
+                    tenantId: true,
+                },
+            });
+        });
+    }
     getTenantByName(dto) {
         return this.prisma.tenant.findFirstOrThrow({
             where: {
@@ -2151,6 +2228,17 @@ exports.UserService = UserService = UserService_1 = tslib_1.__decorate([
     tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
     tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof db !== "undefined" && db.PrismaClient) === "function" ? _a : Object, Function])
 ], UserService);
+function generateVerificationCode() {
+    let verificationCode = '';
+    const digits = '0123456789';
+    while (verificationCode.length < 6) {
+        const randomDigit = digits[Math.floor(Math.random() * digits.length)];
+        if (!verificationCode.includes(randomDigit)) {
+            verificationCode += randomDigit;
+        }
+    }
+    return verificationCode;
+}
 
 
 /***/ }),
@@ -3772,7 +3860,7 @@ exports.zt = tslib_1.__importStar(__webpack_require__("../../libs/prisma-flowda/
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MenuWithRelationsSchema = exports.MenuSchema = exports.DynamicTableDataWithRelationsSchema = exports.DynamicTableDataSchema = exports.DynamicTableDefColumnWithRelationsSchema = exports.DynamicTableDefColumnSchema = exports.DynamicTableDefWithRelationsSchema = exports.DynamicTableDefSchema = exports.AuditsSchema = exports.UserProfileWithRelationsSchema = exports.UserProfileSchema = exports.UserWithRelationsSchema = exports.UserSchema = exports.TableFilterSchema = exports.TaskFormRelationSchema = exports.TenantWithRelationsSchema = exports.TenantSchema = exports.DynamicColumnTypeSchema = exports.JsonNullValueFilterSchema = exports.NullsOrderSchema = exports.JsonNullValueInputSchema = exports.NullableJsonNullValueInputSchema = exports.SortOrderSchema = exports.MenuScalarFieldEnumSchema = exports.DynamicTableDataScalarFieldEnumSchema = exports.DynamicTableDefColumnScalarFieldEnumSchema = exports.DynamicTableDefScalarFieldEnumSchema = exports.AuditsScalarFieldEnumSchema = exports.UserProfileScalarFieldEnumSchema = exports.UserScalarFieldEnumSchema = exports.TableFilterScalarFieldEnumSchema = exports.TaskFormRelationScalarFieldEnumSchema = exports.TenantScalarFieldEnumSchema = exports.TransactionIsolationLevelSchema = exports.InputJsonValue = exports.NullableJsonValue = exports.JsonValue = exports.transformJsonNull = void 0;
+exports.SentSmsSchema = exports.MenuWithRelationsSchema = exports.MenuSchema = exports.DynamicTableDataWithRelationsSchema = exports.DynamicTableDataSchema = exports.DynamicTableDefColumnWithRelationsSchema = exports.DynamicTableDefColumnSchema = exports.DynamicTableDefWithRelationsSchema = exports.DynamicTableDefSchema = exports.AuditsSchema = exports.UserProfileWithRelationsSchema = exports.UserProfileSchema = exports.UserWithRelationsSchema = exports.UserSchema = exports.TableFilterSchema = exports.TaskFormRelationSchema = exports.TenantWithRelationsSchema = exports.TenantSchema = exports.DynamicColumnTypeSchema = exports.JsonNullValueFilterSchema = exports.NullsOrderSchema = exports.JsonNullValueInputSchema = exports.NullableJsonNullValueInputSchema = exports.SortOrderSchema = exports.SentSmsScalarFieldEnumSchema = exports.MenuScalarFieldEnumSchema = exports.DynamicTableDataScalarFieldEnumSchema = exports.DynamicTableDefColumnScalarFieldEnumSchema = exports.DynamicTableDefScalarFieldEnumSchema = exports.AuditsScalarFieldEnumSchema = exports.UserProfileScalarFieldEnumSchema = exports.UserScalarFieldEnumSchema = exports.TableFilterScalarFieldEnumSchema = exports.TaskFormRelationScalarFieldEnumSchema = exports.TenantScalarFieldEnumSchema = exports.TransactionIsolationLevelSchema = exports.InputJsonValue = exports.NullableJsonValue = exports.JsonValue = exports.transformJsonNull = void 0;
 const zod_1 = __webpack_require__("zod");
 const client_flowda_1 = __webpack_require__("@prisma/client-flowda");
 const zod_openapi_1 = __webpack_require__("@anatine/zod-openapi");
@@ -3810,13 +3898,14 @@ exports.TransactionIsolationLevelSchema = zod_1.z.enum(['ReadUncommitted', 'Read
 exports.TenantScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'name']);
 exports.TaskFormRelationScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'taskDefinitionKey', 'formKey']);
 exports.TableFilterScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'path', 'name', 'filterJSON']);
-exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'unionid', 'email', 'image', 'tenantId']);
+exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'unionid', 'email', 'mobile', 'image', 'tenantId']);
 exports.UserProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'fullName', 'tenantId']);
 exports.AuditsScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'auditId', 'auditType', 'userId', 'username', 'action', 'auditChanges', 'version']);
 exports.DynamicTableDefScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'name', 'extendedSchema', 'tenantId']);
 exports.DynamicTableDefColumnScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'dynamicTableDefId', 'name', 'type', 'extendedSchema', 'tenantId']);
 exports.DynamicTableDataScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'dynamicTableDefId', 'data', 'tenantId']);
 exports.MenuScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'treeData', 'tenantId']);
+exports.SentSmsScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'mobile', 'code']);
 exports.SortOrderSchema = zod_1.z.enum(['asc', 'desc']);
 exports.NullableJsonNullValueInputSchema = zod_1.z.enum(['DbNull', 'JsonNull',]).transform((v) => (0, exports.transformJsonNull)(v));
 exports.JsonNullValueInputSchema = zod_1.z.enum(['JsonNull',]);
@@ -3879,6 +3968,7 @@ exports.UserSchema = zod_1.z.object({
     hashedRefreshToken: zod_1.z.string().nullable(),
     unionid: zod_1.z.string().nullable().openapi({ "title": "微信" }),
     email: zod_1.z.string().nullable().openapi({ "title": "邮箱" }),
+    mobile: zod_1.z.string().nullable().openapi({ "title": "手机号" }),
     image: zod_1.z.string().nullable().openapi({ "title": "头像" }),
     tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
 }).openapi({ "display_name": "员工", "display_column": "username" });
@@ -3980,6 +4070,17 @@ exports.MenuSchema = zod_1.z.object({
 exports.MenuWithRelationsSchema = exports.MenuSchema.merge(zod_1.z.object({
     tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
 }));
+/////////////////////////////////////////
+// SENT SMS SCHEMA
+/////////////////////////////////////////
+exports.SentSmsSchema = zod_1.z.object({
+    id: zod_1.z.number().int(),
+    createdAt: zod_1.z.date(),
+    updatedAt: zod_1.z.date(),
+    isDeleted: zod_1.z.boolean(),
+    mobile: zod_1.z.string(),
+    code: zod_1.z.string(),
+}).openapi({ "display_name": "已发送短信", "display_column": "name" });
 
 
 /***/ }),

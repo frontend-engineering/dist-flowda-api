@@ -11,7 +11,7 @@
     "@nestjs/passport": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/schedule": "^4.0.0",
-    "@trpc/server": "^10.44.1",
+    "@trpc": "server@10.44.1",
     "axios": "1.1.0",
     "bcrypt": "^5.1.0",
     "cache-manager": "^5.2.4",
