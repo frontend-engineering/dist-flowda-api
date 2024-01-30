@@ -790,10 +790,11 @@ const tslib_1 = __webpack_require__("tslib");
 const inversify_1 = __webpack_require__("inversify");
 const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
 const zod_1 = __webpack_require__("zod");
-const _ = tslib_1.__importStar(__webpack_require__("radash"));
+const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
 let HelloRouter = HelloRouter_1 = class HelloRouter {
-    constructor(trpc, loggerFactory) {
+    constructor(trpc, schemaService, loggerFactory) {
         this.trpc = trpc;
+        this.schemaService = schemaService;
         this.helloRouter = this.trpc.router({
             createRoot: this.trpc.procedure.input(zod_1.z.any()).query((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return {
@@ -830,18 +831,28 @@ let HelloRouter = HelloRouter_1 = class HelloRouter {
                 pid: zod_1.z.string(),
             }))
                 .query((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const id = _.uid(4);
-                return [
-                    {
-                        id: id,
-                        name: '服务器管理' + id,
+                const zodSchema = this.schemaService.getSchema();
+                return Object.keys(zodSchema).reduce((acc, cur) => {
+                    acc.push({
+                        id: cur,
+                        name: zodSchema[cur].display_name || cur,
                         selected: false,
                         uri: {
                             scheme: 'resource',
-                            name: '服务器管理' + id,
+                            name: zodSchema[cur].display_name || cur,
                         },
-                    },
-                ];
+                    });
+                    return acc;
+                }, []);
+            })),
+            getResourceColumnDefs: this.trpc.protectedProcedure
+                .input(zod_1.z.object({
+                schemaName: zod_1.z.string(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const schemaCache = yield this.schemaService.getSchemaCache();
+                const theSchema = schemaCache[input.schemaName];
+                return theSchema;
             })),
         });
         this.logger = loggerFactory(HelloRouter_1.name);
@@ -851,8 +862,9 @@ exports.HelloRouter = HelloRouter;
 exports.HelloRouter = HelloRouter = HelloRouter_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
     tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
-    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, Function])
+    tslib_1.__param(1, (0, inversify_1.inject)(flowda_shared_1.SchemaServiceSymbol)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, Object, Function])
 ], HelloRouter);
 
 
