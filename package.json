@@ -1,7 +1,7 @@
 {
   "scripts": {
     "serve": "../../node_modules/.bin/dotenv -e .env.dev -- ../../node_modules/.bin/nx run flowda-api:serve",
-    "serve:prod": "../../node_modules/.bin/dotenv -e .env.dev -- ../../node_modules/.bin/nx run flowda-api:serve:production"
+    "serve:prod": "../../node_modules/.bin/dotenv -e .env.prod -- ../../node_modules/.bin/nx run flowda-api:serve"
   },
   "name": "@flowda-projects/flowda-api",
   "dependencies": {
