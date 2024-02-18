@@ -1,22 +1,26 @@
 {
   "scripts": {
     "serve": "../../node_modules/.bin/dotenv -e .env.dev -- ../../node_modules/.bin/nx run flowda-api:serve",
-    "serve:prod": "../../node_modules/.bin/dotenv -e .env.dev -- ../../node_modules/.bin/nx run flowda-api:serve:production"
+    "serve:prod": "../../node_modules/.bin/dotenv -e .env.prod -- ../../node_modules/.bin/nx run flowda-api:serve"
   },
   "name": "@flowda-projects/flowda-api",
   "dependencies": {
     "@anatine/zod-openapi": "file:.yalc/@anatine/zod-openapi",
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
-    "@nestjs/microservices": "^10.2.10",
     "@nestjs/passport": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/schedule": "^4.0.0",
+    "@prisma/client": "^4.16.2",
+    "@prisma/client-flowda": "link:.yalc/@prisma/client-flowda",
+    "@trpc/server": "^10.44.1",
     "axios": "1.1.0",
     "bcrypt": "^5.1.0",
     "cache-manager": "^5.2.4",
+    "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "consola": "^3.2.3",
+    "dayjs": "^1.11.6",
     "express": "^4.18.2",
     "http-proxy-middleware": "^2.0.6",
     "inversify": "^6.0.1",
@@ -28,14 +32,16 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pluralize": "^8.0.0",
+    "prisma": "^4.16.2",
     "qs": "^6.11.2",
     "radash": "^11.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.0.0",
-    "typescript": "~4.9.5",
+    "tencentcloud-sdk-nodejs": "^4.0.789",
+    "typescript": "^5.1.6",
+    "wechat-oauth": "^1.5.0",
     "znv": "^0.4.0",
     "zod": "3.21.1",
-    "tslib": "^2.3.0",
-    "class-transformer": "^0.5.1"
+    "tslib": "^2.3.0"
   }
 }
