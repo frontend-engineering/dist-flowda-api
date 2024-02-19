@@ -15,11 +15,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
 export type TenantPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
   name: "Tenant"
   objects: {
+    menu: MenuPayload<ExtArgs> | null
     /**
      * @schema.model_name User
      */
     users: UserPayload<ExtArgs>[]
-    menu: MenuPayload<ExtArgs> | null
     /**
      * @schema.model_name DynamicTableDef
      */
@@ -48,6 +48,22 @@ export type TenantPayload<ExtArgs extends $Extensions.Args = $Extensions.Default
      * @schema.model_name WeixinProfile
      */
     weixinProfile: WeixinProfilePayload<ExtArgs>[]
+    /**
+     * @schema.model_name ProductSnapshot
+     */
+    productSnapshots: ProductSnapshotPayload<ExtArgs>[]
+    /**
+     * @schema.model_name Order
+     */
+    orders: OrderPayload<ExtArgs>[]
+    /**
+     * @schema.model_name Pay
+     */
+    pays: PayPayload<ExtArgs>[]
+    /**
+     * @schema.model_name Product
+     */
+    products: ProductPayload<ExtArgs>[]
   }
   scalars: $Extensions.GetResult<{
     id: number
@@ -120,6 +136,9 @@ export type UserPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultAr
     profile: UserProfilePayload<ExtArgs> | null
     weixinProfile: WeixinProfilePayload<ExtArgs> | null
     orderProfile: OrderProfilePayload<ExtArgs> | null
+    productSnapshots: ProductSnapshotPayload<ExtArgs>[]
+    orders: OrderPayload<ExtArgs>[]
+    pays: PayPayload<ExtArgs>[]
   }
   scalars: $Extensions.GetResult<{
     id: number
@@ -132,10 +151,6 @@ export type UserPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultAr
     recoveryCode: string | null
     recoveryToken: string | null
     /**
-     * @schema.title 微信 unionid
-     */
-    unionid: string | null
-    /**
      * @schema.title 邮箱
      */
     email: string | null
@@ -143,6 +158,10 @@ export type UserPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultAr
      * @schema.title 手机号
      */
     mobile: string | null
+    /**
+     * @schema.title 快捷创建
+     */
+    anonymousCustomerToken: string | null
     /**
      * @schema.title 头像
      */
@@ -344,7 +363,7 @@ export type DynamicTableDataPayload<ExtArgs extends $Extensions.Args = $Extensio
     tenant: TenantPayload<ExtArgs>
   }
   scalars: $Extensions.GetResult<{
-    id: string
+    id: number
     createdAt: Date
     updatedAt: Date
     isDeleted: boolean
@@ -420,27 +439,33 @@ export type SentSms = runtime.Types.DefaultSelection<SentSmsPayload>
 export type WeixinProfilePayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
   name: "WeixinProfile"
   objects: {
-    user: UserPayload<ExtArgs>
     tenant: TenantPayload<ExtArgs>
+    user: UserPayload<ExtArgs>
   }
   scalars: $Extensions.GetResult<{
     id: number
     createdAt: Date
     updatedAt: Date
     isDeleted: boolean
-    unionid: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
+    /**
+     * @schema.reference Tenant
+     */
+    tenantId: number
     /**
      * @schema.reference User
      */
     userId: number
     /**
-     * @schema.reference Tenant
+     * @schema.title 微信 unionid
      */
-    tenantId: number
+    unionid: string | null
+    /**
+     * @schema.title 微信 openid
+     */
+    loginOpenid: string | null
+    headimgurl: string | null
+    nickname: string | null
+    sex: number | null
   }, ExtArgs["result"]["weixinProfile"]>
   composites: {}
 }
@@ -455,14 +480,18 @@ export type WeixinProfile = runtime.Types.DefaultSelection<WeixinProfilePayload>
 export type OrderProfilePayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
   name: "OrderProfile"
   objects: {
-    user: UserPayload<ExtArgs>
     tenant: TenantPayload<ExtArgs>
+    user: UserPayload<ExtArgs>
   }
   scalars: $Extensions.GetResult<{
     id: number
     createdAt: Date
     updatedAt: Date
     isDeleted: boolean
+    /**
+     * @schema.reference Tenant
+     */
+    tenantId: number
     userId: number
     productType: ProductType
     plan: number | null
@@ -471,10 +500,6 @@ export type OrderProfilePayload<ExtArgs extends $Extensions.Args = $Extensions.D
      */
     amount: number | null
     expireAt: Date | null
-    /**
-     * @schema.reference Tenant
-     */
-    tenantId: number
   }, ExtArgs["result"]["orderProfile"]>
   composites: {}
 }
@@ -486,6 +511,168 @@ export type OrderProfilePayload<ExtArgs extends $Extensions.Args = $Extensions.D
  * @schema.display_column productType
  */
 export type OrderProfile = runtime.Types.DefaultSelection<OrderProfilePayload>
+export type ProductPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Product"
+  objects: {
+    tenant: TenantPayload<ExtArgs>
+    /**
+     * @schema.model_name ProductSnapshot
+     * @schema.foreign_key productId
+     * @schema.primary_key id
+     */
+    productSnapshots: ProductSnapshotPayload<ExtArgs>[]
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    /**
+     * @schema.reference Tenant
+     */
+    tenantId: number
+    /**
+     * @schema.title 产品名
+     */
+    name: string
+    /**
+     * @schema.title 价格
+     * @schema.override_type integer
+     */
+    price: Prisma.Decimal
+    productType: ProductType
+    plan: number | null
+    /**
+     * @schema.title 额度
+     */
+    amount: number
+    extendedDescriptionData: Prisma.JsonValue | null
+    fileSize: string | null
+    storeDuration: number | null
+    /**
+     * @schema.title 广告
+     */
+    hasAds: string | null
+    /**
+     * @schema.title 技术支持
+     */
+    tecSupport: string | null
+    /**
+     * @schema.title 有效期/天
+     */
+    validityPeriod: number | null
+    restricted: number
+  }, ExtArgs["result"]["product"]>
+  composites: {}
+}
+
+/**
+ * Model Product
+ * @schema.primary_key id
+ * @schema.searchable_columns id,name
+ * @schema.display_name 产品
+ * @schema.display_column name
+ */
+export type Product = runtime.Types.DefaultSelection<ProductPayload>
+export type ProductSnapshotPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "ProductSnapshot"
+  objects: {
+    user: UserPayload<ExtArgs>
+    tenant: TenantPayload<ExtArgs>
+    order: OrderPayload<ExtArgs>
+    product: ProductPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    /**
+     * @schema.reference User
+     */
+    userId: number
+    /**
+     * @schema.reference Tenant
+     */
+    tenantId: number
+    snapshotPrice: Prisma.Decimal
+    orderId: number
+    productId: number
+  }, ExtArgs["result"]["productSnapshot"]>
+  composites: {}
+}
+
+/**
+ * Model ProductSnapshot
+ * 
+ */
+export type ProductSnapshot = runtime.Types.DefaultSelection<ProductSnapshotPayload>
+export type OrderPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Order"
+  objects: {
+    user: UserPayload<ExtArgs>
+    tenant: TenantPayload<ExtArgs>
+    pay: PayPayload<ExtArgs> | null
+    productSnapshots: ProductSnapshotPayload<ExtArgs>[]
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    /**
+     * @schema.reference User
+     */
+    userId: number
+    /**
+     * @schema.reference Tenant
+     */
+    tenantId: number
+    serial: number
+    status: OrderStatus
+  }, ExtArgs["result"]["order"]>
+  composites: {}
+}
+
+/**
+ * Model Order
+ * @schema.primary_key id
+ * @schema.display_name 订单
+ * @schema.display_primary_key true
+ */
+export type Order = runtime.Types.DefaultSelection<OrderPayload>
+export type PayPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Pay"
+  objects: {
+    user: UserPayload<ExtArgs>
+    tenant: TenantPayload<ExtArgs>
+    Order: OrderPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    /**
+     * @schema.reference User
+     */
+    userId: number
+    /**
+     * @schema.reference Tenant
+     */
+    tenantId: number
+    status: PayStatus
+    orderId: number
+    transactionId: string
+  }, ExtArgs["result"]["pay"]>
+  composites: {}
+}
+
+/**
+ * Model Pay
+ * 
+ */
+export type Pay = runtime.Types.DefaultSelection<PayPayload>
 
 /**
  * Enums
@@ -510,6 +697,25 @@ export const ProductType: {
 };
 
 export type ProductType = (typeof ProductType)[keyof typeof ProductType]
+
+
+export const OrderStatus: {
+  INITIALIZED: 'INITIALIZED',
+  PAY_ASSOCIATED: 'PAY_ASSOCIATED',
+  FREE_DEAL: 'FREE_DEAL',
+  CANCELED: 'CANCELED'
+};
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
+
+
+export const PayStatus: {
+  UNPAIED: 'UNPAIED',
+  PAIED: 'PAIED',
+  REFUND: 'REFUND'
+};
+
+export type PayStatus = (typeof PayStatus)[keyof typeof PayStatus]
 
 
 /**
@@ -776,6 +982,46 @@ export class PrismaClient<
     * ```
     */
   get orderProfile(): Prisma.OrderProfileDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.product`: Exposes CRUD operations for the **Product** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Products
+    * const products = await prisma.product.findMany()
+    * ```
+    */
+  get product(): Prisma.ProductDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.productSnapshot`: Exposes CRUD operations for the **ProductSnapshot** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ProductSnapshots
+    * const productSnapshots = await prisma.productSnapshot.findMany()
+    * ```
+    */
+  get productSnapshot(): Prisma.ProductSnapshotDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.order`: Exposes CRUD operations for the **Order** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Orders
+    * const orders = await prisma.order.findMany()
+    * ```
+    */
+  get order(): Prisma.OrderDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.pay`: Exposes CRUD operations for the **Pay** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Pays
+    * const pays = await prisma.pay.findMany()
+    * ```
+    */
+  get pay(): Prisma.PayDelegate<GlobalReject, ExtArgs>;
 }
 
 export namespace Prisma {
@@ -1272,7 +1518,11 @@ export namespace Prisma {
     Menu: 'Menu',
     SentSms: 'SentSms',
     WeixinProfile: 'WeixinProfile',
-    OrderProfile: 'OrderProfile'
+    OrderProfile: 'OrderProfile',
+    Product: 'Product',
+    ProductSnapshot: 'ProductSnapshot',
+    Order: 'Order',
+    Pay: 'Pay'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1289,7 +1539,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     meta: {
-      modelProps: 'tenant' | 'taskFormRelation' | 'tableFilter' | 'user' | 'userPreSignup' | 'userProfile' | 'audits' | 'dynamicTableDef' | 'dynamicTableDefColumn' | 'dynamicTableData' | 'menu' | 'sentSms' | 'weixinProfile' | 'orderProfile'
+      modelProps: 'tenant' | 'taskFormRelation' | 'tableFilter' | 'user' | 'userPreSignup' | 'userProfile' | 'audits' | 'dynamicTableDef' | 'dynamicTableDefColumn' | 'dynamicTableData' | 'menu' | 'sentSms' | 'weixinProfile' | 'orderProfile' | 'product' | 'productSnapshot' | 'order' | 'pay'
       txIsolationLevel: Prisma.TransactionIsolationLevel
     },
     model: {
@@ -2203,6 +2453,266 @@ export namespace Prisma {
           }
         }
       }
+      Product: {
+        payload: ProductPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.ProductFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProductFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload>
+          }
+          findFirst: {
+            args: Prisma.ProductFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProductFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload>
+          }
+          findMany: {
+            args: Prisma.ProductFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload>[]
+          }
+          create: {
+            args: Prisma.ProductCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload>
+          }
+          createMany: {
+            args: Prisma.ProductCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.ProductDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload>
+          }
+          update: {
+            args: Prisma.ProductUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload>
+          }
+          deleteMany: {
+            args: Prisma.ProductDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProductUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.ProductUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductPayload>
+          }
+          aggregate: {
+            args: Prisma.ProductAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateProduct>
+          }
+          groupBy: {
+            args: Prisma.ProductGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<ProductGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProductCountArgs<ExtArgs>,
+            result: $Utils.Optional<ProductCountAggregateOutputType> | number
+          }
+        }
+      }
+      ProductSnapshot: {
+        payload: ProductSnapshotPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.ProductSnapshotFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProductSnapshotFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload>
+          }
+          findFirst: {
+            args: Prisma.ProductSnapshotFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProductSnapshotFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload>
+          }
+          findMany: {
+            args: Prisma.ProductSnapshotFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload>[]
+          }
+          create: {
+            args: Prisma.ProductSnapshotCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload>
+          }
+          createMany: {
+            args: Prisma.ProductSnapshotCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.ProductSnapshotDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload>
+          }
+          update: {
+            args: Prisma.ProductSnapshotUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload>
+          }
+          deleteMany: {
+            args: Prisma.ProductSnapshotDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProductSnapshotUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.ProductSnapshotUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<ProductSnapshotPayload>
+          }
+          aggregate: {
+            args: Prisma.ProductSnapshotAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateProductSnapshot>
+          }
+          groupBy: {
+            args: Prisma.ProductSnapshotGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<ProductSnapshotGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProductSnapshotCountArgs<ExtArgs>,
+            result: $Utils.Optional<ProductSnapshotCountAggregateOutputType> | number
+          }
+        }
+      }
+      Order: {
+        payload: OrderPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.OrderFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrderFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload>
+          }
+          findFirst: {
+            args: Prisma.OrderFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrderFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload>
+          }
+          findMany: {
+            args: Prisma.OrderFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload>[]
+          }
+          create: {
+            args: Prisma.OrderCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload>
+          }
+          createMany: {
+            args: Prisma.OrderCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.OrderDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload>
+          }
+          update: {
+            args: Prisma.OrderUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrderDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrderUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.OrderUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<OrderPayload>
+          }
+          aggregate: {
+            args: Prisma.OrderAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateOrder>
+          }
+          groupBy: {
+            args: Prisma.OrderGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<OrderGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrderCountArgs<ExtArgs>,
+            result: $Utils.Optional<OrderCountAggregateOutputType> | number
+          }
+        }
+      }
+      Pay: {
+        payload: PayPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.PayFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PayFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload>
+          }
+          findFirst: {
+            args: Prisma.PayFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PayFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload>
+          }
+          findMany: {
+            args: Prisma.PayFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload>[]
+          }
+          create: {
+            args: Prisma.PayCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload>
+          }
+          createMany: {
+            args: Prisma.PayCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.PayDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload>
+          }
+          update: {
+            args: Prisma.PayUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload>
+          }
+          deleteMany: {
+            args: Prisma.PayDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PayUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.PayUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PayPayload>
+          }
+          aggregate: {
+            args: Prisma.PayAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregatePay>
+          }
+          groupBy: {
+            args: Prisma.PayGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<PayGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PayCountArgs<ExtArgs>,
+            result: $Utils.Optional<PayCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2393,6 +2903,10 @@ export namespace Prisma {
     orderProfile: number
     userProfile: number
     weixinProfile: number
+    productSnapshots: number
+    orders: number
+    pays: number
+    products: number
   }
 
   export type TenantCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
@@ -2404,6 +2918,10 @@ export namespace Prisma {
     orderProfile?: boolean | TenantCountOutputTypeCountOrderProfileArgs
     userProfile?: boolean | TenantCountOutputTypeCountUserProfileArgs
     weixinProfile?: boolean | TenantCountOutputTypeCountWeixinProfileArgs
+    productSnapshots?: boolean | TenantCountOutputTypeCountProductSnapshotsArgs
+    orders?: boolean | TenantCountOutputTypeCountOrdersArgs
+    pays?: boolean | TenantCountOutputTypeCountPaysArgs
+    products?: boolean | TenantCountOutputTypeCountProductsArgs
   }
 
   // Custom InputTypes
@@ -2483,6 +3001,93 @@ export namespace Prisma {
   }
 
 
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountProductSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: ProductSnapshotWhereInput
+  }
+
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountOrdersArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+  }
+
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountPaysArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: PayWhereInput
+  }
+
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountProductsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: ProductWhereInput
+  }
+
+
+
+  /**
+   * Count Type UserCountOutputType
+   */
+
+
+  export type UserCountOutputType = {
+    productSnapshots: number
+    orders: number
+    pays: number
+  }
+
+  export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    productSnapshots?: boolean | UserCountOutputTypeCountProductSnapshotsArgs
+    orders?: boolean | UserCountOutputTypeCountOrdersArgs
+    pays?: boolean | UserCountOutputTypeCountPaysArgs
+  }
+
+  // Custom InputTypes
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserCountOutputType
+     */
+    select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountProductSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: ProductSnapshotWhereInput
+  }
+
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountOrdersArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+  }
+
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountPaysArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: PayWhereInput
+  }
+
+
 
   /**
    * Count Type DynamicTableDefCountOutputType
@@ -2525,6 +3130,76 @@ export namespace Prisma {
    */
   export type DynamicTableDefCountOutputTypeCountDynamicTableDataArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: DynamicTableDataWhereInput
+  }
+
+
+
+  /**
+   * Count Type ProductCountOutputType
+   */
+
+
+  export type ProductCountOutputType = {
+    productSnapshots: number
+  }
+
+  export type ProductCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    productSnapshots?: boolean | ProductCountOutputTypeCountProductSnapshotsArgs
+  }
+
+  // Custom InputTypes
+
+  /**
+   * ProductCountOutputType without action
+   */
+  export type ProductCountOutputTypeArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductCountOutputType
+     */
+    select?: ProductCountOutputTypeSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * ProductCountOutputType without action
+   */
+  export type ProductCountOutputTypeCountProductSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: ProductSnapshotWhereInput
+  }
+
+
+
+  /**
+   * Count Type OrderCountOutputType
+   */
+
+
+  export type OrderCountOutputType = {
+    productSnapshots: number
+  }
+
+  export type OrderCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    productSnapshots?: boolean | OrderCountOutputTypeCountProductSnapshotsArgs
+  }
+
+  // Custom InputTypes
+
+  /**
+   * OrderCountOutputType without action
+   */
+  export type OrderCountOutputTypeArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderCountOutputType
+     */
+    select?: OrderCountOutputTypeSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * OrderCountOutputType without action
+   */
+  export type OrderCountOutputTypeCountProductSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: ProductSnapshotWhereInput
   }
 
 
@@ -2757,8 +3432,8 @@ export namespace Prisma {
     hashedPassword?: boolean
     hashedRefreshToken?: boolean
     displayName?: boolean
-    users?: boolean | Tenant$usersArgs<ExtArgs>
     menu?: boolean | MenuArgs<ExtArgs>
+    users?: boolean | Tenant$usersArgs<ExtArgs>
     dynamicTableDefs?: boolean | Tenant$dynamicTableDefsArgs<ExtArgs>
     dynamicTableDefColumns?: boolean | Tenant$dynamicTableDefColumnsArgs<ExtArgs>
     dynamicTableData?: boolean | Tenant$dynamicTableDataArgs<ExtArgs>
@@ -2766,6 +3441,10 @@ export namespace Prisma {
     orderProfile?: boolean | Tenant$orderProfileArgs<ExtArgs>
     userProfile?: boolean | Tenant$userProfileArgs<ExtArgs>
     weixinProfile?: boolean | Tenant$weixinProfileArgs<ExtArgs>
+    productSnapshots?: boolean | Tenant$productSnapshotsArgs<ExtArgs>
+    orders?: boolean | Tenant$ordersArgs<ExtArgs>
+    pays?: boolean | Tenant$paysArgs<ExtArgs>
+    products?: boolean | Tenant$productsArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeArgs<ExtArgs>
   }, ExtArgs["result"]["tenant"]>
 
@@ -2781,8 +3460,8 @@ export namespace Prisma {
   }
 
   export type TenantInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
-    users?: boolean | Tenant$usersArgs<ExtArgs>
     menu?: boolean | MenuArgs<ExtArgs>
+    users?: boolean | Tenant$usersArgs<ExtArgs>
     dynamicTableDefs?: boolean | Tenant$dynamicTableDefsArgs<ExtArgs>
     dynamicTableDefColumns?: boolean | Tenant$dynamicTableDefColumnsArgs<ExtArgs>
     dynamicTableData?: boolean | Tenant$dynamicTableDataArgs<ExtArgs>
@@ -2790,6 +3469,10 @@ export namespace Prisma {
     orderProfile?: boolean | Tenant$orderProfileArgs<ExtArgs>
     userProfile?: boolean | Tenant$userProfileArgs<ExtArgs>
     weixinProfile?: boolean | Tenant$weixinProfileArgs<ExtArgs>
+    productSnapshots?: boolean | Tenant$productSnapshotsArgs<ExtArgs>
+    orders?: boolean | Tenant$ordersArgs<ExtArgs>
+    pays?: boolean | Tenant$paysArgs<ExtArgs>
+    products?: boolean | Tenant$productsArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeArgs<ExtArgs>
   }
 
@@ -3163,9 +3846,9 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
     constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    users<T extends Tenant$usersArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<UserPayload<ExtArgs>, T, 'findMany', never>| Null>;
-
     menu<T extends MenuArgs<ExtArgs> = {}>(args?: Subset<T, MenuArgs<ExtArgs>>): Prisma__MenuClient<$Types.GetResult<MenuPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    users<T extends Tenant$usersArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<UserPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
     dynamicTableDefs<T extends Tenant$dynamicTableDefsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$dynamicTableDefsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<DynamicTableDefPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
@@ -3180,6 +3863,14 @@ export namespace Prisma {
     userProfile<T extends Tenant$userProfileArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$userProfileArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<UserProfilePayload<ExtArgs>, T, 'findMany', never>| Null>;
 
     weixinProfile<T extends Tenant$weixinProfileArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$weixinProfileArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<WeixinProfilePayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    productSnapshots<T extends Tenant$productSnapshotsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$productSnapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    orders<T extends Tenant$ordersArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    pays<T extends Tenant$paysArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$paysArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<PayPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    products<T extends Tenant$productsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$productsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
     private get _document();
     /**
@@ -3701,6 +4392,90 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: Enumerable<WeixinProfileScalarFieldEnum>
+  }
+
+
+  /**
+   * Tenant.productSnapshots
+   */
+  export type Tenant$productSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    where?: ProductSnapshotWhereInput
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    cursor?: ProductSnapshotWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<ProductSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * Tenant.orders
+   */
+  export type Tenant$ordersArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: Enumerable<OrderOrderByWithRelationInput>
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<OrderScalarFieldEnum>
+  }
+
+
+  /**
+   * Tenant.pays
+   */
+  export type Tenant$paysArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    where?: PayWhereInput
+    orderBy?: Enumerable<PayOrderByWithRelationInput>
+    cursor?: PayWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<PayScalarFieldEnum>
+  }
+
+
+  /**
+   * Tenant.products
+   */
+  export type Tenant$productsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    where?: ProductWhereInput
+    orderBy?: Enumerable<ProductOrderByWithRelationInput>
+    cursor?: ProductWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<ProductScalarFieldEnum>
   }
 
 
@@ -5604,9 +6379,9 @@ export namespace Prisma {
     hashedRefreshToken: string | null
     recoveryCode: string | null
     recoveryToken: string | null
-    unionid: string | null
     email: string | null
     mobile: string | null
+    anonymousCustomerToken: string | null
     image: string | null
     tenantId: number | null
   }
@@ -5621,9 +6396,9 @@ export namespace Prisma {
     hashedRefreshToken: string | null
     recoveryCode: string | null
     recoveryToken: string | null
-    unionid: string | null
     email: string | null
     mobile: string | null
+    anonymousCustomerToken: string | null
     image: string | null
     tenantId: number | null
   }
@@ -5638,9 +6413,9 @@ export namespace Prisma {
     hashedRefreshToken: number
     recoveryCode: number
     recoveryToken: number
-    unionid: number
     email: number
     mobile: number
+    anonymousCustomerToken: number
     image: number
     tenantId: number
     _all: number
@@ -5667,9 +6442,9 @@ export namespace Prisma {
     hashedRefreshToken?: true
     recoveryCode?: true
     recoveryToken?: true
-    unionid?: true
     email?: true
     mobile?: true
+    anonymousCustomerToken?: true
     image?: true
     tenantId?: true
   }
@@ -5684,9 +6459,9 @@ export namespace Prisma {
     hashedRefreshToken?: true
     recoveryCode?: true
     recoveryToken?: true
-    unionid?: true
     email?: true
     mobile?: true
+    anonymousCustomerToken?: true
     image?: true
     tenantId?: true
   }
@@ -5701,9 +6476,9 @@ export namespace Prisma {
     hashedRefreshToken?: true
     recoveryCode?: true
     recoveryToken?: true
-    unionid?: true
     email?: true
     mobile?: true
+    anonymousCustomerToken?: true
     image?: true
     tenantId?: true
     _all?: true
@@ -5806,9 +6581,9 @@ export namespace Prisma {
     hashedRefreshToken: string | null
     recoveryCode: string | null
     recoveryToken: string | null
-    unionid: string | null
     email: string | null
     mobile: string | null
+    anonymousCustomerToken: string | null
     image: string | null
     tenantId: number
     _count: UserCountAggregateOutputType | null
@@ -5842,15 +6617,19 @@ export namespace Prisma {
     hashedRefreshToken?: boolean
     recoveryCode?: boolean
     recoveryToken?: boolean
-    unionid?: boolean
     email?: boolean
     mobile?: boolean
+    anonymousCustomerToken?: boolean
     image?: boolean
     tenantId?: boolean
     tenant?: boolean | TenantArgs<ExtArgs>
     profile?: boolean | UserProfileArgs<ExtArgs>
     weixinProfile?: boolean | WeixinProfileArgs<ExtArgs>
     orderProfile?: boolean | OrderProfileArgs<ExtArgs>
+    productSnapshots?: boolean | User$productSnapshotsArgs<ExtArgs>
+    orders?: boolean | User$ordersArgs<ExtArgs>
+    pays?: boolean | User$paysArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -5863,9 +6642,9 @@ export namespace Prisma {
     hashedRefreshToken?: boolean
     recoveryCode?: boolean
     recoveryToken?: boolean
-    unionid?: boolean
     email?: boolean
     mobile?: boolean
+    anonymousCustomerToken?: boolean
     image?: boolean
     tenantId?: boolean
   }
@@ -5875,6 +6654,10 @@ export namespace Prisma {
     profile?: boolean | UserProfileArgs<ExtArgs>
     weixinProfile?: boolean | WeixinProfileArgs<ExtArgs>
     orderProfile?: boolean | OrderProfileArgs<ExtArgs>
+    productSnapshots?: boolean | User$productSnapshotsArgs<ExtArgs>
+    orders?: boolean | User$ordersArgs<ExtArgs>
+    pays?: boolean | User$paysArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeArgs<ExtArgs>
   }
 
 
@@ -6255,6 +7038,12 @@ export namespace Prisma {
 
     orderProfile<T extends OrderProfileArgs<ExtArgs> = {}>(args?: Subset<T, OrderProfileArgs<ExtArgs>>): Prisma__OrderProfileClient<$Types.GetResult<OrderProfilePayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
+    productSnapshots<T extends User$productSnapshotsArgs<ExtArgs> = {}>(args?: Subset<T, User$productSnapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    orders<T extends User$ordersArgs<ExtArgs> = {}>(args?: Subset<T, User$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    pays<T extends User$paysArgs<ExtArgs> = {}>(args?: Subset<T, User$paysArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<PayPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
     private get _document();
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -6607,6 +7396,69 @@ export namespace Prisma {
      * Filter which Users to delete
      */
     where?: UserWhereInput
+  }
+
+
+  /**
+   * User.productSnapshots
+   */
+  export type User$productSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    where?: ProductSnapshotWhereInput
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    cursor?: ProductSnapshotWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<ProductSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * User.orders
+   */
+  export type User$ordersArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: Enumerable<OrderOrderByWithRelationInput>
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<OrderScalarFieldEnum>
+  }
+
+
+  /**
+   * User.pays
+   */
+  export type User$paysArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    where?: PayWhereInput
+    orderBy?: Enumerable<PayOrderByWithRelationInput>
+    cursor?: PayWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<PayScalarFieldEnum>
   }
 
 
@@ -11594,17 +12446,19 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataAvgAggregateOutputType = {
+    id: number | null
     dynamicTableDefId: number | null
     tenantId: number | null
   }
 
   export type DynamicTableDataSumAggregateOutputType = {
+    id: number | null
     dynamicTableDefId: number | null
     tenantId: number | null
   }
 
   export type DynamicTableDataMinAggregateOutputType = {
-    id: string | null
+    id: number | null
     createdAt: Date | null
     updatedAt: Date | null
     isDeleted: boolean | null
@@ -11613,7 +12467,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataMaxAggregateOutputType = {
-    id: string | null
+    id: number | null
     createdAt: Date | null
     updatedAt: Date | null
     isDeleted: boolean | null
@@ -11634,11 +12488,13 @@ export namespace Prisma {
 
 
   export type DynamicTableDataAvgAggregateInputType = {
+    id?: true
     dynamicTableDefId?: true
     tenantId?: true
   }
 
   export type DynamicTableDataSumAggregateInputType = {
+    id?: true
     dynamicTableDefId?: true
     tenantId?: true
   }
@@ -11760,7 +12616,7 @@ export namespace Prisma {
 
 
   export type DynamicTableDataGroupByOutputType = {
-    id: string
+    id: number
     createdAt: Date
     updatedAt: Date
     isDeleted: boolean
@@ -14463,16 +15319,16 @@ export namespace Prisma {
 
   export type WeixinProfileAvgAggregateOutputType = {
     id: number | null
-    sex: number | null
-    userId: number | null
     tenantId: number | null
+    userId: number | null
+    sex: number | null
   }
 
   export type WeixinProfileSumAggregateOutputType = {
     id: number | null
-    sex: number | null
-    userId: number | null
     tenantId: number | null
+    userId: number | null
+    sex: number | null
   }
 
   export type WeixinProfileMinAggregateOutputType = {
@@ -14480,13 +15336,13 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     isDeleted: boolean | null
+    tenantId: number | null
+    userId: number | null
     unionid: string | null
     loginOpenid: string | null
     headimgurl: string | null
     nickname: string | null
     sex: number | null
-    userId: number | null
-    tenantId: number | null
   }
 
   export type WeixinProfileMaxAggregateOutputType = {
@@ -14494,13 +15350,13 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     isDeleted: boolean | null
+    tenantId: number | null
+    userId: number | null
     unionid: string | null
     loginOpenid: string | null
     headimgurl: string | null
     nickname: string | null
     sex: number | null
-    userId: number | null
-    tenantId: number | null
   }
 
   export type WeixinProfileCountAggregateOutputType = {
@@ -14508,29 +15364,29 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     isDeleted: number
+    tenantId: number
+    userId: number
     unionid: number
     loginOpenid: number
     headimgurl: number
     nickname: number
     sex: number
-    userId: number
-    tenantId: number
     _all: number
   }
 
 
   export type WeixinProfileAvgAggregateInputType = {
     id?: true
-    sex?: true
-    userId?: true
     tenantId?: true
+    userId?: true
+    sex?: true
   }
 
   export type WeixinProfileSumAggregateInputType = {
     id?: true
-    sex?: true
-    userId?: true
     tenantId?: true
+    userId?: true
+    sex?: true
   }
 
   export type WeixinProfileMinAggregateInputType = {
@@ -14538,13 +15394,13 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isDeleted?: true
+    tenantId?: true
+    userId?: true
     unionid?: true
     loginOpenid?: true
     headimgurl?: true
     nickname?: true
     sex?: true
-    userId?: true
-    tenantId?: true
   }
 
   export type WeixinProfileMaxAggregateInputType = {
@@ -14552,13 +15408,13 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isDeleted?: true
+    tenantId?: true
+    userId?: true
     unionid?: true
     loginOpenid?: true
     headimgurl?: true
     nickname?: true
     sex?: true
-    userId?: true
-    tenantId?: true
   }
 
   export type WeixinProfileCountAggregateInputType = {
@@ -14566,13 +15422,13 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isDeleted?: true
+    tenantId?: true
+    userId?: true
     unionid?: true
     loginOpenid?: true
     headimgurl?: true
     nickname?: true
     sex?: true
-    userId?: true
-    tenantId?: true
     _all?: true
   }
 
@@ -14668,13 +15524,13 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     isDeleted: boolean
-    unionid: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
-    userId: number
     tenantId: number
+    userId: number
+    unionid: string | null
+    loginOpenid: string | null
+    headimgurl: string | null
+    nickname: string | null
+    sex: number | null
     _count: WeixinProfileCountAggregateOutputType | null
     _avg: WeixinProfileAvgAggregateOutputType | null
     _sum: WeixinProfileSumAggregateOutputType | null
@@ -14701,15 +15557,15 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isDeleted?: boolean
+    tenantId?: boolean
+    userId?: boolean
     unionid?: boolean
     loginOpenid?: boolean
     headimgurl?: boolean
     nickname?: boolean
     sex?: boolean
-    userId?: boolean
-    tenantId?: boolean
-    user?: boolean | UserArgs<ExtArgs>
     tenant?: boolean | TenantArgs<ExtArgs>
+    user?: boolean | UserArgs<ExtArgs>
   }, ExtArgs["result"]["weixinProfile"]>
 
   export type WeixinProfileSelectScalar = {
@@ -14717,18 +15573,18 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isDeleted?: boolean
+    tenantId?: boolean
+    userId?: boolean
     unionid?: boolean
     loginOpenid?: boolean
     headimgurl?: boolean
     nickname?: boolean
     sex?: boolean
-    userId?: boolean
-    tenantId?: boolean
   }
 
   export type WeixinProfileInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
-    user?: boolean | UserArgs<ExtArgs>
     tenant?: boolean | TenantArgs<ExtArgs>
+    user?: boolean | UserArgs<ExtArgs>
   }
 
 
@@ -15101,9 +15957,9 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
     constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
-
     tenant<T extends TenantArgs<ExtArgs> = {}>(args?: Subset<T, TenantArgs<ExtArgs>>): Prisma__TenantClient<$Types.GetResult<TenantPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
     private get _document();
     /**
@@ -15491,18 +16347,18 @@ export namespace Prisma {
 
   export type OrderProfileAvgAggregateOutputType = {
     id: number | null
+    tenantId: number | null
     userId: number | null
     plan: number | null
     amount: number | null
-    tenantId: number | null
   }
 
   export type OrderProfileSumAggregateOutputType = {
     id: number | null
+    tenantId: number | null
     userId: number | null
     plan: number | null
     amount: number | null
-    tenantId: number | null
   }
 
   export type OrderProfileMinAggregateOutputType = {
@@ -15510,12 +16366,12 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     isDeleted: boolean | null
+    tenantId: number | null
     userId: number | null
     productType: ProductType | null
     plan: number | null
     amount: number | null
     expireAt: Date | null
-    tenantId: number | null
   }
 
   export type OrderProfileMaxAggregateOutputType = {
@@ -15523,12 +16379,12 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     isDeleted: boolean | null
+    tenantId: number | null
     userId: number | null
     productType: ProductType | null
     plan: number | null
     amount: number | null
     expireAt: Date | null
-    tenantId: number | null
   }
 
   export type OrderProfileCountAggregateOutputType = {
@@ -15536,30 +16392,30 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     isDeleted: number
+    tenantId: number
     userId: number
     productType: number
     plan: number
     amount: number
     expireAt: number
-    tenantId: number
     _all: number
   }
 
 
   export type OrderProfileAvgAggregateInputType = {
     id?: true
+    tenantId?: true
     userId?: true
     plan?: true
     amount?: true
-    tenantId?: true
   }
 
   export type OrderProfileSumAggregateInputType = {
     id?: true
+    tenantId?: true
     userId?: true
     plan?: true
     amount?: true
-    tenantId?: true
   }
 
   export type OrderProfileMinAggregateInputType = {
@@ -15567,12 +16423,12 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isDeleted?: true
+    tenantId?: true
     userId?: true
     productType?: true
     plan?: true
     amount?: true
     expireAt?: true
-    tenantId?: true
   }
 
   export type OrderProfileMaxAggregateInputType = {
@@ -15580,12 +16436,12 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isDeleted?: true
+    tenantId?: true
     userId?: true
     productType?: true
     plan?: true
     amount?: true
     expireAt?: true
-    tenantId?: true
   }
 
   export type OrderProfileCountAggregateInputType = {
@@ -15593,12 +16449,12 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     isDeleted?: true
+    tenantId?: true
     userId?: true
     productType?: true
     plan?: true
     amount?: true
     expireAt?: true
-    tenantId?: true
     _all?: true
   }
 
@@ -15694,12 +16550,12 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     isDeleted: boolean
+    tenantId: number
     userId: number
     productType: ProductType
     plan: number | null
     amount: number | null
     expireAt: Date | null
-    tenantId: number
     _count: OrderProfileCountAggregateOutputType | null
     _avg: OrderProfileAvgAggregateOutputType | null
     _sum: OrderProfileSumAggregateOutputType | null
@@ -15726,14 +16582,14 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isDeleted?: boolean
+    tenantId?: boolean
     userId?: boolean
     productType?: boolean
     plan?: boolean
     amount?: boolean
     expireAt?: boolean
-    tenantId?: boolean
-    user?: boolean | UserArgs<ExtArgs>
     tenant?: boolean | TenantArgs<ExtArgs>
+    user?: boolean | UserArgs<ExtArgs>
   }, ExtArgs["result"]["orderProfile"]>
 
   export type OrderProfileSelectScalar = {
@@ -15741,17 +16597,17 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isDeleted?: boolean
+    tenantId?: boolean
     userId?: boolean
     productType?: boolean
     plan?: boolean
     amount?: boolean
     expireAt?: boolean
-    tenantId?: boolean
   }
 
   export type OrderProfileInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
-    user?: boolean | UserArgs<ExtArgs>
     tenant?: boolean | TenantArgs<ExtArgs>
+    user?: boolean | UserArgs<ExtArgs>
   }
 
 
@@ -16124,9 +16980,9 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
     constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
-
     tenant<T extends TenantArgs<ExtArgs> = {}>(args?: Subset<T, TenantArgs<ExtArgs>>): Prisma__TenantClient<$Types.GetResult<TenantPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
     private get _document();
     /**
@@ -16500,6 +17356,4195 @@ export namespace Prisma {
 
 
   /**
+   * Model Product
+   */
+
+
+  export type AggregateProduct = {
+    _count: ProductCountAggregateOutputType | null
+    _avg: ProductAvgAggregateOutputType | null
+    _sum: ProductSumAggregateOutputType | null
+    _min: ProductMinAggregateOutputType | null
+    _max: ProductMaxAggregateOutputType | null
+  }
+
+  export type ProductAvgAggregateOutputType = {
+    id: number | null
+    tenantId: number | null
+    price: Decimal | null
+    plan: number | null
+    amount: number | null
+    storeDuration: number | null
+    validityPeriod: number | null
+    restricted: number | null
+  }
+
+  export type ProductSumAggregateOutputType = {
+    id: number | null
+    tenantId: number | null
+    price: Decimal | null
+    plan: number | null
+    amount: number | null
+    storeDuration: number | null
+    validityPeriod: number | null
+    restricted: number | null
+  }
+
+  export type ProductMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    tenantId: number | null
+    name: string | null
+    price: Decimal | null
+    productType: ProductType | null
+    plan: number | null
+    amount: number | null
+    fileSize: string | null
+    storeDuration: number | null
+    hasAds: string | null
+    tecSupport: string | null
+    validityPeriod: number | null
+    restricted: number | null
+  }
+
+  export type ProductMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    tenantId: number | null
+    name: string | null
+    price: Decimal | null
+    productType: ProductType | null
+    plan: number | null
+    amount: number | null
+    fileSize: string | null
+    storeDuration: number | null
+    hasAds: string | null
+    tecSupport: string | null
+    validityPeriod: number | null
+    restricted: number | null
+  }
+
+  export type ProductCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    isDeleted: number
+    tenantId: number
+    name: number
+    price: number
+    productType: number
+    plan: number
+    amount: number
+    extendedDescriptionData: number
+    fileSize: number
+    storeDuration: number
+    hasAds: number
+    tecSupport: number
+    validityPeriod: number
+    restricted: number
+    _all: number
+  }
+
+
+  export type ProductAvgAggregateInputType = {
+    id?: true
+    tenantId?: true
+    price?: true
+    plan?: true
+    amount?: true
+    storeDuration?: true
+    validityPeriod?: true
+    restricted?: true
+  }
+
+  export type ProductSumAggregateInputType = {
+    id?: true
+    tenantId?: true
+    price?: true
+    plan?: true
+    amount?: true
+    storeDuration?: true
+    validityPeriod?: true
+    restricted?: true
+  }
+
+  export type ProductMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    tenantId?: true
+    name?: true
+    price?: true
+    productType?: true
+    plan?: true
+    amount?: true
+    fileSize?: true
+    storeDuration?: true
+    hasAds?: true
+    tecSupport?: true
+    validityPeriod?: true
+    restricted?: true
+  }
+
+  export type ProductMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    tenantId?: true
+    name?: true
+    price?: true
+    productType?: true
+    plan?: true
+    amount?: true
+    fileSize?: true
+    storeDuration?: true
+    hasAds?: true
+    tecSupport?: true
+    validityPeriod?: true
+    restricted?: true
+  }
+
+  export type ProductCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    tenantId?: true
+    name?: true
+    price?: true
+    productType?: true
+    plan?: true
+    amount?: true
+    extendedDescriptionData?: true
+    fileSize?: true
+    storeDuration?: true
+    hasAds?: true
+    tecSupport?: true
+    validityPeriod?: true
+    restricted?: true
+    _all?: true
+  }
+
+  export type ProductAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Product to aggregate.
+     */
+    where?: ProductWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Products to fetch.
+     */
+    orderBy?: Enumerable<ProductOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProductWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Products from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Products.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Products
+    **/
+    _count?: true | ProductCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ProductAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProductSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProductMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProductMaxAggregateInputType
+  }
+
+  export type GetProductAggregateType<T extends ProductAggregateArgs> = {
+        [P in keyof T & keyof AggregateProduct]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProduct[P]>
+      : GetScalarType<T[P], AggregateProduct[P]>
+  }
+
+
+
+
+  export type ProductGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: ProductWhereInput
+    orderBy?: Enumerable<ProductOrderByWithAggregationInput>
+    by: ProductScalarFieldEnum[]
+    having?: ProductScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProductCountAggregateInputType | true
+    _avg?: ProductAvgAggregateInputType
+    _sum?: ProductSumAggregateInputType
+    _min?: ProductMinAggregateInputType
+    _max?: ProductMaxAggregateInputType
+  }
+
+
+  export type ProductGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    tenantId: number
+    name: string
+    price: Decimal
+    productType: ProductType
+    plan: number | null
+    amount: number
+    extendedDescriptionData: JsonValue | null
+    fileSize: string | null
+    storeDuration: number | null
+    hasAds: string | null
+    tecSupport: string | null
+    validityPeriod: number | null
+    restricted: number
+    _count: ProductCountAggregateOutputType | null
+    _avg: ProductAvgAggregateOutputType | null
+    _sum: ProductSumAggregateOutputType | null
+    _min: ProductMinAggregateOutputType | null
+    _max: ProductMaxAggregateOutputType | null
+  }
+
+  type GetProductGroupByPayload<T extends ProductGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<ProductGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProductGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProductGroupByOutputType[P]>
+            : GetScalarType<T[P], ProductGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProductSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    tenantId?: boolean
+    name?: boolean
+    price?: boolean
+    productType?: boolean
+    plan?: boolean
+    amount?: boolean
+    extendedDescriptionData?: boolean
+    fileSize?: boolean
+    storeDuration?: boolean
+    hasAds?: boolean
+    tecSupport?: boolean
+    validityPeriod?: boolean
+    restricted?: boolean
+    tenant?: boolean | TenantArgs<ExtArgs>
+    productSnapshots?: boolean | Product$productSnapshotsArgs<ExtArgs>
+    _count?: boolean | ProductCountOutputTypeArgs<ExtArgs>
+  }, ExtArgs["result"]["product"]>
+
+  export type ProductSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    tenantId?: boolean
+    name?: boolean
+    price?: boolean
+    productType?: boolean
+    plan?: boolean
+    amount?: boolean
+    extendedDescriptionData?: boolean
+    fileSize?: boolean
+    storeDuration?: boolean
+    hasAds?: boolean
+    tecSupport?: boolean
+    validityPeriod?: boolean
+    restricted?: boolean
+  }
+
+  export type ProductInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantArgs<ExtArgs>
+    productSnapshots?: boolean | Product$productSnapshotsArgs<ExtArgs>
+    _count?: boolean | ProductCountOutputTypeArgs<ExtArgs>
+  }
+
+
+  type ProductGetPayload<S extends boolean | null | undefined | ProductArgs> = $Types.GetResult<ProductPayload, S>
+
+  type ProductCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<ProductFindManyArgs, 'select' | 'include'> & {
+      select?: ProductCountAggregateInputType | true
+    }
+
+  export interface ProductDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Product'], meta: { name: 'Product' } }
+    /**
+     * Find zero or one Product that matches the filter.
+     * @param {ProductFindUniqueArgs} args - Arguments to find a Product
+     * @example
+     * // Get one Product
+     * const product = await prisma.product.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends ProductFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, ProductFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Product'> extends True ? Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one Product that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {ProductFindUniqueOrThrowArgs} args - Arguments to find a Product
+     * @example
+     * // Get one Product
+     * const product = await prisma.product.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends ProductFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first Product that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductFindFirstArgs} args - Arguments to find a Product
+     * @example
+     * // Get one Product
+     * const product = await prisma.product.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends ProductFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, ProductFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Product'> extends True ? Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first Product that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductFindFirstOrThrowArgs} args - Arguments to find a Product
+     * @example
+     * // Get one Product
+     * const product = await prisma.product.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends ProductFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more Products that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Products
+     * const products = await prisma.product.findMany()
+     * 
+     * // Get first 10 Products
+     * const products = await prisma.product.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const productWithIdOnly = await prisma.product.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends ProductFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a Product.
+     * @param {ProductCreateArgs} args - Arguments to create a Product.
+     * @example
+     * // Create one Product
+     * const Product = await prisma.product.create({
+     *   data: {
+     *     // ... data to create a Product
+     *   }
+     * })
+     * 
+    **/
+    create<T extends ProductCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductCreateArgs<ExtArgs>>
+    ): Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many Products.
+     *     @param {ProductCreateManyArgs} args - Arguments to create many Products.
+     *     @example
+     *     // Create many Products
+     *     const product = await prisma.product.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends ProductCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a Product.
+     * @param {ProductDeleteArgs} args - Arguments to delete one Product.
+     * @example
+     * // Delete one Product
+     * const Product = await prisma.product.delete({
+     *   where: {
+     *     // ... filter to delete one Product
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends ProductDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductDeleteArgs<ExtArgs>>
+    ): Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one Product.
+     * @param {ProductUpdateArgs} args - Arguments to update one Product.
+     * @example
+     * // Update one Product
+     * const product = await prisma.product.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends ProductUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductUpdateArgs<ExtArgs>>
+    ): Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more Products.
+     * @param {ProductDeleteManyArgs} args - Arguments to filter Products to delete.
+     * @example
+     * // Delete a few Products
+     * const { count } = await prisma.product.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends ProductDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Products.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Products
+     * const product = await prisma.product.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends ProductUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Product.
+     * @param {ProductUpsertArgs} args - Arguments to update or create a Product.
+     * @example
+     * // Update or create a Product
+     * const product = await prisma.product.upsert({
+     *   create: {
+     *     // ... data to create a Product
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Product we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends ProductUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductUpsertArgs<ExtArgs>>
+    ): Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of Products.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductCountArgs} args - Arguments to filter Products to count.
+     * @example
+     * // Count the number of Products
+     * const count = await prisma.product.count({
+     *   where: {
+     *     // ... the filter for the Products we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProductCountArgs>(
+      args?: Subset<T, ProductCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProductCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Product.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProductAggregateArgs>(args: Subset<T, ProductAggregateArgs>): Prisma.PrismaPromise<GetProductAggregateType<T>>
+
+    /**
+     * Group by Product.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProductGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProductGroupByArgs['orderBy'] }
+        : { orderBy?: ProductGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProductGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProductGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Product.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__ProductClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+    tenant<T extends TenantArgs<ExtArgs> = {}>(args?: Subset<T, TenantArgs<ExtArgs>>): Prisma__TenantClient<$Types.GetResult<TenantPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    productSnapshots<T extends Product$productSnapshotsArgs<ExtArgs> = {}>(args?: Subset<T, Product$productSnapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * Product base type for findUnique actions
+   */
+  export type ProductFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * Filter, which Product to fetch.
+     */
+    where: ProductWhereUniqueInput
+  }
+
+  /**
+   * Product findUnique
+   */
+  export interface ProductFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends ProductFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Product findUniqueOrThrow
+   */
+  export type ProductFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * Filter, which Product to fetch.
+     */
+    where: ProductWhereUniqueInput
+  }
+
+
+  /**
+   * Product base type for findFirst actions
+   */
+  export type ProductFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * Filter, which Product to fetch.
+     */
+    where?: ProductWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Products to fetch.
+     */
+    orderBy?: Enumerable<ProductOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Products.
+     */
+    cursor?: ProductWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Products from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Products.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Products.
+     */
+    distinct?: Enumerable<ProductScalarFieldEnum>
+  }
+
+  /**
+   * Product findFirst
+   */
+  export interface ProductFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends ProductFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Product findFirstOrThrow
+   */
+  export type ProductFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * Filter, which Product to fetch.
+     */
+    where?: ProductWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Products to fetch.
+     */
+    orderBy?: Enumerable<ProductOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Products.
+     */
+    cursor?: ProductWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Products from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Products.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Products.
+     */
+    distinct?: Enumerable<ProductScalarFieldEnum>
+  }
+
+
+  /**
+   * Product findMany
+   */
+  export type ProductFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * Filter, which Products to fetch.
+     */
+    where?: ProductWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Products to fetch.
+     */
+    orderBy?: Enumerable<ProductOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Products.
+     */
+    cursor?: ProductWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Products from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Products.
+     */
+    skip?: number
+    distinct?: Enumerable<ProductScalarFieldEnum>
+  }
+
+
+  /**
+   * Product create
+   */
+  export type ProductCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Product.
+     */
+    data: XOR<ProductCreateInput, ProductUncheckedCreateInput>
+  }
+
+
+  /**
+   * Product createMany
+   */
+  export type ProductCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Products.
+     */
+    data: Enumerable<ProductCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * Product update
+   */
+  export type ProductUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Product.
+     */
+    data: XOR<ProductUpdateInput, ProductUncheckedUpdateInput>
+    /**
+     * Choose, which Product to update.
+     */
+    where: ProductWhereUniqueInput
+  }
+
+
+  /**
+   * Product updateMany
+   */
+  export type ProductUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Products.
+     */
+    data: XOR<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput>
+    /**
+     * Filter which Products to update
+     */
+    where?: ProductWhereInput
+  }
+
+
+  /**
+   * Product upsert
+   */
+  export type ProductUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Product to update in case it exists.
+     */
+    where: ProductWhereUniqueInput
+    /**
+     * In case the Product found by the `where` argument doesn't exist, create a new Product with this data.
+     */
+    create: XOR<ProductCreateInput, ProductUncheckedCreateInput>
+    /**
+     * In case the Product was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProductUpdateInput, ProductUncheckedUpdateInput>
+  }
+
+
+  /**
+   * Product delete
+   */
+  export type ProductDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+    /**
+     * Filter which Product to delete.
+     */
+    where: ProductWhereUniqueInput
+  }
+
+
+  /**
+   * Product deleteMany
+   */
+  export type ProductDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Products to delete
+     */
+    where?: ProductWhereInput
+  }
+
+
+  /**
+   * Product.productSnapshots
+   */
+  export type Product$productSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    where?: ProductSnapshotWhereInput
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    cursor?: ProductSnapshotWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<ProductSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * Product without action
+   */
+  export type ProductArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Product
+     */
+    select?: ProductSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductInclude<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model ProductSnapshot
+   */
+
+
+  export type AggregateProductSnapshot = {
+    _count: ProductSnapshotCountAggregateOutputType | null
+    _avg: ProductSnapshotAvgAggregateOutputType | null
+    _sum: ProductSnapshotSumAggregateOutputType | null
+    _min: ProductSnapshotMinAggregateOutputType | null
+    _max: ProductSnapshotMaxAggregateOutputType | null
+  }
+
+  export type ProductSnapshotAvgAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    tenantId: number | null
+    snapshotPrice: Decimal | null
+    orderId: number | null
+    productId: number | null
+  }
+
+  export type ProductSnapshotSumAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    tenantId: number | null
+    snapshotPrice: Decimal | null
+    orderId: number | null
+    productId: number | null
+  }
+
+  export type ProductSnapshotMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    userId: number | null
+    tenantId: number | null
+    snapshotPrice: Decimal | null
+    orderId: number | null
+    productId: number | null
+  }
+
+  export type ProductSnapshotMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    userId: number | null
+    tenantId: number | null
+    snapshotPrice: Decimal | null
+    orderId: number | null
+    productId: number | null
+  }
+
+  export type ProductSnapshotCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    isDeleted: number
+    userId: number
+    tenantId: number
+    snapshotPrice: number
+    orderId: number
+    productId: number
+    _all: number
+  }
+
+
+  export type ProductSnapshotAvgAggregateInputType = {
+    id?: true
+    userId?: true
+    tenantId?: true
+    snapshotPrice?: true
+    orderId?: true
+    productId?: true
+  }
+
+  export type ProductSnapshotSumAggregateInputType = {
+    id?: true
+    userId?: true
+    tenantId?: true
+    snapshotPrice?: true
+    orderId?: true
+    productId?: true
+  }
+
+  export type ProductSnapshotMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    snapshotPrice?: true
+    orderId?: true
+    productId?: true
+  }
+
+  export type ProductSnapshotMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    snapshotPrice?: true
+    orderId?: true
+    productId?: true
+  }
+
+  export type ProductSnapshotCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    snapshotPrice?: true
+    orderId?: true
+    productId?: true
+    _all?: true
+  }
+
+  export type ProductSnapshotAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProductSnapshot to aggregate.
+     */
+    where?: ProductSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductSnapshots to fetch.
+     */
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProductSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ProductSnapshots
+    **/
+    _count?: true | ProductSnapshotCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ProductSnapshotAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProductSnapshotSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProductSnapshotMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProductSnapshotMaxAggregateInputType
+  }
+
+  export type GetProductSnapshotAggregateType<T extends ProductSnapshotAggregateArgs> = {
+        [P in keyof T & keyof AggregateProductSnapshot]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProductSnapshot[P]>
+      : GetScalarType<T[P], AggregateProductSnapshot[P]>
+  }
+
+
+
+
+  export type ProductSnapshotGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: ProductSnapshotWhereInput
+    orderBy?: Enumerable<ProductSnapshotOrderByWithAggregationInput>
+    by: ProductSnapshotScalarFieldEnum[]
+    having?: ProductSnapshotScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProductSnapshotCountAggregateInputType | true
+    _avg?: ProductSnapshotAvgAggregateInputType
+    _sum?: ProductSnapshotSumAggregateInputType
+    _min?: ProductSnapshotMinAggregateInputType
+    _max?: ProductSnapshotMaxAggregateInputType
+  }
+
+
+  export type ProductSnapshotGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    userId: number
+    tenantId: number
+    snapshotPrice: Decimal
+    orderId: number
+    productId: number
+    _count: ProductSnapshotCountAggregateOutputType | null
+    _avg: ProductSnapshotAvgAggregateOutputType | null
+    _sum: ProductSnapshotSumAggregateOutputType | null
+    _min: ProductSnapshotMinAggregateOutputType | null
+    _max: ProductSnapshotMaxAggregateOutputType | null
+  }
+
+  type GetProductSnapshotGroupByPayload<T extends ProductSnapshotGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<ProductSnapshotGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProductSnapshotGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProductSnapshotGroupByOutputType[P]>
+            : GetScalarType<T[P], ProductSnapshotGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProductSnapshotSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    userId?: boolean
+    tenantId?: boolean
+    snapshotPrice?: boolean
+    orderId?: boolean
+    productId?: boolean
+    user?: boolean | UserArgs<ExtArgs>
+    tenant?: boolean | TenantArgs<ExtArgs>
+    order?: boolean | OrderArgs<ExtArgs>
+    product?: boolean | ProductArgs<ExtArgs>
+  }, ExtArgs["result"]["productSnapshot"]>
+
+  export type ProductSnapshotSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    userId?: boolean
+    tenantId?: boolean
+    snapshotPrice?: boolean
+    orderId?: boolean
+    productId?: boolean
+  }
+
+  export type ProductSnapshotInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    user?: boolean | UserArgs<ExtArgs>
+    tenant?: boolean | TenantArgs<ExtArgs>
+    order?: boolean | OrderArgs<ExtArgs>
+    product?: boolean | ProductArgs<ExtArgs>
+  }
+
+
+  type ProductSnapshotGetPayload<S extends boolean | null | undefined | ProductSnapshotArgs> = $Types.GetResult<ProductSnapshotPayload, S>
+
+  type ProductSnapshotCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<ProductSnapshotFindManyArgs, 'select' | 'include'> & {
+      select?: ProductSnapshotCountAggregateInputType | true
+    }
+
+  export interface ProductSnapshotDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ProductSnapshot'], meta: { name: 'ProductSnapshot' } }
+    /**
+     * Find zero or one ProductSnapshot that matches the filter.
+     * @param {ProductSnapshotFindUniqueArgs} args - Arguments to find a ProductSnapshot
+     * @example
+     * // Get one ProductSnapshot
+     * const productSnapshot = await prisma.productSnapshot.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends ProductSnapshotFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, ProductSnapshotFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'ProductSnapshot'> extends True ? Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one ProductSnapshot that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {ProductSnapshotFindUniqueOrThrowArgs} args - Arguments to find a ProductSnapshot
+     * @example
+     * // Get one ProductSnapshot
+     * const productSnapshot = await prisma.productSnapshot.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends ProductSnapshotFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductSnapshotFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first ProductSnapshot that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductSnapshotFindFirstArgs} args - Arguments to find a ProductSnapshot
+     * @example
+     * // Get one ProductSnapshot
+     * const productSnapshot = await prisma.productSnapshot.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends ProductSnapshotFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, ProductSnapshotFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'ProductSnapshot'> extends True ? Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first ProductSnapshot that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductSnapshotFindFirstOrThrowArgs} args - Arguments to find a ProductSnapshot
+     * @example
+     * // Get one ProductSnapshot
+     * const productSnapshot = await prisma.productSnapshot.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends ProductSnapshotFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductSnapshotFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more ProductSnapshots that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductSnapshotFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ProductSnapshots
+     * const productSnapshots = await prisma.productSnapshot.findMany()
+     * 
+     * // Get first 10 ProductSnapshots
+     * const productSnapshots = await prisma.productSnapshot.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const productSnapshotWithIdOnly = await prisma.productSnapshot.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends ProductSnapshotFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductSnapshotFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a ProductSnapshot.
+     * @param {ProductSnapshotCreateArgs} args - Arguments to create a ProductSnapshot.
+     * @example
+     * // Create one ProductSnapshot
+     * const ProductSnapshot = await prisma.productSnapshot.create({
+     *   data: {
+     *     // ... data to create a ProductSnapshot
+     *   }
+     * })
+     * 
+    **/
+    create<T extends ProductSnapshotCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductSnapshotCreateArgs<ExtArgs>>
+    ): Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many ProductSnapshots.
+     *     @param {ProductSnapshotCreateManyArgs} args - Arguments to create many ProductSnapshots.
+     *     @example
+     *     // Create many ProductSnapshots
+     *     const productSnapshot = await prisma.productSnapshot.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends ProductSnapshotCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductSnapshotCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a ProductSnapshot.
+     * @param {ProductSnapshotDeleteArgs} args - Arguments to delete one ProductSnapshot.
+     * @example
+     * // Delete one ProductSnapshot
+     * const ProductSnapshot = await prisma.productSnapshot.delete({
+     *   where: {
+     *     // ... filter to delete one ProductSnapshot
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends ProductSnapshotDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductSnapshotDeleteArgs<ExtArgs>>
+    ): Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one ProductSnapshot.
+     * @param {ProductSnapshotUpdateArgs} args - Arguments to update one ProductSnapshot.
+     * @example
+     * // Update one ProductSnapshot
+     * const productSnapshot = await prisma.productSnapshot.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends ProductSnapshotUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductSnapshotUpdateArgs<ExtArgs>>
+    ): Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more ProductSnapshots.
+     * @param {ProductSnapshotDeleteManyArgs} args - Arguments to filter ProductSnapshots to delete.
+     * @example
+     * // Delete a few ProductSnapshots
+     * const { count } = await prisma.productSnapshot.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends ProductSnapshotDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, ProductSnapshotDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProductSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductSnapshotUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ProductSnapshots
+     * const productSnapshot = await prisma.productSnapshot.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends ProductSnapshotUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductSnapshotUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ProductSnapshot.
+     * @param {ProductSnapshotUpsertArgs} args - Arguments to update or create a ProductSnapshot.
+     * @example
+     * // Update or create a ProductSnapshot
+     * const productSnapshot = await prisma.productSnapshot.upsert({
+     *   create: {
+     *     // ... data to create a ProductSnapshot
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ProductSnapshot we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends ProductSnapshotUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, ProductSnapshotUpsertArgs<ExtArgs>>
+    ): Prisma__ProductSnapshotClient<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of ProductSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductSnapshotCountArgs} args - Arguments to filter ProductSnapshots to count.
+     * @example
+     * // Count the number of ProductSnapshots
+     * const count = await prisma.productSnapshot.count({
+     *   where: {
+     *     // ... the filter for the ProductSnapshots we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProductSnapshotCountArgs>(
+      args?: Subset<T, ProductSnapshotCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProductSnapshotCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ProductSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductSnapshotAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProductSnapshotAggregateArgs>(args: Subset<T, ProductSnapshotAggregateArgs>): Prisma.PrismaPromise<GetProductSnapshotAggregateType<T>>
+
+    /**
+     * Group by ProductSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductSnapshotGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProductSnapshotGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProductSnapshotGroupByArgs['orderBy'] }
+        : { orderBy?: ProductSnapshotGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProductSnapshotGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProductSnapshotGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ProductSnapshot.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__ProductSnapshotClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    tenant<T extends TenantArgs<ExtArgs> = {}>(args?: Subset<T, TenantArgs<ExtArgs>>): Prisma__TenantClient<$Types.GetResult<TenantPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    order<T extends OrderArgs<ExtArgs> = {}>(args?: Subset<T, OrderArgs<ExtArgs>>): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    product<T extends ProductArgs<ExtArgs> = {}>(args?: Subset<T, ProductArgs<ExtArgs>>): Prisma__ProductClient<$Types.GetResult<ProductPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * ProductSnapshot base type for findUnique actions
+   */
+  export type ProductSnapshotFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductSnapshot to fetch.
+     */
+    where: ProductSnapshotWhereUniqueInput
+  }
+
+  /**
+   * ProductSnapshot findUnique
+   */
+  export interface ProductSnapshotFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends ProductSnapshotFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * ProductSnapshot findUniqueOrThrow
+   */
+  export type ProductSnapshotFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductSnapshot to fetch.
+     */
+    where: ProductSnapshotWhereUniqueInput
+  }
+
+
+  /**
+   * ProductSnapshot base type for findFirst actions
+   */
+  export type ProductSnapshotFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductSnapshot to fetch.
+     */
+    where?: ProductSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductSnapshots to fetch.
+     */
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProductSnapshots.
+     */
+    cursor?: ProductSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProductSnapshots.
+     */
+    distinct?: Enumerable<ProductSnapshotScalarFieldEnum>
+  }
+
+  /**
+   * ProductSnapshot findFirst
+   */
+  export interface ProductSnapshotFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends ProductSnapshotFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * ProductSnapshot findFirstOrThrow
+   */
+  export type ProductSnapshotFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductSnapshot to fetch.
+     */
+    where?: ProductSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductSnapshots to fetch.
+     */
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProductSnapshots.
+     */
+    cursor?: ProductSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProductSnapshots.
+     */
+    distinct?: Enumerable<ProductSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * ProductSnapshot findMany
+   */
+  export type ProductSnapshotFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductSnapshots to fetch.
+     */
+    where?: ProductSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductSnapshots to fetch.
+     */
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ProductSnapshots.
+     */
+    cursor?: ProductSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductSnapshots.
+     */
+    skip?: number
+    distinct?: Enumerable<ProductSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * ProductSnapshot create
+   */
+  export type ProductSnapshotCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ProductSnapshot.
+     */
+    data: XOR<ProductSnapshotCreateInput, ProductSnapshotUncheckedCreateInput>
+  }
+
+
+  /**
+   * ProductSnapshot createMany
+   */
+  export type ProductSnapshotCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ProductSnapshots.
+     */
+    data: Enumerable<ProductSnapshotCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * ProductSnapshot update
+   */
+  export type ProductSnapshotUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ProductSnapshot.
+     */
+    data: XOR<ProductSnapshotUpdateInput, ProductSnapshotUncheckedUpdateInput>
+    /**
+     * Choose, which ProductSnapshot to update.
+     */
+    where: ProductSnapshotWhereUniqueInput
+  }
+
+
+  /**
+   * ProductSnapshot updateMany
+   */
+  export type ProductSnapshotUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ProductSnapshots.
+     */
+    data: XOR<ProductSnapshotUpdateManyMutationInput, ProductSnapshotUncheckedUpdateManyInput>
+    /**
+     * Filter which ProductSnapshots to update
+     */
+    where?: ProductSnapshotWhereInput
+  }
+
+
+  /**
+   * ProductSnapshot upsert
+   */
+  export type ProductSnapshotUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ProductSnapshot to update in case it exists.
+     */
+    where: ProductSnapshotWhereUniqueInput
+    /**
+     * In case the ProductSnapshot found by the `where` argument doesn't exist, create a new ProductSnapshot with this data.
+     */
+    create: XOR<ProductSnapshotCreateInput, ProductSnapshotUncheckedCreateInput>
+    /**
+     * In case the ProductSnapshot was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProductSnapshotUpdateInput, ProductSnapshotUncheckedUpdateInput>
+  }
+
+
+  /**
+   * ProductSnapshot delete
+   */
+  export type ProductSnapshotDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    /**
+     * Filter which ProductSnapshot to delete.
+     */
+    where: ProductSnapshotWhereUniqueInput
+  }
+
+
+  /**
+   * ProductSnapshot deleteMany
+   */
+  export type ProductSnapshotDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProductSnapshots to delete
+     */
+    where?: ProductSnapshotWhereInput
+  }
+
+
+  /**
+   * ProductSnapshot without action
+   */
+  export type ProductSnapshotArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model Order
+   */
+
+
+  export type AggregateOrder = {
+    _count: OrderCountAggregateOutputType | null
+    _avg: OrderAvgAggregateOutputType | null
+    _sum: OrderSumAggregateOutputType | null
+    _min: OrderMinAggregateOutputType | null
+    _max: OrderMaxAggregateOutputType | null
+  }
+
+  export type OrderAvgAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    tenantId: number | null
+    serial: number | null
+  }
+
+  export type OrderSumAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    tenantId: number | null
+    serial: number | null
+  }
+
+  export type OrderMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    userId: number | null
+    tenantId: number | null
+    serial: number | null
+    status: OrderStatus | null
+  }
+
+  export type OrderMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    userId: number | null
+    tenantId: number | null
+    serial: number | null
+    status: OrderStatus | null
+  }
+
+  export type OrderCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    isDeleted: number
+    userId: number
+    tenantId: number
+    serial: number
+    status: number
+    _all: number
+  }
+
+
+  export type OrderAvgAggregateInputType = {
+    id?: true
+    userId?: true
+    tenantId?: true
+    serial?: true
+  }
+
+  export type OrderSumAggregateInputType = {
+    id?: true
+    userId?: true
+    tenantId?: true
+    serial?: true
+  }
+
+  export type OrderMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    serial?: true
+    status?: true
+  }
+
+  export type OrderMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    serial?: true
+    status?: true
+  }
+
+  export type OrderCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    serial?: true
+    status?: true
+    _all?: true
+  }
+
+  export type OrderAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Order to aggregate.
+     */
+    where?: OrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Orders to fetch.
+     */
+    orderBy?: Enumerable<OrderOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Orders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Orders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Orders
+    **/
+    _count?: true | OrderCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OrderAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrderSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrderMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrderMaxAggregateInputType
+  }
+
+  export type GetOrderAggregateType<T extends OrderAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrder]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrder[P]>
+      : GetScalarType<T[P], AggregateOrder[P]>
+  }
+
+
+
+
+  export type OrderGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+    orderBy?: Enumerable<OrderOrderByWithAggregationInput>
+    by: OrderScalarFieldEnum[]
+    having?: OrderScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrderCountAggregateInputType | true
+    _avg?: OrderAvgAggregateInputType
+    _sum?: OrderSumAggregateInputType
+    _min?: OrderMinAggregateInputType
+    _max?: OrderMaxAggregateInputType
+  }
+
+
+  export type OrderGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    userId: number
+    tenantId: number
+    serial: number
+    status: OrderStatus
+    _count: OrderCountAggregateOutputType | null
+    _avg: OrderAvgAggregateOutputType | null
+    _sum: OrderSumAggregateOutputType | null
+    _min: OrderMinAggregateOutputType | null
+    _max: OrderMaxAggregateOutputType | null
+  }
+
+  type GetOrderGroupByPayload<T extends OrderGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<OrderGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrderGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrderGroupByOutputType[P]>
+            : GetScalarType<T[P], OrderGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrderSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    userId?: boolean
+    tenantId?: boolean
+    serial?: boolean
+    status?: boolean
+    user?: boolean | UserArgs<ExtArgs>
+    tenant?: boolean | TenantArgs<ExtArgs>
+    pay?: boolean | PayArgs<ExtArgs>
+    productSnapshots?: boolean | Order$productSnapshotsArgs<ExtArgs>
+    _count?: boolean | OrderCountOutputTypeArgs<ExtArgs>
+  }, ExtArgs["result"]["order"]>
+
+  export type OrderSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    userId?: boolean
+    tenantId?: boolean
+    serial?: boolean
+    status?: boolean
+  }
+
+  export type OrderInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    user?: boolean | UserArgs<ExtArgs>
+    tenant?: boolean | TenantArgs<ExtArgs>
+    pay?: boolean | PayArgs<ExtArgs>
+    productSnapshots?: boolean | Order$productSnapshotsArgs<ExtArgs>
+    _count?: boolean | OrderCountOutputTypeArgs<ExtArgs>
+  }
+
+
+  type OrderGetPayload<S extends boolean | null | undefined | OrderArgs> = $Types.GetResult<OrderPayload, S>
+
+  type OrderCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<OrderFindManyArgs, 'select' | 'include'> & {
+      select?: OrderCountAggregateInputType | true
+    }
+
+  export interface OrderDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Order'], meta: { name: 'Order' } }
+    /**
+     * Find zero or one Order that matches the filter.
+     * @param {OrderFindUniqueArgs} args - Arguments to find a Order
+     * @example
+     * // Get one Order
+     * const order = await prisma.order.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends OrderFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, OrderFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Order'> extends True ? Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one Order that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {OrderFindUniqueOrThrowArgs} args - Arguments to find a Order
+     * @example
+     * // Get one Order
+     * const order = await prisma.order.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends OrderFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, OrderFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first Order that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderFindFirstArgs} args - Arguments to find a Order
+     * @example
+     * // Get one Order
+     * const order = await prisma.order.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends OrderFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, OrderFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Order'> extends True ? Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first Order that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderFindFirstOrThrowArgs} args - Arguments to find a Order
+     * @example
+     * // Get one Order
+     * const order = await prisma.order.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends OrderFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, OrderFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more Orders that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Orders
+     * const orders = await prisma.order.findMany()
+     * 
+     * // Get first 10 Orders
+     * const orders = await prisma.order.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const orderWithIdOnly = await prisma.order.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends OrderFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, OrderFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a Order.
+     * @param {OrderCreateArgs} args - Arguments to create a Order.
+     * @example
+     * // Create one Order
+     * const Order = await prisma.order.create({
+     *   data: {
+     *     // ... data to create a Order
+     *   }
+     * })
+     * 
+    **/
+    create<T extends OrderCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, OrderCreateArgs<ExtArgs>>
+    ): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many Orders.
+     *     @param {OrderCreateManyArgs} args - Arguments to create many Orders.
+     *     @example
+     *     // Create many Orders
+     *     const order = await prisma.order.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends OrderCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, OrderCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a Order.
+     * @param {OrderDeleteArgs} args - Arguments to delete one Order.
+     * @example
+     * // Delete one Order
+     * const Order = await prisma.order.delete({
+     *   where: {
+     *     // ... filter to delete one Order
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends OrderDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, OrderDeleteArgs<ExtArgs>>
+    ): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one Order.
+     * @param {OrderUpdateArgs} args - Arguments to update one Order.
+     * @example
+     * // Update one Order
+     * const order = await prisma.order.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends OrderUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, OrderUpdateArgs<ExtArgs>>
+    ): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more Orders.
+     * @param {OrderDeleteManyArgs} args - Arguments to filter Orders to delete.
+     * @example
+     * // Delete a few Orders
+     * const { count } = await prisma.order.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends OrderDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, OrderDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Orders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Orders
+     * const order = await prisma.order.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends OrderUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, OrderUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Order.
+     * @param {OrderUpsertArgs} args - Arguments to update or create a Order.
+     * @example
+     * // Update or create a Order
+     * const order = await prisma.order.upsert({
+     *   create: {
+     *     // ... data to create a Order
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Order we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends OrderUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, OrderUpsertArgs<ExtArgs>>
+    ): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of Orders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderCountArgs} args - Arguments to filter Orders to count.
+     * @example
+     * // Count the number of Orders
+     * const count = await prisma.order.count({
+     *   where: {
+     *     // ... the filter for the Orders we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrderCountArgs>(
+      args?: Subset<T, OrderCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrderCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Order.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrderAggregateArgs>(args: Subset<T, OrderAggregateArgs>): Prisma.PrismaPromise<GetOrderAggregateType<T>>
+
+    /**
+     * Group by Order.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrderGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrderGroupByArgs['orderBy'] }
+        : { orderBy?: OrderGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrderGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrderGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Order.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__OrderClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    tenant<T extends TenantArgs<ExtArgs> = {}>(args?: Subset<T, TenantArgs<ExtArgs>>): Prisma__TenantClient<$Types.GetResult<TenantPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    pay<T extends PayArgs<ExtArgs> = {}>(args?: Subset<T, PayArgs<ExtArgs>>): Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    productSnapshots<T extends Order$productSnapshotsArgs<ExtArgs> = {}>(args?: Subset<T, Order$productSnapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<ProductSnapshotPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * Order base type for findUnique actions
+   */
+  export type OrderFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * Filter, which Order to fetch.
+     */
+    where: OrderWhereUniqueInput
+  }
+
+  /**
+   * Order findUnique
+   */
+  export interface OrderFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends OrderFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Order findUniqueOrThrow
+   */
+  export type OrderFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * Filter, which Order to fetch.
+     */
+    where: OrderWhereUniqueInput
+  }
+
+
+  /**
+   * Order base type for findFirst actions
+   */
+  export type OrderFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * Filter, which Order to fetch.
+     */
+    where?: OrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Orders to fetch.
+     */
+    orderBy?: Enumerable<OrderOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Orders.
+     */
+    cursor?: OrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Orders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Orders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Orders.
+     */
+    distinct?: Enumerable<OrderScalarFieldEnum>
+  }
+
+  /**
+   * Order findFirst
+   */
+  export interface OrderFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends OrderFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Order findFirstOrThrow
+   */
+  export type OrderFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * Filter, which Order to fetch.
+     */
+    where?: OrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Orders to fetch.
+     */
+    orderBy?: Enumerable<OrderOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Orders.
+     */
+    cursor?: OrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Orders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Orders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Orders.
+     */
+    distinct?: Enumerable<OrderScalarFieldEnum>
+  }
+
+
+  /**
+   * Order findMany
+   */
+  export type OrderFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * Filter, which Orders to fetch.
+     */
+    where?: OrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Orders to fetch.
+     */
+    orderBy?: Enumerable<OrderOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Orders.
+     */
+    cursor?: OrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Orders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Orders.
+     */
+    skip?: number
+    distinct?: Enumerable<OrderScalarFieldEnum>
+  }
+
+
+  /**
+   * Order create
+   */
+  export type OrderCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Order.
+     */
+    data: XOR<OrderCreateInput, OrderUncheckedCreateInput>
+  }
+
+
+  /**
+   * Order createMany
+   */
+  export type OrderCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Orders.
+     */
+    data: Enumerable<OrderCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * Order update
+   */
+  export type OrderUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Order.
+     */
+    data: XOR<OrderUpdateInput, OrderUncheckedUpdateInput>
+    /**
+     * Choose, which Order to update.
+     */
+    where: OrderWhereUniqueInput
+  }
+
+
+  /**
+   * Order updateMany
+   */
+  export type OrderUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Orders.
+     */
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyInput>
+    /**
+     * Filter which Orders to update
+     */
+    where?: OrderWhereInput
+  }
+
+
+  /**
+   * Order upsert
+   */
+  export type OrderUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Order to update in case it exists.
+     */
+    where: OrderWhereUniqueInput
+    /**
+     * In case the Order found by the `where` argument doesn't exist, create a new Order with this data.
+     */
+    create: XOR<OrderCreateInput, OrderUncheckedCreateInput>
+    /**
+     * In case the Order was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrderUpdateInput, OrderUncheckedUpdateInput>
+  }
+
+
+  /**
+   * Order delete
+   */
+  export type OrderDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+    /**
+     * Filter which Order to delete.
+     */
+    where: OrderWhereUniqueInput
+  }
+
+
+  /**
+   * Order deleteMany
+   */
+  export type OrderDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Orders to delete
+     */
+    where?: OrderWhereInput
+  }
+
+
+  /**
+   * Order.productSnapshots
+   */
+  export type Order$productSnapshotsArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductSnapshot
+     */
+    select?: ProductSnapshotSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: ProductSnapshotInclude<ExtArgs> | null
+    where?: ProductSnapshotWhereInput
+    orderBy?: Enumerable<ProductSnapshotOrderByWithRelationInput>
+    cursor?: ProductSnapshotWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<ProductSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * Order without action
+   */
+  export type OrderArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: OrderInclude<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model Pay
+   */
+
+
+  export type AggregatePay = {
+    _count: PayCountAggregateOutputType | null
+    _avg: PayAvgAggregateOutputType | null
+    _sum: PaySumAggregateOutputType | null
+    _min: PayMinAggregateOutputType | null
+    _max: PayMaxAggregateOutputType | null
+  }
+
+  export type PayAvgAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    tenantId: number | null
+    orderId: number | null
+  }
+
+  export type PaySumAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    tenantId: number | null
+    orderId: number | null
+  }
+
+  export type PayMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    userId: number | null
+    tenantId: number | null
+    status: PayStatus | null
+    orderId: number | null
+    transactionId: string | null
+  }
+
+  export type PayMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    isDeleted: boolean | null
+    userId: number | null
+    tenantId: number | null
+    status: PayStatus | null
+    orderId: number | null
+    transactionId: string | null
+  }
+
+  export type PayCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    isDeleted: number
+    userId: number
+    tenantId: number
+    status: number
+    orderId: number
+    transactionId: number
+    _all: number
+  }
+
+
+  export type PayAvgAggregateInputType = {
+    id?: true
+    userId?: true
+    tenantId?: true
+    orderId?: true
+  }
+
+  export type PaySumAggregateInputType = {
+    id?: true
+    userId?: true
+    tenantId?: true
+    orderId?: true
+  }
+
+  export type PayMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    status?: true
+    orderId?: true
+    transactionId?: true
+  }
+
+  export type PayMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    status?: true
+    orderId?: true
+    transactionId?: true
+  }
+
+  export type PayCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    isDeleted?: true
+    userId?: true
+    tenantId?: true
+    status?: true
+    orderId?: true
+    transactionId?: true
+    _all?: true
+  }
+
+  export type PayAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Pay to aggregate.
+     */
+    where?: PayWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pays to fetch.
+     */
+    orderBy?: Enumerable<PayOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PayWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pays from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pays.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Pays
+    **/
+    _count?: true | PayCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PayAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PaySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PayMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PayMaxAggregateInputType
+  }
+
+  export type GetPayAggregateType<T extends PayAggregateArgs> = {
+        [P in keyof T & keyof AggregatePay]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePay[P]>
+      : GetScalarType<T[P], AggregatePay[P]>
+  }
+
+
+
+
+  export type PayGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: PayWhereInput
+    orderBy?: Enumerable<PayOrderByWithAggregationInput>
+    by: PayScalarFieldEnum[]
+    having?: PayScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PayCountAggregateInputType | true
+    _avg?: PayAvgAggregateInputType
+    _sum?: PaySumAggregateInputType
+    _min?: PayMinAggregateInputType
+    _max?: PayMaxAggregateInputType
+  }
+
+
+  export type PayGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    isDeleted: boolean
+    userId: number
+    tenantId: number
+    status: PayStatus
+    orderId: number
+    transactionId: string
+    _count: PayCountAggregateOutputType | null
+    _avg: PayAvgAggregateOutputType | null
+    _sum: PaySumAggregateOutputType | null
+    _min: PayMinAggregateOutputType | null
+    _max: PayMaxAggregateOutputType | null
+  }
+
+  type GetPayGroupByPayload<T extends PayGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<PayGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PayGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PayGroupByOutputType[P]>
+            : GetScalarType<T[P], PayGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PaySelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    userId?: boolean
+    tenantId?: boolean
+    status?: boolean
+    orderId?: boolean
+    transactionId?: boolean
+    user?: boolean | UserArgs<ExtArgs>
+    tenant?: boolean | TenantArgs<ExtArgs>
+    Order?: boolean | OrderArgs<ExtArgs>
+  }, ExtArgs["result"]["pay"]>
+
+  export type PaySelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    isDeleted?: boolean
+    userId?: boolean
+    tenantId?: boolean
+    status?: boolean
+    orderId?: boolean
+    transactionId?: boolean
+  }
+
+  export type PayInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    user?: boolean | UserArgs<ExtArgs>
+    tenant?: boolean | TenantArgs<ExtArgs>
+    Order?: boolean | OrderArgs<ExtArgs>
+  }
+
+
+  type PayGetPayload<S extends boolean | null | undefined | PayArgs> = $Types.GetResult<PayPayload, S>
+
+  type PayCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<PayFindManyArgs, 'select' | 'include'> & {
+      select?: PayCountAggregateInputType | true
+    }
+
+  export interface PayDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Pay'], meta: { name: 'Pay' } }
+    /**
+     * Find zero or one Pay that matches the filter.
+     * @param {PayFindUniqueArgs} args - Arguments to find a Pay
+     * @example
+     * // Get one Pay
+     * const pay = await prisma.pay.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends PayFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, PayFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Pay'> extends True ? Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one Pay that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {PayFindUniqueOrThrowArgs} args - Arguments to find a Pay
+     * @example
+     * // Get one Pay
+     * const pay = await prisma.pay.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends PayFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, PayFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first Pay that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PayFindFirstArgs} args - Arguments to find a Pay
+     * @example
+     * // Get one Pay
+     * const pay = await prisma.pay.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends PayFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, PayFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Pay'> extends True ? Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first Pay that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PayFindFirstOrThrowArgs} args - Arguments to find a Pay
+     * @example
+     * // Get one Pay
+     * const pay = await prisma.pay.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends PayFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, PayFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more Pays that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PayFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Pays
+     * const pays = await prisma.pay.findMany()
+     * 
+     * // Get first 10 Pays
+     * const pays = await prisma.pay.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const payWithIdOnly = await prisma.pay.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends PayFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PayFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<PayPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a Pay.
+     * @param {PayCreateArgs} args - Arguments to create a Pay.
+     * @example
+     * // Create one Pay
+     * const Pay = await prisma.pay.create({
+     *   data: {
+     *     // ... data to create a Pay
+     *   }
+     * })
+     * 
+    **/
+    create<T extends PayCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, PayCreateArgs<ExtArgs>>
+    ): Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many Pays.
+     *     @param {PayCreateManyArgs} args - Arguments to create many Pays.
+     *     @example
+     *     // Create many Pays
+     *     const pay = await prisma.pay.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends PayCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PayCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a Pay.
+     * @param {PayDeleteArgs} args - Arguments to delete one Pay.
+     * @example
+     * // Delete one Pay
+     * const Pay = await prisma.pay.delete({
+     *   where: {
+     *     // ... filter to delete one Pay
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends PayDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, PayDeleteArgs<ExtArgs>>
+    ): Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one Pay.
+     * @param {PayUpdateArgs} args - Arguments to update one Pay.
+     * @example
+     * // Update one Pay
+     * const pay = await prisma.pay.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends PayUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, PayUpdateArgs<ExtArgs>>
+    ): Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more Pays.
+     * @param {PayDeleteManyArgs} args - Arguments to filter Pays to delete.
+     * @example
+     * // Delete a few Pays
+     * const { count } = await prisma.pay.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends PayDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PayDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Pays.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PayUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Pays
+     * const pay = await prisma.pay.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends PayUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, PayUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Pay.
+     * @param {PayUpsertArgs} args - Arguments to update or create a Pay.
+     * @example
+     * // Update or create a Pay
+     * const pay = await prisma.pay.upsert({
+     *   create: {
+     *     // ... data to create a Pay
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Pay we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends PayUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, PayUpsertArgs<ExtArgs>>
+    ): Prisma__PayClient<$Types.GetResult<PayPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of Pays.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PayCountArgs} args - Arguments to filter Pays to count.
+     * @example
+     * // Count the number of Pays
+     * const count = await prisma.pay.count({
+     *   where: {
+     *     // ... the filter for the Pays we want to count
+     *   }
+     * })
+    **/
+    count<T extends PayCountArgs>(
+      args?: Subset<T, PayCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PayCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Pay.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PayAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PayAggregateArgs>(args: Subset<T, PayAggregateArgs>): Prisma.PrismaPromise<GetPayAggregateType<T>>
+
+    /**
+     * Group by Pay.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PayGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PayGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PayGroupByArgs['orderBy'] }
+        : { orderBy?: PayGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PayGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPayGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Pay.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__PayClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    tenant<T extends TenantArgs<ExtArgs> = {}>(args?: Subset<T, TenantArgs<ExtArgs>>): Prisma__TenantClient<$Types.GetResult<TenantPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    Order<T extends OrderArgs<ExtArgs> = {}>(args?: Subset<T, OrderArgs<ExtArgs>>): Prisma__OrderClient<$Types.GetResult<OrderPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * Pay base type for findUnique actions
+   */
+  export type PayFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * Filter, which Pay to fetch.
+     */
+    where: PayWhereUniqueInput
+  }
+
+  /**
+   * Pay findUnique
+   */
+  export interface PayFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends PayFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Pay findUniqueOrThrow
+   */
+  export type PayFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * Filter, which Pay to fetch.
+     */
+    where: PayWhereUniqueInput
+  }
+
+
+  /**
+   * Pay base type for findFirst actions
+   */
+  export type PayFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * Filter, which Pay to fetch.
+     */
+    where?: PayWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pays to fetch.
+     */
+    orderBy?: Enumerable<PayOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Pays.
+     */
+    cursor?: PayWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pays from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pays.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Pays.
+     */
+    distinct?: Enumerable<PayScalarFieldEnum>
+  }
+
+  /**
+   * Pay findFirst
+   */
+  export interface PayFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends PayFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * Pay findFirstOrThrow
+   */
+  export type PayFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * Filter, which Pay to fetch.
+     */
+    where?: PayWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pays to fetch.
+     */
+    orderBy?: Enumerable<PayOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Pays.
+     */
+    cursor?: PayWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pays from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pays.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Pays.
+     */
+    distinct?: Enumerable<PayScalarFieldEnum>
+  }
+
+
+  /**
+   * Pay findMany
+   */
+  export type PayFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * Filter, which Pays to fetch.
+     */
+    where?: PayWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Pays to fetch.
+     */
+    orderBy?: Enumerable<PayOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Pays.
+     */
+    cursor?: PayWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Pays from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Pays.
+     */
+    skip?: number
+    distinct?: Enumerable<PayScalarFieldEnum>
+  }
+
+
+  /**
+   * Pay create
+   */
+  export type PayCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Pay.
+     */
+    data: XOR<PayCreateInput, PayUncheckedCreateInput>
+  }
+
+
+  /**
+   * Pay createMany
+   */
+  export type PayCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Pays.
+     */
+    data: Enumerable<PayCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * Pay update
+   */
+  export type PayUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Pay.
+     */
+    data: XOR<PayUpdateInput, PayUncheckedUpdateInput>
+    /**
+     * Choose, which Pay to update.
+     */
+    where: PayWhereUniqueInput
+  }
+
+
+  /**
+   * Pay updateMany
+   */
+  export type PayUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Pays.
+     */
+    data: XOR<PayUpdateManyMutationInput, PayUncheckedUpdateManyInput>
+    /**
+     * Filter which Pays to update
+     */
+    where?: PayWhereInput
+  }
+
+
+  /**
+   * Pay upsert
+   */
+  export type PayUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Pay to update in case it exists.
+     */
+    where: PayWhereUniqueInput
+    /**
+     * In case the Pay found by the `where` argument doesn't exist, create a new Pay with this data.
+     */
+    create: XOR<PayCreateInput, PayUncheckedCreateInput>
+    /**
+     * In case the Pay was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PayUpdateInput, PayUncheckedUpdateInput>
+  }
+
+
+  /**
+   * Pay delete
+   */
+  export type PayDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+    /**
+     * Filter which Pay to delete.
+     */
+    where: PayWhereUniqueInput
+  }
+
+
+  /**
+   * Pay deleteMany
+   */
+  export type PayDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Pays to delete
+     */
+    where?: PayWhereInput
+  }
+
+
+  /**
+   * Pay without action
+   */
+  export type PayArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Pay
+     */
+    select?: PaySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PayInclude<ExtArgs> | null
+  }
+
+
+
+  /**
    * Enums
    */
 
@@ -16562,9 +21607,9 @@ export namespace Prisma {
     hashedRefreshToken: 'hashedRefreshToken',
     recoveryCode: 'recoveryCode',
     recoveryToken: 'recoveryToken',
-    unionid: 'unionid',
     email: 'email',
     mobile: 'mobile',
+    anonymousCustomerToken: 'anonymousCustomerToken',
     image: 'image',
     tenantId: 'tenantId'
   };
@@ -16683,13 +21728,13 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     isDeleted: 'isDeleted',
+    tenantId: 'tenantId',
+    userId: 'userId',
     unionid: 'unionid',
     loginOpenid: 'loginOpenid',
     headimgurl: 'headimgurl',
     nickname: 'nickname',
-    sex: 'sex',
-    userId: 'userId',
-    tenantId: 'tenantId'
+    sex: 'sex'
   };
 
   export type WeixinProfileScalarFieldEnum = (typeof WeixinProfileScalarFieldEnum)[keyof typeof WeixinProfileScalarFieldEnum]
@@ -16700,15 +21745,82 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     isDeleted: 'isDeleted',
+    tenantId: 'tenantId',
     userId: 'userId',
     productType: 'productType',
     plan: 'plan',
     amount: 'amount',
-    expireAt: 'expireAt',
-    tenantId: 'tenantId'
+    expireAt: 'expireAt'
   };
 
   export type OrderProfileScalarFieldEnum = (typeof OrderProfileScalarFieldEnum)[keyof typeof OrderProfileScalarFieldEnum]
+
+
+  export const ProductScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    isDeleted: 'isDeleted',
+    tenantId: 'tenantId',
+    name: 'name',
+    price: 'price',
+    productType: 'productType',
+    plan: 'plan',
+    amount: 'amount',
+    extendedDescriptionData: 'extendedDescriptionData',
+    fileSize: 'fileSize',
+    storeDuration: 'storeDuration',
+    hasAds: 'hasAds',
+    tecSupport: 'tecSupport',
+    validityPeriod: 'validityPeriod',
+    restricted: 'restricted'
+  };
+
+  export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
+
+
+  export const ProductSnapshotScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    isDeleted: 'isDeleted',
+    userId: 'userId',
+    tenantId: 'tenantId',
+    snapshotPrice: 'snapshotPrice',
+    orderId: 'orderId',
+    productId: 'productId'
+  };
+
+  export type ProductSnapshotScalarFieldEnum = (typeof ProductSnapshotScalarFieldEnum)[keyof typeof ProductSnapshotScalarFieldEnum]
+
+
+  export const OrderScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    isDeleted: 'isDeleted',
+    userId: 'userId',
+    tenantId: 'tenantId',
+    serial: 'serial',
+    status: 'status'
+  };
+
+  export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+  export const PayScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    isDeleted: 'isDeleted',
+    userId: 'userId',
+    tenantId: 'tenantId',
+    status: 'status',
+    orderId: 'orderId',
+    transactionId: 'transactionId'
+  };
+
+  export type PayScalarFieldEnum = (typeof PayScalarFieldEnum)[keyof typeof PayScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -16768,8 +21880,8 @@ export namespace Prisma {
     hashedPassword?: StringNullableFilter | string | null
     hashedRefreshToken?: StringNullableFilter | string | null
     displayName?: StringNullableFilter | string | null
-    users?: UserListRelationFilter
     menu?: XOR<MenuRelationFilter, MenuWhereInput> | null
+    users?: UserListRelationFilter
     dynamicTableDefs?: DynamicTableDefListRelationFilter
     dynamicTableDefColumns?: DynamicTableDefColumnListRelationFilter
     dynamicTableData?: DynamicTableDataListRelationFilter
@@ -16777,6 +21889,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileListRelationFilter
     userProfile?: UserProfileListRelationFilter
     weixinProfile?: WeixinProfileListRelationFilter
+    productSnapshots?: ProductSnapshotListRelationFilter
+    orders?: OrderListRelationFilter
+    pays?: PayListRelationFilter
+    products?: ProductListRelationFilter
   }
 
   export type TenantOrderByWithRelationInput = {
@@ -16788,8 +21904,8 @@ export namespace Prisma {
     hashedPassword?: SortOrderInput | SortOrder
     hashedRefreshToken?: SortOrderInput | SortOrder
     displayName?: SortOrderInput | SortOrder
-    users?: UserOrderByRelationAggregateInput
     menu?: MenuOrderByWithRelationInput
+    users?: UserOrderByRelationAggregateInput
     dynamicTableDefs?: DynamicTableDefOrderByRelationAggregateInput
     dynamicTableDefColumns?: DynamicTableDefColumnOrderByRelationAggregateInput
     dynamicTableData?: DynamicTableDataOrderByRelationAggregateInput
@@ -16797,6 +21913,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileOrderByRelationAggregateInput
     userProfile?: UserProfileOrderByRelationAggregateInput
     weixinProfile?: WeixinProfileOrderByRelationAggregateInput
+    productSnapshots?: ProductSnapshotOrderByRelationAggregateInput
+    orders?: OrderOrderByRelationAggregateInput
+    pays?: PayOrderByRelationAggregateInput
+    products?: ProductOrderByRelationAggregateInput
   }
 
   export type TenantWhereUniqueInput = {
@@ -16954,15 +22074,18 @@ export namespace Prisma {
     hashedRefreshToken?: StringNullableFilter | string | null
     recoveryCode?: StringNullableFilter | string | null
     recoveryToken?: StringNullableFilter | string | null
-    unionid?: StringNullableFilter | string | null
     email?: StringNullableFilter | string | null
     mobile?: StringNullableFilter | string | null
+    anonymousCustomerToken?: StringNullableFilter | string | null
     image?: StringNullableFilter | string | null
     tenantId?: IntFilter | number
     tenant?: XOR<TenantRelationFilter, TenantWhereInput>
     profile?: XOR<UserProfileRelationFilter, UserProfileWhereInput> | null
     weixinProfile?: XOR<WeixinProfileRelationFilter, WeixinProfileWhereInput> | null
     orderProfile?: XOR<OrderProfileRelationFilter, OrderProfileWhereInput> | null
+    productSnapshots?: ProductSnapshotListRelationFilter
+    orders?: OrderListRelationFilter
+    pays?: PayListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -16975,21 +22098,25 @@ export namespace Prisma {
     hashedRefreshToken?: SortOrderInput | SortOrder
     recoveryCode?: SortOrderInput | SortOrder
     recoveryToken?: SortOrderInput | SortOrder
-    unionid?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     mobile?: SortOrderInput | SortOrder
+    anonymousCustomerToken?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
     tenantId?: SortOrder
     tenant?: TenantOrderByWithRelationInput
     profile?: UserProfileOrderByWithRelationInput
     weixinProfile?: WeixinProfileOrderByWithRelationInput
     orderProfile?: OrderProfileOrderByWithRelationInput
+    productSnapshots?: ProductSnapshotOrderByRelationAggregateInput
+    orders?: OrderOrderByRelationAggregateInput
+    pays?: PayOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = {
     id?: number
     email?: string
     mobile?: string
+    anonymousCustomerToken?: string
   }
 
   export type UserOrderByWithAggregationInput = {
@@ -17002,9 +22129,9 @@ export namespace Prisma {
     hashedRefreshToken?: SortOrderInput | SortOrder
     recoveryCode?: SortOrderInput | SortOrder
     recoveryToken?: SortOrderInput | SortOrder
-    unionid?: SortOrderInput | SortOrder
     email?: SortOrderInput | SortOrder
     mobile?: SortOrderInput | SortOrder
+    anonymousCustomerToken?: SortOrderInput | SortOrder
     image?: SortOrderInput | SortOrder
     tenantId?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -17027,9 +22154,9 @@ export namespace Prisma {
     hashedRefreshToken?: StringNullableWithAggregatesFilter | string | null
     recoveryCode?: StringNullableWithAggregatesFilter | string | null
     recoveryToken?: StringNullableWithAggregatesFilter | string | null
-    unionid?: StringNullableWithAggregatesFilter | string | null
     email?: StringNullableWithAggregatesFilter | string | null
     mobile?: StringNullableWithAggregatesFilter | string | null
+    anonymousCustomerToken?: StringNullableWithAggregatesFilter | string | null
     image?: StringNullableWithAggregatesFilter | string | null
     tenantId?: IntWithAggregatesFilter | number
   }
@@ -17346,7 +22473,7 @@ export namespace Prisma {
     AND?: Enumerable<DynamicTableDataWhereInput>
     OR?: Enumerable<DynamicTableDataWhereInput>
     NOT?: Enumerable<DynamicTableDataWhereInput>
-    id?: StringFilter | string
+    id?: IntFilter | number
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     isDeleted?: BoolFilter | boolean
@@ -17370,7 +22497,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataWhereUniqueInput = {
-    id?: string
+    id?: number
   }
 
   export type DynamicTableDataOrderByWithAggregationInput = {
@@ -17392,7 +22519,7 @@ export namespace Prisma {
     AND?: Enumerable<DynamicTableDataScalarWhereWithAggregatesInput>
     OR?: Enumerable<DynamicTableDataScalarWhereWithAggregatesInput>
     NOT?: Enumerable<DynamicTableDataScalarWhereWithAggregatesInput>
-    id?: StringWithAggregatesFilter | string
+    id?: IntWithAggregatesFilter | number
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     updatedAt?: DateTimeWithAggregatesFilter | Date | string
     isDeleted?: BoolWithAggregatesFilter | boolean
@@ -17514,15 +22641,15 @@ export namespace Prisma {
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     isDeleted?: BoolFilter | boolean
-    unionid?: StringNullableFilter | string | null
-    loginOpenid?: StringFilter | string
-    headimgurl?: StringFilter | string
-    nickname?: StringFilter | string
-    sex?: IntFilter | number
-    userId?: IntFilter | number
     tenantId?: IntFilter | number
-    user?: XOR<UserRelationFilter, UserWhereInput>
+    userId?: IntFilter | number
+    unionid?: StringNullableFilter | string | null
+    loginOpenid?: StringNullableFilter | string | null
+    headimgurl?: StringNullableFilter | string | null
+    nickname?: StringNullableFilter | string | null
+    sex?: IntNullableFilter | number | null
     tenant?: XOR<TenantRelationFilter, TenantWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
   }
 
   export type WeixinProfileOrderByWithRelationInput = {
@@ -17530,20 +22657,22 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isDeleted?: SortOrder
-    unionid?: SortOrderInput | SortOrder
-    loginOpenid?: SortOrder
-    headimgurl?: SortOrder
-    nickname?: SortOrder
-    sex?: SortOrder
-    userId?: SortOrder
     tenantId?: SortOrder
-    user?: UserOrderByWithRelationInput
+    userId?: SortOrder
+    unionid?: SortOrderInput | SortOrder
+    loginOpenid?: SortOrderInput | SortOrder
+    headimgurl?: SortOrderInput | SortOrder
+    nickname?: SortOrderInput | SortOrder
+    sex?: SortOrderInput | SortOrder
     tenant?: TenantOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
   }
 
   export type WeixinProfileWhereUniqueInput = {
     id?: number
     userId?: number
+    unionid?: string
+    loginOpenid?: string
   }
 
   export type WeixinProfileOrderByWithAggregationInput = {
@@ -17551,13 +22680,13 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isDeleted?: SortOrder
-    unionid?: SortOrderInput | SortOrder
-    loginOpenid?: SortOrder
-    headimgurl?: SortOrder
-    nickname?: SortOrder
-    sex?: SortOrder
-    userId?: SortOrder
     tenantId?: SortOrder
+    userId?: SortOrder
+    unionid?: SortOrderInput | SortOrder
+    loginOpenid?: SortOrderInput | SortOrder
+    headimgurl?: SortOrderInput | SortOrder
+    nickname?: SortOrderInput | SortOrder
+    sex?: SortOrderInput | SortOrder
     _count?: WeixinProfileCountOrderByAggregateInput
     _avg?: WeixinProfileAvgOrderByAggregateInput
     _max?: WeixinProfileMaxOrderByAggregateInput
@@ -17573,13 +22702,13 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     updatedAt?: DateTimeWithAggregatesFilter | Date | string
     isDeleted?: BoolWithAggregatesFilter | boolean
-    unionid?: StringNullableWithAggregatesFilter | string | null
-    loginOpenid?: StringWithAggregatesFilter | string
-    headimgurl?: StringWithAggregatesFilter | string
-    nickname?: StringWithAggregatesFilter | string
-    sex?: IntWithAggregatesFilter | number
-    userId?: IntWithAggregatesFilter | number
     tenantId?: IntWithAggregatesFilter | number
+    userId?: IntWithAggregatesFilter | number
+    unionid?: StringNullableWithAggregatesFilter | string | null
+    loginOpenid?: StringNullableWithAggregatesFilter | string | null
+    headimgurl?: StringNullableWithAggregatesFilter | string | null
+    nickname?: StringNullableWithAggregatesFilter | string | null
+    sex?: IntNullableWithAggregatesFilter | number | null
   }
 
   export type OrderProfileWhereInput = {
@@ -17590,14 +22719,14 @@ export namespace Prisma {
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     isDeleted?: BoolFilter | boolean
+    tenantId?: IntFilter | number
     userId?: IntFilter | number
     productType?: EnumProductTypeFilter | ProductType
     plan?: IntNullableFilter | number | null
     amount?: IntNullableFilter | number | null
     expireAt?: DateTimeNullableFilter | Date | string | null
-    tenantId?: IntFilter | number
-    user?: XOR<UserRelationFilter, UserWhereInput>
     tenant?: XOR<TenantRelationFilter, TenantWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
   }
 
   export type OrderProfileOrderByWithRelationInput = {
@@ -17605,14 +22734,14 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isDeleted?: SortOrder
+    tenantId?: SortOrder
     userId?: SortOrder
     productType?: SortOrder
     plan?: SortOrderInput | SortOrder
     amount?: SortOrderInput | SortOrder
     expireAt?: SortOrderInput | SortOrder
-    tenantId?: SortOrder
-    user?: UserOrderByWithRelationInput
     tenant?: TenantOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
   }
 
   export type OrderProfileWhereUniqueInput = {
@@ -17625,12 +22754,12 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isDeleted?: SortOrder
+    tenantId?: SortOrder
     userId?: SortOrder
     productType?: SortOrder
     plan?: SortOrderInput | SortOrder
     amount?: SortOrderInput | SortOrder
     expireAt?: SortOrderInput | SortOrder
-    tenantId?: SortOrder
     _count?: OrderProfileCountOrderByAggregateInput
     _avg?: OrderProfileAvgOrderByAggregateInput
     _max?: OrderProfileMaxOrderByAggregateInput
@@ -17646,12 +22775,319 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     updatedAt?: DateTimeWithAggregatesFilter | Date | string
     isDeleted?: BoolWithAggregatesFilter | boolean
+    tenantId?: IntWithAggregatesFilter | number
     userId?: IntWithAggregatesFilter | number
     productType?: EnumProductTypeWithAggregatesFilter | ProductType
     plan?: IntNullableWithAggregatesFilter | number | null
     amount?: IntNullableWithAggregatesFilter | number | null
     expireAt?: DateTimeNullableWithAggregatesFilter | Date | string | null
+  }
+
+  export type ProductWhereInput = {
+    AND?: Enumerable<ProductWhereInput>
+    OR?: Enumerable<ProductWhereInput>
+    NOT?: Enumerable<ProductWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
+    tenantId?: IntFilter | number
+    name?: StringFilter | string
+    price?: DecimalFilter | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFilter | ProductType
+    plan?: IntNullableFilter | number | null
+    amount?: IntFilter | number
+    extendedDescriptionData?: JsonNullableFilter
+    fileSize?: StringNullableFilter | string | null
+    storeDuration?: IntNullableFilter | number | null
+    hasAds?: StringNullableFilter | string | null
+    tecSupport?: StringNullableFilter | string | null
+    validityPeriod?: IntNullableFilter | number | null
+    restricted?: IntFilter | number
+    tenant?: XOR<TenantRelationFilter, TenantWhereInput>
+    productSnapshots?: ProductSnapshotListRelationFilter
+  }
+
+  export type ProductOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    price?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrderInput | SortOrder
+    amount?: SortOrder
+    extendedDescriptionData?: SortOrderInput | SortOrder
+    fileSize?: SortOrderInput | SortOrder
+    storeDuration?: SortOrderInput | SortOrder
+    hasAds?: SortOrderInput | SortOrder
+    tecSupport?: SortOrderInput | SortOrder
+    validityPeriod?: SortOrderInput | SortOrder
+    restricted?: SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    productSnapshots?: ProductSnapshotOrderByRelationAggregateInput
+  }
+
+  export type ProductWhereUniqueInput = {
+    id?: number
+  }
+
+  export type ProductOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    price?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrderInput | SortOrder
+    amount?: SortOrder
+    extendedDescriptionData?: SortOrderInput | SortOrder
+    fileSize?: SortOrderInput | SortOrder
+    storeDuration?: SortOrderInput | SortOrder
+    hasAds?: SortOrderInput | SortOrder
+    tecSupport?: SortOrderInput | SortOrder
+    validityPeriod?: SortOrderInput | SortOrder
+    restricted?: SortOrder
+    _count?: ProductCountOrderByAggregateInput
+    _avg?: ProductAvgOrderByAggregateInput
+    _max?: ProductMaxOrderByAggregateInput
+    _min?: ProductMinOrderByAggregateInput
+    _sum?: ProductSumOrderByAggregateInput
+  }
+
+  export type ProductScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<ProductScalarWhereWithAggregatesInput>
+    OR?: Enumerable<ProductScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<ProductScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    isDeleted?: BoolWithAggregatesFilter | boolean
     tenantId?: IntWithAggregatesFilter | number
+    name?: StringWithAggregatesFilter | string
+    price?: DecimalWithAggregatesFilter | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeWithAggregatesFilter | ProductType
+    plan?: IntNullableWithAggregatesFilter | number | null
+    amount?: IntWithAggregatesFilter | number
+    extendedDescriptionData?: JsonNullableWithAggregatesFilter
+    fileSize?: StringNullableWithAggregatesFilter | string | null
+    storeDuration?: IntNullableWithAggregatesFilter | number | null
+    hasAds?: StringNullableWithAggregatesFilter | string | null
+    tecSupport?: StringNullableWithAggregatesFilter | string | null
+    validityPeriod?: IntNullableWithAggregatesFilter | number | null
+    restricted?: IntWithAggregatesFilter | number
+  }
+
+  export type ProductSnapshotWhereInput = {
+    AND?: Enumerable<ProductSnapshotWhereInput>
+    OR?: Enumerable<ProductSnapshotWhereInput>
+    NOT?: Enumerable<ProductSnapshotWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
+    userId?: IntFilter | number
+    tenantId?: IntFilter | number
+    snapshotPrice?: DecimalFilter | Decimal | DecimalJsLike | number | string
+    orderId?: IntFilter | number
+    productId?: IntFilter | number
+    user?: XOR<UserRelationFilter, UserWhereInput>
+    tenant?: XOR<TenantRelationFilter, TenantWhereInput>
+    order?: XOR<OrderRelationFilter, OrderWhereInput>
+    product?: XOR<ProductRelationFilter, ProductWhereInput>
+  }
+
+  export type ProductSnapshotOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    snapshotPrice?: SortOrder
+    orderId?: SortOrder
+    productId?: SortOrder
+    user?: UserOrderByWithRelationInput
+    tenant?: TenantOrderByWithRelationInput
+    order?: OrderOrderByWithRelationInput
+    product?: ProductOrderByWithRelationInput
+  }
+
+  export type ProductSnapshotWhereUniqueInput = {
+    id?: number
+  }
+
+  export type ProductSnapshotOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    snapshotPrice?: SortOrder
+    orderId?: SortOrder
+    productId?: SortOrder
+    _count?: ProductSnapshotCountOrderByAggregateInput
+    _avg?: ProductSnapshotAvgOrderByAggregateInput
+    _max?: ProductSnapshotMaxOrderByAggregateInput
+    _min?: ProductSnapshotMinOrderByAggregateInput
+    _sum?: ProductSnapshotSumOrderByAggregateInput
+  }
+
+  export type ProductSnapshotScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<ProductSnapshotScalarWhereWithAggregatesInput>
+    OR?: Enumerable<ProductSnapshotScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<ProductSnapshotScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    isDeleted?: BoolWithAggregatesFilter | boolean
+    userId?: IntWithAggregatesFilter | number
+    tenantId?: IntWithAggregatesFilter | number
+    snapshotPrice?: DecimalWithAggregatesFilter | Decimal | DecimalJsLike | number | string
+    orderId?: IntWithAggregatesFilter | number
+    productId?: IntWithAggregatesFilter | number
+  }
+
+  export type OrderWhereInput = {
+    AND?: Enumerable<OrderWhereInput>
+    OR?: Enumerable<OrderWhereInput>
+    NOT?: Enumerable<OrderWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
+    userId?: IntFilter | number
+    tenantId?: IntFilter | number
+    serial?: IntFilter | number
+    status?: EnumOrderStatusFilter | OrderStatus
+    user?: XOR<UserRelationFilter, UserWhereInput>
+    tenant?: XOR<TenantRelationFilter, TenantWhereInput>
+    pay?: XOR<PayRelationFilter, PayWhereInput> | null
+    productSnapshots?: ProductSnapshotListRelationFilter
+  }
+
+  export type OrderOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    serial?: SortOrder
+    status?: SortOrder
+    user?: UserOrderByWithRelationInput
+    tenant?: TenantOrderByWithRelationInput
+    pay?: PayOrderByWithRelationInput
+    productSnapshots?: ProductSnapshotOrderByRelationAggregateInput
+  }
+
+  export type OrderWhereUniqueInput = {
+    id?: number
+  }
+
+  export type OrderOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    serial?: SortOrder
+    status?: SortOrder
+    _count?: OrderCountOrderByAggregateInput
+    _avg?: OrderAvgOrderByAggregateInput
+    _max?: OrderMaxOrderByAggregateInput
+    _min?: OrderMinOrderByAggregateInput
+    _sum?: OrderSumOrderByAggregateInput
+  }
+
+  export type OrderScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<OrderScalarWhereWithAggregatesInput>
+    OR?: Enumerable<OrderScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<OrderScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    isDeleted?: BoolWithAggregatesFilter | boolean
+    userId?: IntWithAggregatesFilter | number
+    tenantId?: IntWithAggregatesFilter | number
+    serial?: IntWithAggregatesFilter | number
+    status?: EnumOrderStatusWithAggregatesFilter | OrderStatus
+  }
+
+  export type PayWhereInput = {
+    AND?: Enumerable<PayWhereInput>
+    OR?: Enumerable<PayWhereInput>
+    NOT?: Enumerable<PayWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
+    userId?: IntFilter | number
+    tenantId?: IntFilter | number
+    status?: EnumPayStatusFilter | PayStatus
+    orderId?: IntFilter | number
+    transactionId?: StringFilter | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+    tenant?: XOR<TenantRelationFilter, TenantWhereInput>
+    Order?: XOR<OrderRelationFilter, OrderWhereInput>
+  }
+
+  export type PayOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    transactionId?: SortOrder
+    user?: UserOrderByWithRelationInput
+    tenant?: TenantOrderByWithRelationInput
+    Order?: OrderOrderByWithRelationInput
+  }
+
+  export type PayWhereUniqueInput = {
+    id?: number
+    orderId?: number
+  }
+
+  export type PayOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    transactionId?: SortOrder
+    _count?: PayCountOrderByAggregateInput
+    _avg?: PayAvgOrderByAggregateInput
+    _max?: PayMaxOrderByAggregateInput
+    _min?: PayMinOrderByAggregateInput
+    _sum?: PaySumOrderByAggregateInput
+  }
+
+  export type PayScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<PayScalarWhereWithAggregatesInput>
+    OR?: Enumerable<PayScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<PayScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    isDeleted?: BoolWithAggregatesFilter | boolean
+    userId?: IntWithAggregatesFilter | number
+    tenantId?: IntWithAggregatesFilter | number
+    status?: EnumPayStatusWithAggregatesFilter | PayStatus
+    orderId?: IntWithAggregatesFilter | number
+    transactionId?: StringWithAggregatesFilter | string
   }
 
   export type TenantCreateInput = {
@@ -17662,8 +23098,8 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
     menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
@@ -17671,6 +23107,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateInput = {
@@ -17682,8 +23122,8 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
@@ -17691,6 +23131,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUpdateInput = {
@@ -17701,8 +23145,8 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
     menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
@@ -17710,6 +23154,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateInput = {
@@ -17721,8 +23169,8 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
@@ -17730,6 +23178,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateManyInput = {
@@ -17900,14 +23352,17 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenant: TenantCreateNestedOneWithoutUsersInput
     profile?: UserProfileCreateNestedOneWithoutUserInput
     weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
     orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutUserInput
+    orders?: OrderCreateNestedManyWithoutUserInput
+    pays?: PayCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -17920,14 +23375,17 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenantId: number
     profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
     orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutUserInput
+    orders?: OrderUncheckedCreateNestedManyWithoutUserInput
+    pays?: PayUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -17939,14 +23397,17 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenant?: TenantUpdateOneRequiredWithoutUsersNestedInput
     profile?: UserProfileUpdateOneWithoutUserNestedInput
     weixinProfile?: WeixinProfileUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutUserNestedInput
+    orders?: OrderUpdateManyWithoutUserNestedInput
+    pays?: PayUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -17959,14 +23420,17 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenantId?: IntFieldUpdateOperationsInput | number
     profile?: UserProfileUncheckedUpdateOneWithoutUserNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUncheckedUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutUserNestedInput
+    pays?: PayUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -17979,9 +23443,9 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenantId: number
   }
@@ -17995,9 +23459,9 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -18011,9 +23475,9 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenantId?: IntFieldUpdateOperationsInput | number
   }
@@ -18384,7 +23848,6 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataCreateInput = {
-    id?: string
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -18394,7 +23857,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedCreateInput = {
-    id?: string
+    id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -18404,7 +23867,6 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -18414,7 +23876,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
+    id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -18424,7 +23886,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataCreateManyInput = {
-    id?: string
+    id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -18434,7 +23896,6 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -18442,7 +23903,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
+    id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -18575,12 +24036,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     isDeleted?: boolean
     unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
-    user: UserCreateNestedOneWithoutWeixinProfileInput
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
     tenant: TenantCreateNestedOneWithoutWeixinProfileInput
+    user: UserCreateNestedOneWithoutWeixinProfileInput
   }
 
   export type WeixinProfileUncheckedCreateInput = {
@@ -18588,13 +24049,13 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
-    unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
-    userId: number
     tenantId: number
+    userId: number
+    unionid?: string | null
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
   }
 
   export type WeixinProfileUpdateInput = {
@@ -18602,12 +24063,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
-    user?: UserUpdateOneRequiredWithoutWeixinProfileNestedInput
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
     tenant?: TenantUpdateOneRequiredWithoutWeixinProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWeixinProfileNestedInput
   }
 
   export type WeixinProfileUncheckedUpdateInput = {
@@ -18615,13 +24076,13 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
-    userId?: IntFieldUpdateOperationsInput | number
     tenantId?: IntFieldUpdateOperationsInput | number
+    userId?: IntFieldUpdateOperationsInput | number
+    unionid?: NullableStringFieldUpdateOperationsInput | string | null
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type WeixinProfileCreateManyInput = {
@@ -18629,13 +24090,13 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
-    unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
-    userId: number
     tenantId: number
+    userId: number
+    unionid?: string | null
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
   }
 
   export type WeixinProfileUpdateManyMutationInput = {
@@ -18643,10 +24104,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type WeixinProfileUncheckedUpdateManyInput = {
@@ -18654,13 +24115,13 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
-    userId?: IntFieldUpdateOperationsInput | number
     tenantId?: IntFieldUpdateOperationsInput | number
+    userId?: IntFieldUpdateOperationsInput | number
+    unionid?: NullableStringFieldUpdateOperationsInput | string | null
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type OrderProfileCreateInput = {
@@ -18671,8 +24132,8 @@ export namespace Prisma {
     plan?: number | null
     amount?: number | null
     expireAt?: Date | string | null
-    user: UserCreateNestedOneWithoutOrderProfileInput
     tenant: TenantCreateNestedOneWithoutOrderProfileInput
+    user: UserCreateNestedOneWithoutOrderProfileInput
   }
 
   export type OrderProfileUncheckedCreateInput = {
@@ -18680,12 +24141,12 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
+    tenantId: number
     userId: number
     productType?: ProductType
     plan?: number | null
     amount?: number | null
     expireAt?: Date | string | null
-    tenantId: number
   }
 
   export type OrderProfileUpdateInput = {
@@ -18696,8 +24157,8 @@ export namespace Prisma {
     plan?: NullableIntFieldUpdateOperationsInput | number | null
     amount?: NullableIntFieldUpdateOperationsInput | number | null
     expireAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    user?: UserUpdateOneRequiredWithoutOrderProfileNestedInput
     tenant?: TenantUpdateOneRequiredWithoutOrderProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutOrderProfileNestedInput
   }
 
   export type OrderProfileUncheckedUpdateInput = {
@@ -18705,12 +24166,12 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
     userId?: IntFieldUpdateOperationsInput | number
     productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
     plan?: NullableIntFieldUpdateOperationsInput | number | null
     amount?: NullableIntFieldUpdateOperationsInput | number | null
     expireAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    tenantId?: IntFieldUpdateOperationsInput | number
   }
 
   export type OrderProfileCreateManyInput = {
@@ -18718,12 +24179,12 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
+    tenantId: number
     userId: number
     productType?: ProductType
     plan?: number | null
     amount?: number | null
     expireAt?: Date | string | null
-    tenantId: number
   }
 
   export type OrderProfileUpdateManyMutationInput = {
@@ -18741,12 +24202,387 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
     userId?: IntFieldUpdateOperationsInput | number
     productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
     plan?: NullableIntFieldUpdateOperationsInput | number | null
     amount?: NullableIntFieldUpdateOperationsInput | number | null
     expireAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ProductCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
+    tenant: TenantCreateNestedOneWithoutProductsInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutProductInput
+  }
+
+  export type ProductUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutProductInput
+  }
+
+  export type ProductUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+    tenant?: TenantUpdateOneRequiredWithoutProductsNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutProductNestedInput
+  }
+
+  export type ProductUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
     tenantId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutProductNestedInput
+  }
+
+  export type ProductCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
+  }
+
+  export type ProductUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductSnapshotCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    user: UserCreateNestedOneWithoutProductSnapshotsInput
+    tenant: TenantCreateNestedOneWithoutProductSnapshotsInput
+    order: OrderCreateNestedOneWithoutProductSnapshotsInput
+    product: ProductCreateNestedOneWithoutProductSnapshotsInput
+  }
+
+  export type ProductSnapshotUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+    productId: number
+  }
+
+  export type ProductSnapshotUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    user?: UserUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    order?: OrderUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    product?: ProductUpdateOneRequiredWithoutProductSnapshotsNestedInput
+  }
+
+  export type ProductSnapshotUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orderId?: IntFieldUpdateOperationsInput | number
+    productId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductSnapshotCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+    productId: number
+  }
+
+  export type ProductSnapshotUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ProductSnapshotUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orderId?: IntFieldUpdateOperationsInput | number
+    productId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type OrderCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    serial: number
+    status: OrderStatus
+    user: UserCreateNestedOneWithoutOrdersInput
+    tenant: TenantCreateNestedOneWithoutOrdersInput
+    pay?: PayCreateNestedOneWithoutOrderInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    serial: number
+    status: OrderStatus
+    pay?: PayUncheckedCreateNestedOneWithoutOrderInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutOrdersNestedInput
+    pay?: PayUpdateOneWithoutOrderNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    pay?: PayUncheckedUpdateOneWithoutOrderNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    serial: number
+    status: OrderStatus
+  }
+
+  export type OrderUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+  }
+
+  export type OrderUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+  }
+
+  export type PayCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    status?: PayStatus
+    transactionId: string
+    user: UserCreateNestedOneWithoutPaysInput
+    tenant: TenantCreateNestedOneWithoutPaysInput
+    Order: OrderCreateNestedOneWithoutPayInput
+  }
+
+  export type PayUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    status?: PayStatus
+    orderId: number
+    transactionId: string
+  }
+
+  export type PayUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    transactionId?: StringFieldUpdateOperationsInput | string
+    user?: UserUpdateOneRequiredWithoutPaysNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutPaysNestedInput
+    Order?: OrderUpdateOneRequiredWithoutPayNestedInput
+  }
+
+  export type PayUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    orderId?: IntFieldUpdateOperationsInput | number
+    transactionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PayCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    status?: PayStatus
+    orderId: number
+    transactionId: string
+  }
+
+  export type PayUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    transactionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PayUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    orderId?: IntFieldUpdateOperationsInput | number
+    transactionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type IntFilter = {
@@ -18804,15 +24640,15 @@ export namespace Prisma {
     not?: NestedStringNullableFilter | string | null
   }
 
+  export type MenuRelationFilter = {
+    is?: MenuWhereInput | null
+    isNot?: MenuWhereInput | null
+  }
+
   export type UserListRelationFilter = {
     every?: UserWhereInput
     some?: UserWhereInput
     none?: UserWhereInput
-  }
-
-  export type MenuRelationFilter = {
-    is?: MenuWhereInput | null
-    isNot?: MenuWhereInput | null
   }
 
   export type DynamicTableDefListRelationFilter = {
@@ -18857,6 +24693,30 @@ export namespace Prisma {
     none?: WeixinProfileWhereInput
   }
 
+  export type ProductSnapshotListRelationFilter = {
+    every?: ProductSnapshotWhereInput
+    some?: ProductSnapshotWhereInput
+    none?: ProductSnapshotWhereInput
+  }
+
+  export type OrderListRelationFilter = {
+    every?: OrderWhereInput
+    some?: OrderWhereInput
+    none?: OrderWhereInput
+  }
+
+  export type PayListRelationFilter = {
+    every?: PayWhereInput
+    some?: PayWhereInput
+    none?: PayWhereInput
+  }
+
+  export type ProductListRelationFilter = {
+    every?: ProductWhereInput
+    some?: ProductWhereInput
+    none?: ProductWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -18891,6 +24751,22 @@ export namespace Prisma {
   }
 
   export type WeixinProfileOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ProductSnapshotOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PayOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ProductOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -19110,9 +24986,9 @@ export namespace Prisma {
     hashedRefreshToken?: SortOrder
     recoveryCode?: SortOrder
     recoveryToken?: SortOrder
-    unionid?: SortOrder
     email?: SortOrder
     mobile?: SortOrder
+    anonymousCustomerToken?: SortOrder
     image?: SortOrder
     tenantId?: SortOrder
   }
@@ -19132,9 +25008,9 @@ export namespace Prisma {
     hashedRefreshToken?: SortOrder
     recoveryCode?: SortOrder
     recoveryToken?: SortOrder
-    unionid?: SortOrder
     email?: SortOrder
     mobile?: SortOrder
+    anonymousCustomerToken?: SortOrder
     image?: SortOrder
     tenantId?: SortOrder
   }
@@ -19149,9 +25025,9 @@ export namespace Prisma {
     hashedRefreshToken?: SortOrder
     recoveryCode?: SortOrder
     recoveryToken?: SortOrder
-    unionid?: SortOrder
     email?: SortOrder
     mobile?: SortOrder
+    anonymousCustomerToken?: SortOrder
     image?: SortOrder
     tenantId?: SortOrder
   }
@@ -19482,6 +25358,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataAvgOrderByAggregateInput = {
+    id?: SortOrder
     dynamicTableDefId?: SortOrder
     tenantId?: SortOrder
   }
@@ -19505,6 +25382,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataSumOrderByAggregateInput = {
+    id?: SortOrder
     dynamicTableDefId?: SortOrder
     tenantId?: SortOrder
   }
@@ -19604,69 +25482,6 @@ export namespace Prisma {
     id?: SortOrder
   }
 
-  export type WeixinProfileCountOrderByAggregateInput = {
-    id?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    isDeleted?: SortOrder
-    unionid?: SortOrder
-    loginOpenid?: SortOrder
-    headimgurl?: SortOrder
-    nickname?: SortOrder
-    sex?: SortOrder
-    userId?: SortOrder
-    tenantId?: SortOrder
-  }
-
-  export type WeixinProfileAvgOrderByAggregateInput = {
-    id?: SortOrder
-    sex?: SortOrder
-    userId?: SortOrder
-    tenantId?: SortOrder
-  }
-
-  export type WeixinProfileMaxOrderByAggregateInput = {
-    id?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    isDeleted?: SortOrder
-    unionid?: SortOrder
-    loginOpenid?: SortOrder
-    headimgurl?: SortOrder
-    nickname?: SortOrder
-    sex?: SortOrder
-    userId?: SortOrder
-    tenantId?: SortOrder
-  }
-
-  export type WeixinProfileMinOrderByAggregateInput = {
-    id?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    isDeleted?: SortOrder
-    unionid?: SortOrder
-    loginOpenid?: SortOrder
-    headimgurl?: SortOrder
-    nickname?: SortOrder
-    sex?: SortOrder
-    userId?: SortOrder
-    tenantId?: SortOrder
-  }
-
-  export type WeixinProfileSumOrderByAggregateInput = {
-    id?: SortOrder
-    sex?: SortOrder
-    userId?: SortOrder
-    tenantId?: SortOrder
-  }
-
-  export type EnumProductTypeFilter = {
-    equals?: ProductType
-    in?: Enumerable<ProductType>
-    notIn?: Enumerable<ProductType>
-    not?: NestedEnumProductTypeFilter | ProductType
-  }
-
   export type IntNullableFilter = {
     equals?: number | null
     in?: Enumerable<number> | number | null
@@ -19678,80 +25493,60 @@ export namespace Prisma {
     not?: NestedIntNullableFilter | number | null
   }
 
-  export type DateTimeNullableFilter = {
-    equals?: Date | string | null
-    in?: Enumerable<Date> | Enumerable<string> | Date | string | null
-    notIn?: Enumerable<Date> | Enumerable<string> | Date | string | null
-    lt?: Date | string
-    lte?: Date | string
-    gt?: Date | string
-    gte?: Date | string
-    not?: NestedDateTimeNullableFilter | Date | string | null
-  }
-
-  export type OrderProfileCountOrderByAggregateInput = {
+  export type WeixinProfileCountOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isDeleted?: SortOrder
-    userId?: SortOrder
-    productType?: SortOrder
-    plan?: SortOrder
-    amount?: SortOrder
-    expireAt?: SortOrder
     tenantId?: SortOrder
+    userId?: SortOrder
+    unionid?: SortOrder
+    loginOpenid?: SortOrder
+    headimgurl?: SortOrder
+    nickname?: SortOrder
+    sex?: SortOrder
   }
 
-  export type OrderProfileAvgOrderByAggregateInput = {
+  export type WeixinProfileAvgOrderByAggregateInput = {
     id?: SortOrder
-    userId?: SortOrder
-    plan?: SortOrder
-    amount?: SortOrder
     tenantId?: SortOrder
+    userId?: SortOrder
+    sex?: SortOrder
   }
 
-  export type OrderProfileMaxOrderByAggregateInput = {
-    id?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    isDeleted?: SortOrder
-    userId?: SortOrder
-    productType?: SortOrder
-    plan?: SortOrder
-    amount?: SortOrder
-    expireAt?: SortOrder
-    tenantId?: SortOrder
-  }
-
-  export type OrderProfileMinOrderByAggregateInput = {
+  export type WeixinProfileMaxOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isDeleted?: SortOrder
-    userId?: SortOrder
-    productType?: SortOrder
-    plan?: SortOrder
-    amount?: SortOrder
-    expireAt?: SortOrder
     tenantId?: SortOrder
+    userId?: SortOrder
+    unionid?: SortOrder
+    loginOpenid?: SortOrder
+    headimgurl?: SortOrder
+    nickname?: SortOrder
+    sex?: SortOrder
   }
 
-  export type OrderProfileSumOrderByAggregateInput = {
+  export type WeixinProfileMinOrderByAggregateInput = {
     id?: SortOrder
-    userId?: SortOrder
-    plan?: SortOrder
-    amount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
     tenantId?: SortOrder
+    userId?: SortOrder
+    unionid?: SortOrder
+    loginOpenid?: SortOrder
+    headimgurl?: SortOrder
+    nickname?: SortOrder
+    sex?: SortOrder
   }
 
-  export type EnumProductTypeWithAggregatesFilter = {
-    equals?: ProductType
-    in?: Enumerable<ProductType>
-    notIn?: Enumerable<ProductType>
-    not?: NestedEnumProductTypeWithAggregatesFilter | ProductType
-    _count?: NestedIntFilter
-    _min?: NestedEnumProductTypeFilter
-    _max?: NestedEnumProductTypeFilter
+  export type WeixinProfileSumOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    sex?: SortOrder
   }
 
   export type IntNullableWithAggregatesFilter = {
@@ -19770,6 +25565,89 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter
   }
 
+  export type EnumProductTypeFilter = {
+    equals?: ProductType
+    in?: Enumerable<ProductType>
+    notIn?: Enumerable<ProductType>
+    not?: NestedEnumProductTypeFilter | ProductType
+  }
+
+  export type DateTimeNullableFilter = {
+    equals?: Date | string | null
+    in?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    lt?: Date | string
+    lte?: Date | string
+    gt?: Date | string
+    gte?: Date | string
+    not?: NestedDateTimeNullableFilter | Date | string | null
+  }
+
+  export type OrderProfileCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    expireAt?: SortOrder
+  }
+
+  export type OrderProfileAvgOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+  }
+
+  export type OrderProfileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    expireAt?: SortOrder
+  }
+
+  export type OrderProfileMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    expireAt?: SortOrder
+  }
+
+  export type OrderProfileSumOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+  }
+
+  export type EnumProductTypeWithAggregatesFilter = {
+    equals?: ProductType
+    in?: Enumerable<ProductType>
+    notIn?: Enumerable<ProductType>
+    not?: NestedEnumProductTypeWithAggregatesFilter | ProductType
+    _count?: NestedIntFilter
+    _min?: NestedEnumProductTypeFilter
+    _max?: NestedEnumProductTypeFilter
+  }
+
   export type DateTimeNullableWithAggregatesFilter = {
     equals?: Date | string | null
     in?: Enumerable<Date> | Enumerable<string> | Date | string | null
@@ -19784,17 +25662,324 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter
   }
 
-  export type UserCreateNestedManyWithoutTenantInput = {
-    create?: XOR<Enumerable<UserCreateWithoutTenantInput>, Enumerable<UserUncheckedCreateWithoutTenantInput>>
-    connectOrCreate?: Enumerable<UserCreateOrConnectWithoutTenantInput>
-    createMany?: UserCreateManyTenantInputEnvelope
-    connect?: Enumerable<UserWhereUniqueInput>
+  export type DecimalFilter = {
+    equals?: Decimal | DecimalJsLike | number | string
+    in?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    notIn?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    lt?: Decimal | DecimalJsLike | number | string
+    lte?: Decimal | DecimalJsLike | number | string
+    gt?: Decimal | DecimalJsLike | number | string
+    gte?: Decimal | DecimalJsLike | number | string
+    not?: NestedDecimalFilter | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ProductCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    price?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    extendedDescriptionData?: SortOrder
+    fileSize?: SortOrder
+    storeDuration?: SortOrder
+    hasAds?: SortOrder
+    tecSupport?: SortOrder
+    validityPeriod?: SortOrder
+    restricted?: SortOrder
+  }
+
+  export type ProductAvgOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    price?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    storeDuration?: SortOrder
+    validityPeriod?: SortOrder
+    restricted?: SortOrder
+  }
+
+  export type ProductMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    price?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    fileSize?: SortOrder
+    storeDuration?: SortOrder
+    hasAds?: SortOrder
+    tecSupport?: SortOrder
+    validityPeriod?: SortOrder
+    restricted?: SortOrder
+  }
+
+  export type ProductMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    price?: SortOrder
+    productType?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    fileSize?: SortOrder
+    storeDuration?: SortOrder
+    hasAds?: SortOrder
+    tecSupport?: SortOrder
+    validityPeriod?: SortOrder
+    restricted?: SortOrder
+  }
+
+  export type ProductSumOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    price?: SortOrder
+    plan?: SortOrder
+    amount?: SortOrder
+    storeDuration?: SortOrder
+    validityPeriod?: SortOrder
+    restricted?: SortOrder
+  }
+
+  export type DecimalWithAggregatesFilter = {
+    equals?: Decimal | DecimalJsLike | number | string
+    in?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    notIn?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    lt?: Decimal | DecimalJsLike | number | string
+    lte?: Decimal | DecimalJsLike | number | string
+    gt?: Decimal | DecimalJsLike | number | string
+    gte?: Decimal | DecimalJsLike | number | string
+    not?: NestedDecimalWithAggregatesFilter | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter
+    _avg?: NestedDecimalFilter
+    _sum?: NestedDecimalFilter
+    _min?: NestedDecimalFilter
+    _max?: NestedDecimalFilter
+  }
+
+  export type OrderRelationFilter = {
+    is?: OrderWhereInput | null
+    isNot?: OrderWhereInput | null
+  }
+
+  export type ProductRelationFilter = {
+    is?: ProductWhereInput | null
+    isNot?: ProductWhereInput | null
+  }
+
+  export type ProductSnapshotCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    snapshotPrice?: SortOrder
+    orderId?: SortOrder
+    productId?: SortOrder
+  }
+
+  export type ProductSnapshotAvgOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    snapshotPrice?: SortOrder
+    orderId?: SortOrder
+    productId?: SortOrder
+  }
+
+  export type ProductSnapshotMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    snapshotPrice?: SortOrder
+    orderId?: SortOrder
+    productId?: SortOrder
+  }
+
+  export type ProductSnapshotMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    snapshotPrice?: SortOrder
+    orderId?: SortOrder
+    productId?: SortOrder
+  }
+
+  export type ProductSnapshotSumOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    snapshotPrice?: SortOrder
+    orderId?: SortOrder
+    productId?: SortOrder
+  }
+
+  export type EnumOrderStatusFilter = {
+    equals?: OrderStatus
+    in?: Enumerable<OrderStatus>
+    notIn?: Enumerable<OrderStatus>
+    not?: NestedEnumOrderStatusFilter | OrderStatus
+  }
+
+  export type PayRelationFilter = {
+    is?: PayWhereInput | null
+    isNot?: PayWhereInput | null
+  }
+
+  export type OrderCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    serial?: SortOrder
+    status?: SortOrder
+  }
+
+  export type OrderAvgOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    serial?: SortOrder
+  }
+
+  export type OrderMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    serial?: SortOrder
+    status?: SortOrder
+  }
+
+  export type OrderMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    serial?: SortOrder
+    status?: SortOrder
+  }
+
+  export type OrderSumOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    serial?: SortOrder
+  }
+
+  export type EnumOrderStatusWithAggregatesFilter = {
+    equals?: OrderStatus
+    in?: Enumerable<OrderStatus>
+    notIn?: Enumerable<OrderStatus>
+    not?: NestedEnumOrderStatusWithAggregatesFilter | OrderStatus
+    _count?: NestedIntFilter
+    _min?: NestedEnumOrderStatusFilter
+    _max?: NestedEnumOrderStatusFilter
+  }
+
+  export type EnumPayStatusFilter = {
+    equals?: PayStatus
+    in?: Enumerable<PayStatus>
+    notIn?: Enumerable<PayStatus>
+    not?: NestedEnumPayStatusFilter | PayStatus
+  }
+
+  export type PayCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    transactionId?: SortOrder
+  }
+
+  export type PayAvgOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    orderId?: SortOrder
+  }
+
+  export type PayMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    transactionId?: SortOrder
+  }
+
+  export type PayMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    isDeleted?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    orderId?: SortOrder
+    transactionId?: SortOrder
+  }
+
+  export type PaySumOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    tenantId?: SortOrder
+    orderId?: SortOrder
+  }
+
+  export type EnumPayStatusWithAggregatesFilter = {
+    equals?: PayStatus
+    in?: Enumerable<PayStatus>
+    notIn?: Enumerable<PayStatus>
+    not?: NestedEnumPayStatusWithAggregatesFilter | PayStatus
+    _count?: NestedIntFilter
+    _min?: NestedEnumPayStatusFilter
+    _max?: NestedEnumPayStatusFilter
   }
 
   export type MenuCreateNestedOneWithoutTenantInput = {
     create?: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
     connectOrCreate?: MenuCreateOrConnectWithoutTenantInput
     connect?: MenuWhereUniqueInput
+  }
+
+  export type UserCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<UserCreateWithoutTenantInput>, Enumerable<UserUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<UserCreateOrConnectWithoutTenantInput>
+    createMany?: UserCreateManyTenantInputEnvelope
+    connect?: Enumerable<UserWhereUniqueInput>
   }
 
   export type DynamicTableDefCreateNestedManyWithoutTenantInput = {
@@ -19846,17 +26031,45 @@ export namespace Prisma {
     connect?: Enumerable<WeixinProfileWhereUniqueInput>
   }
 
-  export type UserUncheckedCreateNestedManyWithoutTenantInput = {
-    create?: XOR<Enumerable<UserCreateWithoutTenantInput>, Enumerable<UserUncheckedCreateWithoutTenantInput>>
-    connectOrCreate?: Enumerable<UserCreateOrConnectWithoutTenantInput>
-    createMany?: UserCreateManyTenantInputEnvelope
-    connect?: Enumerable<UserWhereUniqueInput>
+  export type ProductSnapshotCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutTenantInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutTenantInput>
+    createMany?: ProductSnapshotCreateManyTenantInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type OrderCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutTenantInput>, Enumerable<OrderUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutTenantInput>
+    createMany?: OrderCreateManyTenantInputEnvelope
+    connect?: Enumerable<OrderWhereUniqueInput>
+  }
+
+  export type PayCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<PayCreateWithoutTenantInput>, Enumerable<PayUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutTenantInput>
+    createMany?: PayCreateManyTenantInputEnvelope
+    connect?: Enumerable<PayWhereUniqueInput>
+  }
+
+  export type ProductCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<ProductCreateWithoutTenantInput>, Enumerable<ProductUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductCreateOrConnectWithoutTenantInput>
+    createMany?: ProductCreateManyTenantInputEnvelope
+    connect?: Enumerable<ProductWhereUniqueInput>
   }
 
   export type MenuUncheckedCreateNestedOneWithoutTenantInput = {
     create?: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
     connectOrCreate?: MenuCreateOrConnectWithoutTenantInput
     connect?: MenuWhereUniqueInput
+  }
+
+  export type UserUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<UserCreateWithoutTenantInput>, Enumerable<UserUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<UserCreateOrConnectWithoutTenantInput>
+    createMany?: UserCreateManyTenantInputEnvelope
+    connect?: Enumerable<UserWhereUniqueInput>
   }
 
   export type DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput = {
@@ -19908,6 +26121,34 @@ export namespace Prisma {
     connect?: Enumerable<WeixinProfileWhereUniqueInput>
   }
 
+  export type ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutTenantInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutTenantInput>
+    createMany?: ProductSnapshotCreateManyTenantInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type OrderUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutTenantInput>, Enumerable<OrderUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutTenantInput>
+    createMany?: OrderCreateManyTenantInputEnvelope
+    connect?: Enumerable<OrderWhereUniqueInput>
+  }
+
+  export type PayUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<PayCreateWithoutTenantInput>, Enumerable<PayUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutTenantInput>
+    createMany?: PayCreateManyTenantInputEnvelope
+    connect?: Enumerable<PayWhereUniqueInput>
+  }
+
+  export type ProductUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<Enumerable<ProductCreateWithoutTenantInput>, Enumerable<ProductUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductCreateOrConnectWithoutTenantInput>
+    createMany?: ProductCreateManyTenantInputEnvelope
+    connect?: Enumerable<ProductWhereUniqueInput>
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
@@ -19924,6 +26165,16 @@ export namespace Prisma {
     set?: string | null
   }
 
+  export type MenuUpdateOneWithoutTenantNestedInput = {
+    create?: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
+    connectOrCreate?: MenuCreateOrConnectWithoutTenantInput
+    upsert?: MenuUpsertWithoutTenantInput
+    disconnect?: boolean
+    delete?: boolean
+    connect?: MenuWhereUniqueInput
+    update?: XOR<MenuUpdateWithoutTenantInput, MenuUncheckedUpdateWithoutTenantInput>
+  }
+
   export type UserUpdateManyWithoutTenantNestedInput = {
     create?: XOR<Enumerable<UserCreateWithoutTenantInput>, Enumerable<UserUncheckedCreateWithoutTenantInput>>
     connectOrCreate?: Enumerable<UserCreateOrConnectWithoutTenantInput>
@@ -19936,16 +26187,6 @@ export namespace Prisma {
     update?: Enumerable<UserUpdateWithWhereUniqueWithoutTenantInput>
     updateMany?: Enumerable<UserUpdateManyWithWhereWithoutTenantInput>
     deleteMany?: Enumerable<UserScalarWhereInput>
-  }
-
-  export type MenuUpdateOneWithoutTenantNestedInput = {
-    create?: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
-    connectOrCreate?: MenuCreateOrConnectWithoutTenantInput
-    upsert?: MenuUpsertWithoutTenantInput
-    disconnect?: boolean
-    delete?: boolean
-    connect?: MenuWhereUniqueInput
-    update?: XOR<MenuUpdateWithoutTenantInput, MenuUncheckedUpdateWithoutTenantInput>
   }
 
   export type DynamicTableDefUpdateManyWithoutTenantNestedInput = {
@@ -20046,12 +26287,78 @@ export namespace Prisma {
     deleteMany?: Enumerable<WeixinProfileScalarWhereInput>
   }
 
+  export type ProductSnapshotUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutTenantInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: ProductSnapshotCreateManyTenantInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type OrderUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutTenantInput>, Enumerable<OrderUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<OrderUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: OrderCreateManyTenantInputEnvelope
+    set?: Enumerable<OrderWhereUniqueInput>
+    disconnect?: Enumerable<OrderWhereUniqueInput>
+    delete?: Enumerable<OrderWhereUniqueInput>
+    connect?: Enumerable<OrderWhereUniqueInput>
+    update?: Enumerable<OrderUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<OrderUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<OrderScalarWhereInput>
+  }
+
+  export type PayUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<PayCreateWithoutTenantInput>, Enumerable<PayUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<PayUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: PayCreateManyTenantInputEnvelope
+    set?: Enumerable<PayWhereUniqueInput>
+    disconnect?: Enumerable<PayWhereUniqueInput>
+    delete?: Enumerable<PayWhereUniqueInput>
+    connect?: Enumerable<PayWhereUniqueInput>
+    update?: Enumerable<PayUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<PayUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<PayScalarWhereInput>
+  }
+
+  export type ProductUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<ProductCreateWithoutTenantInput>, Enumerable<ProductUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<ProductUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: ProductCreateManyTenantInputEnvelope
+    set?: Enumerable<ProductWhereUniqueInput>
+    disconnect?: Enumerable<ProductWhereUniqueInput>
+    delete?: Enumerable<ProductWhereUniqueInput>
+    connect?: Enumerable<ProductWhereUniqueInput>
+    update?: Enumerable<ProductUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<ProductUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<ProductScalarWhereInput>
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type MenuUncheckedUpdateOneWithoutTenantNestedInput = {
+    create?: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
+    connectOrCreate?: MenuCreateOrConnectWithoutTenantInput
+    upsert?: MenuUpsertWithoutTenantInput
+    disconnect?: boolean
+    delete?: boolean
+    connect?: MenuWhereUniqueInput
+    update?: XOR<MenuUpdateWithoutTenantInput, MenuUncheckedUpdateWithoutTenantInput>
   }
 
   export type UserUncheckedUpdateManyWithoutTenantNestedInput = {
@@ -20066,16 +26373,6 @@ export namespace Prisma {
     update?: Enumerable<UserUpdateWithWhereUniqueWithoutTenantInput>
     updateMany?: Enumerable<UserUpdateManyWithWhereWithoutTenantInput>
     deleteMany?: Enumerable<UserScalarWhereInput>
-  }
-
-  export type MenuUncheckedUpdateOneWithoutTenantNestedInput = {
-    create?: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
-    connectOrCreate?: MenuCreateOrConnectWithoutTenantInput
-    upsert?: MenuUpsertWithoutTenantInput
-    disconnect?: boolean
-    delete?: boolean
-    connect?: MenuWhereUniqueInput
-    update?: XOR<MenuUpdateWithoutTenantInput, MenuUncheckedUpdateWithoutTenantInput>
   }
 
   export type DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput = {
@@ -20176,6 +26473,62 @@ export namespace Prisma {
     deleteMany?: Enumerable<WeixinProfileScalarWhereInput>
   }
 
+  export type ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutTenantInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: ProductSnapshotCreateManyTenantInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type OrderUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutTenantInput>, Enumerable<OrderUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<OrderUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: OrderCreateManyTenantInputEnvelope
+    set?: Enumerable<OrderWhereUniqueInput>
+    disconnect?: Enumerable<OrderWhereUniqueInput>
+    delete?: Enumerable<OrderWhereUniqueInput>
+    connect?: Enumerable<OrderWhereUniqueInput>
+    update?: Enumerable<OrderUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<OrderUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<OrderScalarWhereInput>
+  }
+
+  export type PayUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<PayCreateWithoutTenantInput>, Enumerable<PayUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<PayUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: PayCreateManyTenantInputEnvelope
+    set?: Enumerable<PayWhereUniqueInput>
+    disconnect?: Enumerable<PayWhereUniqueInput>
+    delete?: Enumerable<PayWhereUniqueInput>
+    connect?: Enumerable<PayWhereUniqueInput>
+    update?: Enumerable<PayUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<PayUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<PayScalarWhereInput>
+  }
+
+  export type ProductUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<Enumerable<ProductCreateWithoutTenantInput>, Enumerable<ProductUncheckedCreateWithoutTenantInput>>
+    connectOrCreate?: Enumerable<ProductCreateOrConnectWithoutTenantInput>
+    upsert?: Enumerable<ProductUpsertWithWhereUniqueWithoutTenantInput>
+    createMany?: ProductCreateManyTenantInputEnvelope
+    set?: Enumerable<ProductWhereUniqueInput>
+    disconnect?: Enumerable<ProductWhereUniqueInput>
+    delete?: Enumerable<ProductWhereUniqueInput>
+    connect?: Enumerable<ProductWhereUniqueInput>
+    update?: Enumerable<ProductUpdateWithWhereUniqueWithoutTenantInput>
+    updateMany?: Enumerable<ProductUpdateManyWithWhereWithoutTenantInput>
+    deleteMany?: Enumerable<ProductScalarWhereInput>
+  }
+
   export type TenantCreateNestedOneWithoutUsersInput = {
     create?: XOR<TenantCreateWithoutUsersInput, TenantUncheckedCreateWithoutUsersInput>
     connectOrCreate?: TenantCreateOrConnectWithoutUsersInput
@@ -20200,6 +26553,27 @@ export namespace Prisma {
     connect?: OrderProfileWhereUniqueInput
   }
 
+  export type ProductSnapshotCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutUserInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutUserInput>
+    createMany?: ProductSnapshotCreateManyUserInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type OrderCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutUserInput>, Enumerable<OrderUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutUserInput>
+    createMany?: OrderCreateManyUserInputEnvelope
+    connect?: Enumerable<OrderWhereUniqueInput>
+  }
+
+  export type PayCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<PayCreateWithoutUserInput>, Enumerable<PayUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutUserInput>
+    createMany?: PayCreateManyUserInputEnvelope
+    connect?: Enumerable<PayWhereUniqueInput>
+  }
+
   export type UserProfileUncheckedCreateNestedOneWithoutUserInput = {
     create?: XOR<UserProfileCreateWithoutUserInput, UserProfileUncheckedCreateWithoutUserInput>
     connectOrCreate?: UserProfileCreateOrConnectWithoutUserInput
@@ -20216,6 +26590,27 @@ export namespace Prisma {
     create?: XOR<OrderProfileCreateWithoutUserInput, OrderProfileUncheckedCreateWithoutUserInput>
     connectOrCreate?: OrderProfileCreateOrConnectWithoutUserInput
     connect?: OrderProfileWhereUniqueInput
+  }
+
+  export type ProductSnapshotUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutUserInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutUserInput>
+    createMany?: ProductSnapshotCreateManyUserInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type OrderUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutUserInput>, Enumerable<OrderUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutUserInput>
+    createMany?: OrderCreateManyUserInputEnvelope
+    connect?: Enumerable<OrderWhereUniqueInput>
+  }
+
+  export type PayUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<PayCreateWithoutUserInput>, Enumerable<PayUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutUserInput>
+    createMany?: PayCreateManyUserInputEnvelope
+    connect?: Enumerable<PayWhereUniqueInput>
   }
 
   export type TenantUpdateOneRequiredWithoutUsersNestedInput = {
@@ -20256,6 +26651,48 @@ export namespace Prisma {
     update?: XOR<OrderProfileUpdateWithoutUserInput, OrderProfileUncheckedUpdateWithoutUserInput>
   }
 
+  export type ProductSnapshotUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutUserInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: ProductSnapshotCreateManyUserInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type OrderUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutUserInput>, Enumerable<OrderUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<OrderUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: OrderCreateManyUserInputEnvelope
+    set?: Enumerable<OrderWhereUniqueInput>
+    disconnect?: Enumerable<OrderWhereUniqueInput>
+    delete?: Enumerable<OrderWhereUniqueInput>
+    connect?: Enumerable<OrderWhereUniqueInput>
+    update?: Enumerable<OrderUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<OrderUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<OrderScalarWhereInput>
+  }
+
+  export type PayUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<PayCreateWithoutUserInput>, Enumerable<PayUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<PayUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: PayCreateManyUserInputEnvelope
+    set?: Enumerable<PayWhereUniqueInput>
+    disconnect?: Enumerable<PayWhereUniqueInput>
+    delete?: Enumerable<PayWhereUniqueInput>
+    connect?: Enumerable<PayWhereUniqueInput>
+    update?: Enumerable<PayUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<PayUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<PayScalarWhereInput>
+  }
+
   export type UserProfileUncheckedUpdateOneWithoutUserNestedInput = {
     create?: XOR<UserProfileCreateWithoutUserInput, UserProfileUncheckedCreateWithoutUserInput>
     connectOrCreate?: UserProfileCreateOrConnectWithoutUserInput
@@ -20284,6 +26721,48 @@ export namespace Prisma {
     delete?: boolean
     connect?: OrderProfileWhereUniqueInput
     update?: XOR<OrderProfileUpdateWithoutUserInput, OrderProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutUserInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: ProductSnapshotCreateManyUserInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type OrderUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<OrderCreateWithoutUserInput>, Enumerable<OrderUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<OrderCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<OrderUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: OrderCreateManyUserInputEnvelope
+    set?: Enumerable<OrderWhereUniqueInput>
+    disconnect?: Enumerable<OrderWhereUniqueInput>
+    delete?: Enumerable<OrderWhereUniqueInput>
+    connect?: Enumerable<OrderWhereUniqueInput>
+    update?: Enumerable<OrderUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<OrderUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<OrderScalarWhereInput>
+  }
+
+  export type PayUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<PayCreateWithoutUserInput>, Enumerable<PayUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<PayCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<PayUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: PayCreateManyUserInputEnvelope
+    set?: Enumerable<PayWhereUniqueInput>
+    disconnect?: Enumerable<PayWhereUniqueInput>
+    delete?: Enumerable<PayWhereUniqueInput>
+    connect?: Enumerable<PayWhereUniqueInput>
+    update?: Enumerable<PayUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<PayUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<PayScalarWhereInput>
   }
 
   export type TenantCreateNestedOneWithoutUserPreSignupInput = {
@@ -20500,48 +26979,16 @@ export namespace Prisma {
     update?: XOR<TenantUpdateWithoutMenuInput, TenantUncheckedUpdateWithoutMenuInput>
   }
 
-  export type UserCreateNestedOneWithoutWeixinProfileInput = {
-    create?: XOR<UserCreateWithoutWeixinProfileInput, UserUncheckedCreateWithoutWeixinProfileInput>
-    connectOrCreate?: UserCreateOrConnectWithoutWeixinProfileInput
-    connect?: UserWhereUniqueInput
-  }
-
   export type TenantCreateNestedOneWithoutWeixinProfileInput = {
     create?: XOR<TenantCreateWithoutWeixinProfileInput, TenantUncheckedCreateWithoutWeixinProfileInput>
     connectOrCreate?: TenantCreateOrConnectWithoutWeixinProfileInput
     connect?: TenantWhereUniqueInput
   }
 
-  export type UserUpdateOneRequiredWithoutWeixinProfileNestedInput = {
+  export type UserCreateNestedOneWithoutWeixinProfileInput = {
     create?: XOR<UserCreateWithoutWeixinProfileInput, UserUncheckedCreateWithoutWeixinProfileInput>
     connectOrCreate?: UserCreateOrConnectWithoutWeixinProfileInput
-    upsert?: UserUpsertWithoutWeixinProfileInput
     connect?: UserWhereUniqueInput
-    update?: XOR<UserUpdateWithoutWeixinProfileInput, UserUncheckedUpdateWithoutWeixinProfileInput>
-  }
-
-  export type TenantUpdateOneRequiredWithoutWeixinProfileNestedInput = {
-    create?: XOR<TenantCreateWithoutWeixinProfileInput, TenantUncheckedCreateWithoutWeixinProfileInput>
-    connectOrCreate?: TenantCreateOrConnectWithoutWeixinProfileInput
-    upsert?: TenantUpsertWithoutWeixinProfileInput
-    connect?: TenantWhereUniqueInput
-    update?: XOR<TenantUpdateWithoutWeixinProfileInput, TenantUncheckedUpdateWithoutWeixinProfileInput>
-  }
-
-  export type UserCreateNestedOneWithoutOrderProfileInput = {
-    create?: XOR<UserCreateWithoutOrderProfileInput, UserUncheckedCreateWithoutOrderProfileInput>
-    connectOrCreate?: UserCreateOrConnectWithoutOrderProfileInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type TenantCreateNestedOneWithoutOrderProfileInput = {
-    create?: XOR<TenantCreateWithoutOrderProfileInput, TenantUncheckedCreateWithoutOrderProfileInput>
-    connectOrCreate?: TenantCreateOrConnectWithoutOrderProfileInput
-    connect?: TenantWhereUniqueInput
-  }
-
-  export type EnumProductTypeFieldUpdateOperationsInput = {
-    set?: ProductType
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -20552,8 +26999,48 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type TenantUpdateOneRequiredWithoutWeixinProfileNestedInput = {
+    create?: XOR<TenantCreateWithoutWeixinProfileInput, TenantUncheckedCreateWithoutWeixinProfileInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutWeixinProfileInput
+    upsert?: TenantUpsertWithoutWeixinProfileInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<TenantUpdateWithoutWeixinProfileInput, TenantUncheckedUpdateWithoutWeixinProfileInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutWeixinProfileNestedInput = {
+    create?: XOR<UserCreateWithoutWeixinProfileInput, UserUncheckedCreateWithoutWeixinProfileInput>
+    connectOrCreate?: UserCreateOrConnectWithoutWeixinProfileInput
+    upsert?: UserUpsertWithoutWeixinProfileInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<UserUpdateWithoutWeixinProfileInput, UserUncheckedUpdateWithoutWeixinProfileInput>
+  }
+
+  export type TenantCreateNestedOneWithoutOrderProfileInput = {
+    create?: XOR<TenantCreateWithoutOrderProfileInput, TenantUncheckedCreateWithoutOrderProfileInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutOrderProfileInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutOrderProfileInput = {
+    create?: XOR<UserCreateWithoutOrderProfileInput, UserUncheckedCreateWithoutOrderProfileInput>
+    connectOrCreate?: UserCreateOrConnectWithoutOrderProfileInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumProductTypeFieldUpdateOperationsInput = {
+    set?: ProductType
+  }
+
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
+  }
+
+  export type TenantUpdateOneRequiredWithoutOrderProfileNestedInput = {
+    create?: XOR<TenantCreateWithoutOrderProfileInput, TenantUncheckedCreateWithoutOrderProfileInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutOrderProfileInput
+    upsert?: TenantUpsertWithoutOrderProfileInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<TenantUpdateWithoutOrderProfileInput, TenantUncheckedUpdateWithoutOrderProfileInput>
   }
 
   export type UserUpdateOneRequiredWithoutOrderProfileNestedInput = {
@@ -20564,12 +27051,276 @@ export namespace Prisma {
     update?: XOR<UserUpdateWithoutOrderProfileInput, UserUncheckedUpdateWithoutOrderProfileInput>
   }
 
-  export type TenantUpdateOneRequiredWithoutOrderProfileNestedInput = {
-    create?: XOR<TenantCreateWithoutOrderProfileInput, TenantUncheckedCreateWithoutOrderProfileInput>
-    connectOrCreate?: TenantCreateOrConnectWithoutOrderProfileInput
-    upsert?: TenantUpsertWithoutOrderProfileInput
+  export type TenantCreateNestedOneWithoutProductsInput = {
+    create?: XOR<TenantCreateWithoutProductsInput, TenantUncheckedCreateWithoutProductsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutProductsInput
     connect?: TenantWhereUniqueInput
-    update?: XOR<TenantUpdateWithoutOrderProfileInput, TenantUncheckedUpdateWithoutOrderProfileInput>
+  }
+
+  export type ProductSnapshotCreateNestedManyWithoutProductInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutProductInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutProductInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutProductInput>
+    createMany?: ProductSnapshotCreateManyProductInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type ProductSnapshotUncheckedCreateNestedManyWithoutProductInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutProductInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutProductInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutProductInput>
+    createMany?: ProductSnapshotCreateManyProductInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type DecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type TenantUpdateOneRequiredWithoutProductsNestedInput = {
+    create?: XOR<TenantCreateWithoutProductsInput, TenantUncheckedCreateWithoutProductsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutProductsInput
+    upsert?: TenantUpsertWithoutProductsInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<TenantUpdateWithoutProductsInput, TenantUncheckedUpdateWithoutProductsInput>
+  }
+
+  export type ProductSnapshotUpdateManyWithoutProductNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutProductInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutProductInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutProductInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutProductInput>
+    createMany?: ProductSnapshotCreateManyProductInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutProductInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutProductInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type ProductSnapshotUncheckedUpdateManyWithoutProductNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutProductInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutProductInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutProductInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutProductInput>
+    createMany?: ProductSnapshotCreateManyProductInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutProductInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutProductInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type UserCreateNestedOneWithoutProductSnapshotsInput = {
+    create?: XOR<UserCreateWithoutProductSnapshotsInput, UserUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutProductSnapshotsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TenantCreateNestedOneWithoutProductSnapshotsInput = {
+    create?: XOR<TenantCreateWithoutProductSnapshotsInput, TenantUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutProductSnapshotsInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type OrderCreateNestedOneWithoutProductSnapshotsInput = {
+    create?: XOR<OrderCreateWithoutProductSnapshotsInput, OrderUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutProductSnapshotsInput
+    connect?: OrderWhereUniqueInput
+  }
+
+  export type ProductCreateNestedOneWithoutProductSnapshotsInput = {
+    create?: XOR<ProductCreateWithoutProductSnapshotsInput, ProductUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: ProductCreateOrConnectWithoutProductSnapshotsInput
+    connect?: ProductWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutProductSnapshotsNestedInput = {
+    create?: XOR<UserCreateWithoutProductSnapshotsInput, UserUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutProductSnapshotsInput
+    upsert?: UserUpsertWithoutProductSnapshotsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<UserUpdateWithoutProductSnapshotsInput, UserUncheckedUpdateWithoutProductSnapshotsInput>
+  }
+
+  export type TenantUpdateOneRequiredWithoutProductSnapshotsNestedInput = {
+    create?: XOR<TenantCreateWithoutProductSnapshotsInput, TenantUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutProductSnapshotsInput
+    upsert?: TenantUpsertWithoutProductSnapshotsInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<TenantUpdateWithoutProductSnapshotsInput, TenantUncheckedUpdateWithoutProductSnapshotsInput>
+  }
+
+  export type OrderUpdateOneRequiredWithoutProductSnapshotsNestedInput = {
+    create?: XOR<OrderCreateWithoutProductSnapshotsInput, OrderUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutProductSnapshotsInput
+    upsert?: OrderUpsertWithoutProductSnapshotsInput
+    connect?: OrderWhereUniqueInput
+    update?: XOR<OrderUpdateWithoutProductSnapshotsInput, OrderUncheckedUpdateWithoutProductSnapshotsInput>
+  }
+
+  export type ProductUpdateOneRequiredWithoutProductSnapshotsNestedInput = {
+    create?: XOR<ProductCreateWithoutProductSnapshotsInput, ProductUncheckedCreateWithoutProductSnapshotsInput>
+    connectOrCreate?: ProductCreateOrConnectWithoutProductSnapshotsInput
+    upsert?: ProductUpsertWithoutProductSnapshotsInput
+    connect?: ProductWhereUniqueInput
+    update?: XOR<ProductUpdateWithoutProductSnapshotsInput, ProductUncheckedUpdateWithoutProductSnapshotsInput>
+  }
+
+  export type UserCreateNestedOneWithoutOrdersInput = {
+    create?: XOR<UserCreateWithoutOrdersInput, UserUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutOrdersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TenantCreateNestedOneWithoutOrdersInput = {
+    create?: XOR<TenantCreateWithoutOrdersInput, TenantUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutOrdersInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type PayCreateNestedOneWithoutOrderInput = {
+    create?: XOR<PayCreateWithoutOrderInput, PayUncheckedCreateWithoutOrderInput>
+    connectOrCreate?: PayCreateOrConnectWithoutOrderInput
+    connect?: PayWhereUniqueInput
+  }
+
+  export type ProductSnapshotCreateNestedManyWithoutOrderInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutOrderInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutOrderInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutOrderInput>
+    createMany?: ProductSnapshotCreateManyOrderInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type PayUncheckedCreateNestedOneWithoutOrderInput = {
+    create?: XOR<PayCreateWithoutOrderInput, PayUncheckedCreateWithoutOrderInput>
+    connectOrCreate?: PayCreateOrConnectWithoutOrderInput
+    connect?: PayWhereUniqueInput
+  }
+
+  export type ProductSnapshotUncheckedCreateNestedManyWithoutOrderInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutOrderInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutOrderInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutOrderInput>
+    createMany?: ProductSnapshotCreateManyOrderInputEnvelope
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+  }
+
+  export type EnumOrderStatusFieldUpdateOperationsInput = {
+    set?: OrderStatus
+  }
+
+  export type UserUpdateOneRequiredWithoutOrdersNestedInput = {
+    create?: XOR<UserCreateWithoutOrdersInput, UserUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutOrdersInput
+    upsert?: UserUpsertWithoutOrdersInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<UserUpdateWithoutOrdersInput, UserUncheckedUpdateWithoutOrdersInput>
+  }
+
+  export type TenantUpdateOneRequiredWithoutOrdersNestedInput = {
+    create?: XOR<TenantCreateWithoutOrdersInput, TenantUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutOrdersInput
+    upsert?: TenantUpsertWithoutOrdersInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<TenantUpdateWithoutOrdersInput, TenantUncheckedUpdateWithoutOrdersInput>
+  }
+
+  export type PayUpdateOneWithoutOrderNestedInput = {
+    create?: XOR<PayCreateWithoutOrderInput, PayUncheckedCreateWithoutOrderInput>
+    connectOrCreate?: PayCreateOrConnectWithoutOrderInput
+    upsert?: PayUpsertWithoutOrderInput
+    disconnect?: boolean
+    delete?: boolean
+    connect?: PayWhereUniqueInput
+    update?: XOR<PayUpdateWithoutOrderInput, PayUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type ProductSnapshotUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutOrderInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutOrderInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutOrderInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutOrderInput>
+    createMany?: ProductSnapshotCreateManyOrderInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutOrderInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutOrderInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type PayUncheckedUpdateOneWithoutOrderNestedInput = {
+    create?: XOR<PayCreateWithoutOrderInput, PayUncheckedCreateWithoutOrderInput>
+    connectOrCreate?: PayCreateOrConnectWithoutOrderInput
+    upsert?: PayUpsertWithoutOrderInput
+    disconnect?: boolean
+    delete?: boolean
+    connect?: PayWhereUniqueInput
+    update?: XOR<PayUpdateWithoutOrderInput, PayUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type ProductSnapshotUncheckedUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<Enumerable<ProductSnapshotCreateWithoutOrderInput>, Enumerable<ProductSnapshotUncheckedCreateWithoutOrderInput>>
+    connectOrCreate?: Enumerable<ProductSnapshotCreateOrConnectWithoutOrderInput>
+    upsert?: Enumerable<ProductSnapshotUpsertWithWhereUniqueWithoutOrderInput>
+    createMany?: ProductSnapshotCreateManyOrderInputEnvelope
+    set?: Enumerable<ProductSnapshotWhereUniqueInput>
+    disconnect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    delete?: Enumerable<ProductSnapshotWhereUniqueInput>
+    connect?: Enumerable<ProductSnapshotWhereUniqueInput>
+    update?: Enumerable<ProductSnapshotUpdateWithWhereUniqueWithoutOrderInput>
+    updateMany?: Enumerable<ProductSnapshotUpdateManyWithWhereWithoutOrderInput>
+    deleteMany?: Enumerable<ProductSnapshotScalarWhereInput>
+  }
+
+  export type UserCreateNestedOneWithoutPaysInput = {
+    create?: XOR<UserCreateWithoutPaysInput, UserUncheckedCreateWithoutPaysInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPaysInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TenantCreateNestedOneWithoutPaysInput = {
+    create?: XOR<TenantCreateWithoutPaysInput, TenantUncheckedCreateWithoutPaysInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutPaysInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type OrderCreateNestedOneWithoutPayInput = {
+    create?: XOR<OrderCreateWithoutPayInput, OrderUncheckedCreateWithoutPayInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutPayInput
+    connect?: OrderWhereUniqueInput
+  }
+
+  export type EnumPayStatusFieldUpdateOperationsInput = {
+    set?: PayStatus
+  }
+
+  export type UserUpdateOneRequiredWithoutPaysNestedInput = {
+    create?: XOR<UserCreateWithoutPaysInput, UserUncheckedCreateWithoutPaysInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPaysInput
+    upsert?: UserUpsertWithoutPaysInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<UserUpdateWithoutPaysInput, UserUncheckedUpdateWithoutPaysInput>
+  }
+
+  export type TenantUpdateOneRequiredWithoutPaysNestedInput = {
+    create?: XOR<TenantCreateWithoutPaysInput, TenantUncheckedCreateWithoutPaysInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutPaysInput
+    upsert?: TenantUpsertWithoutPaysInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<TenantUpdateWithoutPaysInput, TenantUncheckedUpdateWithoutPaysInput>
+  }
+
+  export type OrderUpdateOneRequiredWithoutPayNestedInput = {
+    create?: XOR<OrderCreateWithoutPayInput, OrderUncheckedCreateWithoutPayInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutPayInput
+    upsert?: OrderUpsertWithoutPayInput
+    connect?: OrderWhereUniqueInput
+    update?: XOR<OrderUpdateWithoutPayInput, OrderUncheckedUpdateWithoutPayInput>
   }
 
   export type NestedIntFilter = {
@@ -20782,6 +27533,33 @@ export namespace Prisma {
     not?: InputJsonValue | JsonNullValueFilter
   }
 
+  export type NestedIntNullableWithAggregatesFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | number | null
+    notIn?: Enumerable<number> | number | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedIntNullableWithAggregatesFilter | number | null
+    _count?: NestedIntNullableFilter
+    _avg?: NestedFloatNullableFilter
+    _sum?: NestedIntNullableFilter
+    _min?: NestedIntNullableFilter
+    _max?: NestedIntNullableFilter
+  }
+
+  export type NestedFloatNullableFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | number | null
+    notIn?: Enumerable<number> | number | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedFloatNullableFilter | number | null
+  }
+
   export type NestedEnumProductTypeFilter = {
     equals?: ProductType
     in?: Enumerable<ProductType>
@@ -20810,33 +27588,6 @@ export namespace Prisma {
     _max?: NestedEnumProductTypeFilter
   }
 
-  export type NestedIntNullableWithAggregatesFilter = {
-    equals?: number | null
-    in?: Enumerable<number> | number | null
-    notIn?: Enumerable<number> | number | null
-    lt?: number
-    lte?: number
-    gt?: number
-    gte?: number
-    not?: NestedIntNullableWithAggregatesFilter | number | null
-    _count?: NestedIntNullableFilter
-    _avg?: NestedFloatNullableFilter
-    _sum?: NestedIntNullableFilter
-    _min?: NestedIntNullableFilter
-    _max?: NestedIntNullableFilter
-  }
-
-  export type NestedFloatNullableFilter = {
-    equals?: number | null
-    in?: Enumerable<number> | number | null
-    notIn?: Enumerable<number> | number | null
-    lt?: number
-    lte?: number
-    gt?: number
-    gte?: number
-    not?: NestedFloatNullableFilter | number | null
-  }
-
   export type NestedDateTimeNullableWithAggregatesFilter = {
     equals?: Date | string | null
     in?: Enumerable<Date> | Enumerable<string> | Date | string | null
@@ -20851,51 +27602,65 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter
   }
 
-  export type UserCreateWithoutTenantInput = {
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    isDeleted?: boolean
-    username: string
-    hashedPassword?: string | null
-    hashedRefreshToken?: string | null
-    recoveryCode?: string | null
-    recoveryToken?: string | null
-    unionid?: string | null
-    email?: string | null
-    mobile?: string | null
-    image?: string | null
-    profile?: UserProfileCreateNestedOneWithoutUserInput
-    weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
-    orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+  export type NestedDecimalFilter = {
+    equals?: Decimal | DecimalJsLike | number | string
+    in?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    notIn?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    lt?: Decimal | DecimalJsLike | number | string
+    lte?: Decimal | DecimalJsLike | number | string
+    gt?: Decimal | DecimalJsLike | number | string
+    gte?: Decimal | DecimalJsLike | number | string
+    not?: NestedDecimalFilter | Decimal | DecimalJsLike | number | string
   }
 
-  export type UserUncheckedCreateWithoutTenantInput = {
-    id?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    isDeleted?: boolean
-    username: string
-    hashedPassword?: string | null
-    hashedRefreshToken?: string | null
-    recoveryCode?: string | null
-    recoveryToken?: string | null
-    unionid?: string | null
-    email?: string | null
-    mobile?: string | null
-    image?: string | null
-    profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
-    weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
-    orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+  export type NestedDecimalWithAggregatesFilter = {
+    equals?: Decimal | DecimalJsLike | number | string
+    in?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    notIn?: Enumerable<Decimal> | Enumerable<DecimalJsLike> | Enumerable<number> | Enumerable<string> | Decimal | DecimalJsLike | number | string
+    lt?: Decimal | DecimalJsLike | number | string
+    lte?: Decimal | DecimalJsLike | number | string
+    gt?: Decimal | DecimalJsLike | number | string
+    gte?: Decimal | DecimalJsLike | number | string
+    not?: NestedDecimalWithAggregatesFilter | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter
+    _avg?: NestedDecimalFilter
+    _sum?: NestedDecimalFilter
+    _min?: NestedDecimalFilter
+    _max?: NestedDecimalFilter
   }
 
-  export type UserCreateOrConnectWithoutTenantInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutTenantInput, UserUncheckedCreateWithoutTenantInput>
+  export type NestedEnumOrderStatusFilter = {
+    equals?: OrderStatus
+    in?: Enumerable<OrderStatus>
+    notIn?: Enumerable<OrderStatus>
+    not?: NestedEnumOrderStatusFilter | OrderStatus
   }
 
-  export type UserCreateManyTenantInputEnvelope = {
-    data: Enumerable<UserCreateManyTenantInput>
-    skipDuplicates?: boolean
+  export type NestedEnumOrderStatusWithAggregatesFilter = {
+    equals?: OrderStatus
+    in?: Enumerable<OrderStatus>
+    notIn?: Enumerable<OrderStatus>
+    not?: NestedEnumOrderStatusWithAggregatesFilter | OrderStatus
+    _count?: NestedIntFilter
+    _min?: NestedEnumOrderStatusFilter
+    _max?: NestedEnumOrderStatusFilter
+  }
+
+  export type NestedEnumPayStatusFilter = {
+    equals?: PayStatus
+    in?: Enumerable<PayStatus>
+    notIn?: Enumerable<PayStatus>
+    not?: NestedEnumPayStatusFilter | PayStatus
+  }
+
+  export type NestedEnumPayStatusWithAggregatesFilter = {
+    equals?: PayStatus
+    in?: Enumerable<PayStatus>
+    notIn?: Enumerable<PayStatus>
+    not?: NestedEnumPayStatusWithAggregatesFilter | PayStatus
+    _count?: NestedIntFilter
+    _min?: NestedEnumPayStatusFilter
+    _max?: NestedEnumPayStatusFilter
   }
 
   export type MenuCreateWithoutTenantInput = {
@@ -20916,6 +27681,59 @@ export namespace Prisma {
   export type MenuCreateOrConnectWithoutTenantInput = {
     where: MenuWhereUniqueInput
     create: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
+  }
+
+  export type UserCreateWithoutTenantInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    profile?: UserProfileCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutUserInput
+    orders?: OrderCreateNestedManyWithoutUserInput
+    pays?: PayCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutUserInput
+    orders?: OrderUncheckedCreateNestedManyWithoutUserInput
+    pays?: PayUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTenantInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTenantInput, UserUncheckedCreateWithoutTenantInput>
+  }
+
+  export type UserCreateManyTenantInputEnvelope = {
+    data: Enumerable<UserCreateManyTenantInput>
+    skipDuplicates?: boolean
   }
 
   export type DynamicTableDefCreateWithoutTenantInput = {
@@ -20981,7 +27799,6 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataCreateWithoutTenantInput = {
-    id?: string
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -20990,7 +27807,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedCreateWithoutTenantInput = {
-    id?: string
+    id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -21100,10 +27917,10 @@ export namespace Prisma {
     updatedAt?: Date | string
     isDeleted?: boolean
     unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
     user: UserCreateNestedOneWithoutWeixinProfileInput
   }
 
@@ -21112,12 +27929,12 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
-    unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
     userId: number
+    unionid?: string | null
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
   }
 
   export type WeixinProfileCreateOrConnectWithoutTenantInput = {
@@ -21128,6 +27945,170 @@ export namespace Prisma {
   export type WeixinProfileCreateManyTenantInputEnvelope = {
     data: Enumerable<WeixinProfileCreateManyTenantInput>
     skipDuplicates?: boolean
+  }
+
+  export type ProductSnapshotCreateWithoutTenantInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    user: UserCreateNestedOneWithoutProductSnapshotsInput
+    order: OrderCreateNestedOneWithoutProductSnapshotsInput
+    product: ProductCreateNestedOneWithoutProductSnapshotsInput
+  }
+
+  export type ProductSnapshotUncheckedCreateWithoutTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+    productId: number
+  }
+
+  export type ProductSnapshotCreateOrConnectWithoutTenantInput = {
+    where: ProductSnapshotWhereUniqueInput
+    create: XOR<ProductSnapshotCreateWithoutTenantInput, ProductSnapshotUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ProductSnapshotCreateManyTenantInputEnvelope = {
+    data: Enumerable<ProductSnapshotCreateManyTenantInput>
+    skipDuplicates?: boolean
+  }
+
+  export type OrderCreateWithoutTenantInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    serial: number
+    status: OrderStatus
+    user: UserCreateNestedOneWithoutOrdersInput
+    pay?: PayCreateNestedOneWithoutOrderInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderUncheckedCreateWithoutTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    serial: number
+    status: OrderStatus
+    pay?: PayUncheckedCreateNestedOneWithoutOrderInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutTenantInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutTenantInput, OrderUncheckedCreateWithoutTenantInput>
+  }
+
+  export type OrderCreateManyTenantInputEnvelope = {
+    data: Enumerable<OrderCreateManyTenantInput>
+    skipDuplicates?: boolean
+  }
+
+  export type PayCreateWithoutTenantInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    status?: PayStatus
+    transactionId: string
+    user: UserCreateNestedOneWithoutPaysInput
+    Order: OrderCreateNestedOneWithoutPayInput
+  }
+
+  export type PayUncheckedCreateWithoutTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    status?: PayStatus
+    orderId: number
+    transactionId: string
+  }
+
+  export type PayCreateOrConnectWithoutTenantInput = {
+    where: PayWhereUniqueInput
+    create: XOR<PayCreateWithoutTenantInput, PayUncheckedCreateWithoutTenantInput>
+  }
+
+  export type PayCreateManyTenantInputEnvelope = {
+    data: Enumerable<PayCreateManyTenantInput>
+    skipDuplicates?: boolean
+  }
+
+  export type ProductCreateWithoutTenantInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutProductInput
+  }
+
+  export type ProductUncheckedCreateWithoutTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutProductInput
+  }
+
+  export type ProductCreateOrConnectWithoutTenantInput = {
+    where: ProductWhereUniqueInput
+    create: XOR<ProductCreateWithoutTenantInput, ProductUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ProductCreateManyTenantInputEnvelope = {
+    data: Enumerable<ProductCreateManyTenantInput>
+    skipDuplicates?: boolean
+  }
+
+  export type MenuUpsertWithoutTenantInput = {
+    update: XOR<MenuUpdateWithoutTenantInput, MenuUncheckedUpdateWithoutTenantInput>
+    create: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
+  }
+
+  export type MenuUpdateWithoutTenantInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    treeData?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type MenuUncheckedUpdateWithoutTenantInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    treeData?: JsonNullValueInput | InputJsonValue
   }
 
   export type UserUpsertWithWhereUniqueWithoutTenantInput = {
@@ -21159,31 +28140,11 @@ export namespace Prisma {
     hashedRefreshToken?: StringNullableFilter | string | null
     recoveryCode?: StringNullableFilter | string | null
     recoveryToken?: StringNullableFilter | string | null
-    unionid?: StringNullableFilter | string | null
     email?: StringNullableFilter | string | null
     mobile?: StringNullableFilter | string | null
+    anonymousCustomerToken?: StringNullableFilter | string | null
     image?: StringNullableFilter | string | null
     tenantId?: IntFilter | number
-  }
-
-  export type MenuUpsertWithoutTenantInput = {
-    update: XOR<MenuUpdateWithoutTenantInput, MenuUncheckedUpdateWithoutTenantInput>
-    create: XOR<MenuCreateWithoutTenantInput, MenuUncheckedCreateWithoutTenantInput>
-  }
-
-  export type MenuUpdateWithoutTenantInput = {
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    treeData?: JsonNullValueInput | InputJsonValue
-  }
-
-  export type MenuUncheckedUpdateWithoutTenantInput = {
-    id?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    treeData?: JsonNullValueInput | InputJsonValue
   }
 
   export type DynamicTableDefUpsertWithWhereUniqueWithoutTenantInput = {
@@ -21266,7 +28227,7 @@ export namespace Prisma {
     AND?: Enumerable<DynamicTableDataScalarWhereInput>
     OR?: Enumerable<DynamicTableDataScalarWhereInput>
     NOT?: Enumerable<DynamicTableDataScalarWhereInput>
-    id?: StringFilter | string
+    id?: IntFilter | number
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     isDeleted?: BoolFilter | boolean
@@ -21328,12 +28289,12 @@ export namespace Prisma {
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     isDeleted?: BoolFilter | boolean
+    tenantId?: IntFilter | number
     userId?: IntFilter | number
     productType?: EnumProductTypeFilter | ProductType
     plan?: IntNullableFilter | number | null
     amount?: IntNullableFilter | number | null
     expireAt?: DateTimeNullableFilter | Date | string | null
-    tenantId?: IntFilter | number
   }
 
   export type UserProfileUpsertWithWhereUniqueWithoutTenantInput = {
@@ -21389,13 +28350,144 @@ export namespace Prisma {
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     isDeleted?: BoolFilter | boolean
+    tenantId?: IntFilter | number
+    userId?: IntFilter | number
     unionid?: StringNullableFilter | string | null
-    loginOpenid?: StringFilter | string
-    headimgurl?: StringFilter | string
-    nickname?: StringFilter | string
-    sex?: IntFilter | number
+    loginOpenid?: StringNullableFilter | string | null
+    headimgurl?: StringNullableFilter | string | null
+    nickname?: StringNullableFilter | string | null
+    sex?: IntNullableFilter | number | null
+  }
+
+  export type ProductSnapshotUpsertWithWhereUniqueWithoutTenantInput = {
+    where: ProductSnapshotWhereUniqueInput
+    update: XOR<ProductSnapshotUpdateWithoutTenantInput, ProductSnapshotUncheckedUpdateWithoutTenantInput>
+    create: XOR<ProductSnapshotCreateWithoutTenantInput, ProductSnapshotUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ProductSnapshotUpdateWithWhereUniqueWithoutTenantInput = {
+    where: ProductSnapshotWhereUniqueInput
+    data: XOR<ProductSnapshotUpdateWithoutTenantInput, ProductSnapshotUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type ProductSnapshotUpdateManyWithWhereWithoutTenantInput = {
+    where: ProductSnapshotScalarWhereInput
+    data: XOR<ProductSnapshotUpdateManyMutationInput, ProductSnapshotUncheckedUpdateManyWithoutProductSnapshotsInput>
+  }
+
+  export type ProductSnapshotScalarWhereInput = {
+    AND?: Enumerable<ProductSnapshotScalarWhereInput>
+    OR?: Enumerable<ProductSnapshotScalarWhereInput>
+    NOT?: Enumerable<ProductSnapshotScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
     userId?: IntFilter | number
     tenantId?: IntFilter | number
+    snapshotPrice?: DecimalFilter | Decimal | DecimalJsLike | number | string
+    orderId?: IntFilter | number
+    productId?: IntFilter | number
+  }
+
+  export type OrderUpsertWithWhereUniqueWithoutTenantInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutTenantInput, OrderUncheckedUpdateWithoutTenantInput>
+    create: XOR<OrderCreateWithoutTenantInput, OrderUncheckedCreateWithoutTenantInput>
+  }
+
+  export type OrderUpdateWithWhereUniqueWithoutTenantInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutTenantInput, OrderUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type OrderUpdateManyWithWhereWithoutTenantInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutOrdersInput>
+  }
+
+  export type OrderScalarWhereInput = {
+    AND?: Enumerable<OrderScalarWhereInput>
+    OR?: Enumerable<OrderScalarWhereInput>
+    NOT?: Enumerable<OrderScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
+    userId?: IntFilter | number
+    tenantId?: IntFilter | number
+    serial?: IntFilter | number
+    status?: EnumOrderStatusFilter | OrderStatus
+  }
+
+  export type PayUpsertWithWhereUniqueWithoutTenantInput = {
+    where: PayWhereUniqueInput
+    update: XOR<PayUpdateWithoutTenantInput, PayUncheckedUpdateWithoutTenantInput>
+    create: XOR<PayCreateWithoutTenantInput, PayUncheckedCreateWithoutTenantInput>
+  }
+
+  export type PayUpdateWithWhereUniqueWithoutTenantInput = {
+    where: PayWhereUniqueInput
+    data: XOR<PayUpdateWithoutTenantInput, PayUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type PayUpdateManyWithWhereWithoutTenantInput = {
+    where: PayScalarWhereInput
+    data: XOR<PayUpdateManyMutationInput, PayUncheckedUpdateManyWithoutPaysInput>
+  }
+
+  export type PayScalarWhereInput = {
+    AND?: Enumerable<PayScalarWhereInput>
+    OR?: Enumerable<PayScalarWhereInput>
+    NOT?: Enumerable<PayScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
+    userId?: IntFilter | number
+    tenantId?: IntFilter | number
+    status?: EnumPayStatusFilter | PayStatus
+    orderId?: IntFilter | number
+    transactionId?: StringFilter | string
+  }
+
+  export type ProductUpsertWithWhereUniqueWithoutTenantInput = {
+    where: ProductWhereUniqueInput
+    update: XOR<ProductUpdateWithoutTenantInput, ProductUncheckedUpdateWithoutTenantInput>
+    create: XOR<ProductCreateWithoutTenantInput, ProductUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ProductUpdateWithWhereUniqueWithoutTenantInput = {
+    where: ProductWhereUniqueInput
+    data: XOR<ProductUpdateWithoutTenantInput, ProductUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type ProductUpdateManyWithWhereWithoutTenantInput = {
+    where: ProductScalarWhereInput
+    data: XOR<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyWithoutProductsInput>
+  }
+
+  export type ProductScalarWhereInput = {
+    AND?: Enumerable<ProductScalarWhereInput>
+    OR?: Enumerable<ProductScalarWhereInput>
+    NOT?: Enumerable<ProductScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
+    tenantId?: IntFilter | number
+    name?: StringFilter | string
+    price?: DecimalFilter | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFilter | ProductType
+    plan?: IntNullableFilter | number | null
+    amount?: IntFilter | number
+    extendedDescriptionData?: JsonNullableFilter
+    fileSize?: StringNullableFilter | string | null
+    storeDuration?: IntNullableFilter | number | null
+    hasAds?: StringNullableFilter | string | null
+    tecSupport?: StringNullableFilter | string | null
+    validityPeriod?: IntNullableFilter | number | null
+    restricted?: IntFilter | number
   }
 
   export type TenantCreateWithoutUsersInput = {
@@ -21414,6 +28506,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutUsersInput = {
@@ -21433,6 +28529,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutUsersInput = {
@@ -21467,10 +28567,10 @@ export namespace Prisma {
     updatedAt?: Date | string
     isDeleted?: boolean
     unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
     tenant: TenantCreateNestedOneWithoutWeixinProfileInput
   }
 
@@ -21479,12 +28579,12 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
-    unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
     tenantId: number
+    unionid?: string | null
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
   }
 
   export type WeixinProfileCreateOrConnectWithoutUserInput = {
@@ -21508,16 +28608,111 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
+    tenantId: number
     productType?: ProductType
     plan?: number | null
     amount?: number | null
     expireAt?: Date | string | null
-    tenantId: number
   }
 
   export type OrderProfileCreateOrConnectWithoutUserInput = {
     where: OrderProfileWhereUniqueInput
     create: XOR<OrderProfileCreateWithoutUserInput, OrderProfileUncheckedCreateWithoutUserInput>
+  }
+
+  export type ProductSnapshotCreateWithoutUserInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    tenant: TenantCreateNestedOneWithoutProductSnapshotsInput
+    order: OrderCreateNestedOneWithoutProductSnapshotsInput
+    product: ProductCreateNestedOneWithoutProductSnapshotsInput
+  }
+
+  export type ProductSnapshotUncheckedCreateWithoutUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+    productId: number
+  }
+
+  export type ProductSnapshotCreateOrConnectWithoutUserInput = {
+    where: ProductSnapshotWhereUniqueInput
+    create: XOR<ProductSnapshotCreateWithoutUserInput, ProductSnapshotUncheckedCreateWithoutUserInput>
+  }
+
+  export type ProductSnapshotCreateManyUserInputEnvelope = {
+    data: Enumerable<ProductSnapshotCreateManyUserInput>
+    skipDuplicates?: boolean
+  }
+
+  export type OrderCreateWithoutUserInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    serial: number
+    status: OrderStatus
+    tenant: TenantCreateNestedOneWithoutOrdersInput
+    pay?: PayCreateNestedOneWithoutOrderInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderUncheckedCreateWithoutUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    serial: number
+    status: OrderStatus
+    pay?: PayUncheckedCreateNestedOneWithoutOrderInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutUserInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutUserInput, OrderUncheckedCreateWithoutUserInput>
+  }
+
+  export type OrderCreateManyUserInputEnvelope = {
+    data: Enumerable<OrderCreateManyUserInput>
+    skipDuplicates?: boolean
+  }
+
+  export type PayCreateWithoutUserInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    status?: PayStatus
+    transactionId: string
+    tenant: TenantCreateNestedOneWithoutPaysInput
+    Order: OrderCreateNestedOneWithoutPayInput
+  }
+
+  export type PayUncheckedCreateWithoutUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    status?: PayStatus
+    orderId: number
+    transactionId: string
+  }
+
+  export type PayCreateOrConnectWithoutUserInput = {
+    where: PayWhereUniqueInput
+    create: XOR<PayCreateWithoutUserInput, PayUncheckedCreateWithoutUserInput>
+  }
+
+  export type PayCreateManyUserInputEnvelope = {
+    data: Enumerable<PayCreateManyUserInput>
+    skipDuplicates?: boolean
   }
 
   export type TenantUpsertWithoutUsersInput = {
@@ -21541,6 +28736,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutUsersInput = {
@@ -21560,6 +28759,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserProfileUpsertWithoutUserInput = {
@@ -21594,10 +28797,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
     tenant?: TenantUpdateOneRequiredWithoutWeixinProfileNestedInput
   }
 
@@ -21606,12 +28809,12 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
     tenantId?: IntFieldUpdateOperationsInput | number
+    unionid?: NullableStringFieldUpdateOperationsInput | string | null
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type OrderProfileUpsertWithoutUserInput = {
@@ -21635,11 +28838,59 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
     productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
     plan?: NullableIntFieldUpdateOperationsInput | number | null
     amount?: NullableIntFieldUpdateOperationsInput | number | null
     expireAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    tenantId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductSnapshotUpsertWithWhereUniqueWithoutUserInput = {
+    where: ProductSnapshotWhereUniqueInput
+    update: XOR<ProductSnapshotUpdateWithoutUserInput, ProductSnapshotUncheckedUpdateWithoutUserInput>
+    create: XOR<ProductSnapshotCreateWithoutUserInput, ProductSnapshotUncheckedCreateWithoutUserInput>
+  }
+
+  export type ProductSnapshotUpdateWithWhereUniqueWithoutUserInput = {
+    where: ProductSnapshotWhereUniqueInput
+    data: XOR<ProductSnapshotUpdateWithoutUserInput, ProductSnapshotUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ProductSnapshotUpdateManyWithWhereWithoutUserInput = {
+    where: ProductSnapshotScalarWhereInput
+    data: XOR<ProductSnapshotUpdateManyMutationInput, ProductSnapshotUncheckedUpdateManyWithoutProductSnapshotsInput>
+  }
+
+  export type OrderUpsertWithWhereUniqueWithoutUserInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutUserInput, OrderUncheckedUpdateWithoutUserInput>
+    create: XOR<OrderCreateWithoutUserInput, OrderUncheckedCreateWithoutUserInput>
+  }
+
+  export type OrderUpdateWithWhereUniqueWithoutUserInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutUserInput, OrderUncheckedUpdateWithoutUserInput>
+  }
+
+  export type OrderUpdateManyWithWhereWithoutUserInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutOrdersInput>
+  }
+
+  export type PayUpsertWithWhereUniqueWithoutUserInput = {
+    where: PayWhereUniqueInput
+    update: XOR<PayUpdateWithoutUserInput, PayUncheckedUpdateWithoutUserInput>
+    create: XOR<PayCreateWithoutUserInput, PayUncheckedCreateWithoutUserInput>
+  }
+
+  export type PayUpdateWithWhereUniqueWithoutUserInput = {
+    where: PayWhereUniqueInput
+    data: XOR<PayUpdateWithoutUserInput, PayUncheckedUpdateWithoutUserInput>
+  }
+
+  export type PayUpdateManyWithWhereWithoutUserInput = {
+    where: PayScalarWhereInput
+    data: XOR<PayUpdateManyMutationInput, PayUncheckedUpdateManyWithoutPaysInput>
   }
 
   export type TenantCreateWithoutUserPreSignupInput = {
@@ -21650,14 +28901,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
     menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutUserPreSignupInput = {
@@ -21669,14 +28924,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutUserPreSignupInput = {
@@ -21697,14 +28956,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
     menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutUserPreSignupInput = {
@@ -21716,14 +28979,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserCreateWithoutProfileInput = {
@@ -21735,13 +29002,16 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenant: TenantCreateNestedOneWithoutUsersInput
     weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
     orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutUserInput
+    orders?: OrderCreateNestedManyWithoutUserInput
+    pays?: PayCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutProfileInput = {
@@ -21754,13 +29024,16 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenantId: number
     weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
     orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutUserInput
+    orders?: OrderUncheckedCreateNestedManyWithoutUserInput
+    pays?: PayUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutProfileInput = {
@@ -21776,14 +29049,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
     menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutUserProfileInput = {
@@ -21795,14 +29072,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutUserProfileInput = {
@@ -21824,13 +29105,16 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenant?: TenantUpdateOneRequiredWithoutUsersNestedInput
     weixinProfile?: WeixinProfileUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutUserNestedInput
+    orders?: OrderUpdateManyWithoutUserNestedInput
+    pays?: PayUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProfileInput = {
@@ -21843,13 +29127,16 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenantId?: IntFieldUpdateOperationsInput | number
     weixinProfile?: WeixinProfileUncheckedUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUncheckedUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutUserNestedInput
+    pays?: PayUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type TenantUpsertWithoutUserProfileInput = {
@@ -21865,14 +29152,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
     menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutUserProfileInput = {
@@ -21884,14 +29175,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type DynamicTableDefColumnCreateWithoutDynamicTableDefInput = {
@@ -21926,7 +29221,6 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataCreateWithoutDynamicTableDefInput = {
-    id?: string
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -21935,7 +29229,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedCreateWithoutDynamicTableDefInput = {
-    id?: string
+    id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -21961,14 +29255,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
     menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutDynamicTableDefsInput = {
@@ -21980,14 +29278,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutDynamicTableDefsInput = {
@@ -22040,14 +29342,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
     menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutDynamicTableDefsInput = {
@@ -22059,14 +29365,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type DynamicTableDefCreateWithoutDynamicTableDefColumnsInput = {
@@ -22103,14 +29413,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
     menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutDynamicTableDefColumnsInput = {
@@ -22122,14 +29436,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutDynamicTableDefColumnsInput = {
@@ -22176,14 +29494,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
     menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutDynamicTableDefColumnsInput = {
@@ -22195,14 +29517,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type DynamicTableDefCreateWithoutDynamicTableDataInput = {
@@ -22239,14 +29565,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
     menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutDynamicTableDataInput = {
@@ -22258,14 +29588,18 @@ export namespace Prisma {
     hashedPassword?: string | null
     hashedRefreshToken?: string | null
     displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
     userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutDynamicTableDataInput = {
@@ -22312,14 +29646,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
     menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutDynamicTableDataInput = {
@@ -22331,14 +29669,18 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateWithoutMenuInput = {
@@ -22357,6 +29699,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutMenuInput = {
@@ -22376,6 +29722,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
     userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutMenuInput = {
@@ -22404,6 +29754,10 @@ export namespace Prisma {
     orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutMenuInput = {
@@ -22423,6 +29777,60 @@ export namespace Prisma {
     orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantCreateWithoutWeixinProfileInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutWeixinProfileInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutWeixinProfileInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutWeixinProfileInput, TenantUncheckedCreateWithoutWeixinProfileInput>
   }
 
   export type UserCreateWithoutWeixinProfileInput = {
@@ -22434,13 +29842,16 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenant: TenantCreateNestedOneWithoutUsersInput
     profile?: UserProfileCreateNestedOneWithoutUserInput
     orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutUserInput
+    orders?: OrderCreateNestedManyWithoutUserInput
+    pays?: PayCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutWeixinProfileInput = {
@@ -22453,13 +29864,16 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenantId: number
     profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
     orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutUserInput
+    orders?: OrderUncheckedCreateNestedManyWithoutUserInput
+    pays?: PayUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutWeixinProfileInput = {
@@ -22467,46 +29881,54 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutWeixinProfileInput, UserUncheckedCreateWithoutWeixinProfileInput>
   }
 
-  export type TenantCreateWithoutWeixinProfileInput = {
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    isDeleted?: boolean
-    name: string
-    hashedPassword?: string | null
-    hashedRefreshToken?: string | null
-    displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
-    menu?: MenuCreateNestedOneWithoutTenantInput
-    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
-    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
-    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
-    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
-    orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
-    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
-  }
-
-  export type TenantUncheckedCreateWithoutWeixinProfileInput = {
-    id?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    isDeleted?: boolean
-    name: string
-    hashedPassword?: string | null
-    hashedRefreshToken?: string | null
-    displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
-    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
-    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
-    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
-    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
-    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
-    orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
-    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
-  }
-
-  export type TenantCreateOrConnectWithoutWeixinProfileInput = {
-    where: TenantWhereUniqueInput
+  export type TenantUpsertWithoutWeixinProfileInput = {
+    update: XOR<TenantUpdateWithoutWeixinProfileInput, TenantUncheckedUpdateWithoutWeixinProfileInput>
     create: XOR<TenantCreateWithoutWeixinProfileInput, TenantUncheckedCreateWithoutWeixinProfileInput>
+  }
+
+  export type TenantUpdateWithoutWeixinProfileInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutWeixinProfileInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserUpsertWithoutWeixinProfileInput = {
@@ -22523,13 +29945,16 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenant?: TenantUpdateOneRequiredWithoutUsersNestedInput
     profile?: UserProfileUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutUserNestedInput
+    orders?: OrderUpdateManyWithoutUserNestedInput
+    pays?: PayUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutWeixinProfileInput = {
@@ -22542,55 +29967,66 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenantId?: IntFieldUpdateOperationsInput | number
     profile?: UserProfileUncheckedUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUncheckedUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutUserNestedInput
+    pays?: PayUncheckedUpdateManyWithoutUserNestedInput
   }
 
-  export type TenantUpsertWithoutWeixinProfileInput = {
-    update: XOR<TenantUpdateWithoutWeixinProfileInput, TenantUncheckedUpdateWithoutWeixinProfileInput>
-    create: XOR<TenantCreateWithoutWeixinProfileInput, TenantUncheckedCreateWithoutWeixinProfileInput>
+  export type TenantCreateWithoutOrderProfileInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
   }
 
-  export type TenantUpdateWithoutWeixinProfileInput = {
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    name?: StringFieldUpdateOperationsInput | string
-    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
-    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
-    displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
-    menu?: MenuUpdateOneWithoutTenantNestedInput
-    dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
-    dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
-    dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
-    userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
-    orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
-    userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
+  export type TenantUncheckedCreateWithoutOrderProfileInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
   }
 
-  export type TenantUncheckedUpdateWithoutWeixinProfileInput = {
-    id?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    name?: StringFieldUpdateOperationsInput | string
-    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
-    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
-    displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
-    menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
-    dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
-    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
-    dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
-    userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
-    orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
-    userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
+  export type TenantCreateOrConnectWithoutOrderProfileInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutOrderProfileInput, TenantUncheckedCreateWithoutOrderProfileInput>
   }
 
   export type UserCreateWithoutOrderProfileInput = {
@@ -22602,13 +30038,16 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenant: TenantCreateNestedOneWithoutUsersInput
     profile?: UserProfileCreateNestedOneWithoutUserInput
     weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutUserInput
+    orders?: OrderCreateNestedManyWithoutUserInput
+    pays?: PayCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOrderProfileInput = {
@@ -22621,13 +30060,16 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
     tenantId: number
     profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
     weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutUserInput
+    orders?: OrderUncheckedCreateNestedManyWithoutUserInput
+    pays?: PayUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOrderProfileInput = {
@@ -22635,46 +30077,54 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutOrderProfileInput, UserUncheckedCreateWithoutOrderProfileInput>
   }
 
-  export type TenantCreateWithoutOrderProfileInput = {
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    isDeleted?: boolean
-    name: string
-    hashedPassword?: string | null
-    hashedRefreshToken?: string | null
-    displayName?: string | null
-    users?: UserCreateNestedManyWithoutTenantInput
-    menu?: MenuCreateNestedOneWithoutTenantInput
-    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
-    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
-    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
-    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
-    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
-    weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
-  }
-
-  export type TenantUncheckedCreateWithoutOrderProfileInput = {
-    id?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    isDeleted?: boolean
-    name: string
-    hashedPassword?: string | null
-    hashedRefreshToken?: string | null
-    displayName?: string | null
-    users?: UserUncheckedCreateNestedManyWithoutTenantInput
-    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
-    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
-    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
-    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
-    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
-    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
-    weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
-  }
-
-  export type TenantCreateOrConnectWithoutOrderProfileInput = {
-    where: TenantWhereUniqueInput
+  export type TenantUpsertWithoutOrderProfileInput = {
+    update: XOR<TenantUpdateWithoutOrderProfileInput, TenantUncheckedUpdateWithoutOrderProfileInput>
     create: XOR<TenantCreateWithoutOrderProfileInput, TenantUncheckedCreateWithoutOrderProfileInput>
+  }
+
+  export type TenantUpdateWithoutOrderProfileInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutOrderProfileInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserUpsertWithoutOrderProfileInput = {
@@ -22691,13 +30141,16 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenant?: TenantUpdateOneRequiredWithoutUsersNestedInput
     profile?: UserProfileUpdateOneWithoutUserNestedInput
     weixinProfile?: WeixinProfileUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutUserNestedInput
+    orders?: OrderUpdateManyWithoutUserNestedInput
+    pays?: PayUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOrderProfileInput = {
@@ -22710,21 +30163,105 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     tenantId?: IntFieldUpdateOperationsInput | number
     profile?: UserProfileUncheckedUpdateOneWithoutUserNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutUserNestedInput
+    pays?: PayUncheckedUpdateManyWithoutUserNestedInput
   }
 
-  export type TenantUpsertWithoutOrderProfileInput = {
-    update: XOR<TenantUpdateWithoutOrderProfileInput, TenantUncheckedUpdateWithoutOrderProfileInput>
-    create: XOR<TenantCreateWithoutOrderProfileInput, TenantUncheckedCreateWithoutOrderProfileInput>
+  export type TenantCreateWithoutProductsInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
   }
 
-  export type TenantUpdateWithoutOrderProfileInput = {
+  export type TenantUncheckedCreateWithoutProductsInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutProductsInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutProductsInput, TenantUncheckedCreateWithoutProductsInput>
+  }
+
+  export type ProductSnapshotCreateWithoutProductInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    user: UserCreateNestedOneWithoutProductSnapshotsInput
+    tenant: TenantCreateNestedOneWithoutProductSnapshotsInput
+    order: OrderCreateNestedOneWithoutProductSnapshotsInput
+  }
+
+  export type ProductSnapshotUncheckedCreateWithoutProductInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+  }
+
+  export type ProductSnapshotCreateOrConnectWithoutProductInput = {
+    where: ProductSnapshotWhereUniqueInput
+    create: XOR<ProductSnapshotCreateWithoutProductInput, ProductSnapshotUncheckedCreateWithoutProductInput>
+  }
+
+  export type ProductSnapshotCreateManyProductInputEnvelope = {
+    data: Enumerable<ProductSnapshotCreateManyProductInput>
+    skipDuplicates?: boolean
+  }
+
+  export type TenantUpsertWithoutProductsInput = {
+    update: XOR<TenantUpdateWithoutProductsInput, TenantUncheckedUpdateWithoutProductsInput>
+    create: XOR<TenantCreateWithoutProductsInput, TenantUncheckedCreateWithoutProductsInput>
+  }
+
+  export type TenantUpdateWithoutProductsInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -22732,17 +30269,21 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUpdateManyWithoutTenantNestedInput
     menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
   }
 
-  export type TenantUncheckedUpdateWithoutOrderProfileInput = {
+  export type TenantUncheckedUpdateWithoutProductsInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22751,14 +30292,921 @@ export namespace Prisma {
     hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     displayName?: NullableStringFieldUpdateOperationsInput | string | null
-    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
     dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
     userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
     userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type ProductSnapshotUpsertWithWhereUniqueWithoutProductInput = {
+    where: ProductSnapshotWhereUniqueInput
+    update: XOR<ProductSnapshotUpdateWithoutProductInput, ProductSnapshotUncheckedUpdateWithoutProductInput>
+    create: XOR<ProductSnapshotCreateWithoutProductInput, ProductSnapshotUncheckedCreateWithoutProductInput>
+  }
+
+  export type ProductSnapshotUpdateWithWhereUniqueWithoutProductInput = {
+    where: ProductSnapshotWhereUniqueInput
+    data: XOR<ProductSnapshotUpdateWithoutProductInput, ProductSnapshotUncheckedUpdateWithoutProductInput>
+  }
+
+  export type ProductSnapshotUpdateManyWithWhereWithoutProductInput = {
+    where: ProductSnapshotScalarWhereInput
+    data: XOR<ProductSnapshotUpdateManyMutationInput, ProductSnapshotUncheckedUpdateManyWithoutProductSnapshotsInput>
+  }
+
+  export type UserCreateWithoutProductSnapshotsInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    tenant: TenantCreateNestedOneWithoutUsersInput
+    profile?: UserProfileCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+    orders?: OrderCreateNestedManyWithoutUserInput
+    pays?: PayCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutProductSnapshotsInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    tenantId: number
+    profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+    orders?: OrderUncheckedCreateNestedManyWithoutUserInput
+    pays?: PayUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutProductSnapshotsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutProductSnapshotsInput, UserUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type TenantCreateWithoutProductSnapshotsInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutProductSnapshotsInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutProductSnapshotsInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutProductSnapshotsInput, TenantUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type OrderCreateWithoutProductSnapshotsInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    serial: number
+    status: OrderStatus
+    user: UserCreateNestedOneWithoutOrdersInput
+    tenant: TenantCreateNestedOneWithoutOrdersInput
+    pay?: PayCreateNestedOneWithoutOrderInput
+  }
+
+  export type OrderUncheckedCreateWithoutProductSnapshotsInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    serial: number
+    status: OrderStatus
+    pay?: PayUncheckedCreateNestedOneWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutProductSnapshotsInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutProductSnapshotsInput, OrderUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type ProductCreateWithoutProductSnapshotsInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
+    tenant: TenantCreateNestedOneWithoutProductsInput
+  }
+
+  export type ProductUncheckedCreateWithoutProductSnapshotsInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
+  }
+
+  export type ProductCreateOrConnectWithoutProductSnapshotsInput = {
+    where: ProductWhereUniqueInput
+    create: XOR<ProductCreateWithoutProductSnapshotsInput, ProductUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type UserUpsertWithoutProductSnapshotsInput = {
+    update: XOR<UserUpdateWithoutProductSnapshotsInput, UserUncheckedUpdateWithoutProductSnapshotsInput>
+    create: XOR<UserCreateWithoutProductSnapshotsInput, UserUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type UserUpdateWithoutProductSnapshotsInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    username?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    tenant?: TenantUpdateOneRequiredWithoutUsersNestedInput
+    profile?: UserProfileUpdateOneWithoutUserNestedInput
+    weixinProfile?: WeixinProfileUpdateOneWithoutUserNestedInput
+    orderProfile?: OrderProfileUpdateOneWithoutUserNestedInput
+    orders?: OrderUpdateManyWithoutUserNestedInput
+    pays?: PayUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutProductSnapshotsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    username?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    tenantId?: IntFieldUpdateOperationsInput | number
+    profile?: UserProfileUncheckedUpdateOneWithoutUserNestedInput
+    weixinProfile?: WeixinProfileUncheckedUpdateOneWithoutUserNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateOneWithoutUserNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutUserNestedInput
+    pays?: PayUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type TenantUpsertWithoutProductSnapshotsInput = {
+    update: XOR<TenantUpdateWithoutProductSnapshotsInput, TenantUncheckedUpdateWithoutProductSnapshotsInput>
+    create: XOR<TenantCreateWithoutProductSnapshotsInput, TenantUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type TenantUpdateWithoutProductSnapshotsInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutProductSnapshotsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type OrderUpsertWithoutProductSnapshotsInput = {
+    update: XOR<OrderUpdateWithoutProductSnapshotsInput, OrderUncheckedUpdateWithoutProductSnapshotsInput>
+    create: XOR<OrderCreateWithoutProductSnapshotsInput, OrderUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type OrderUpdateWithoutProductSnapshotsInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutOrdersNestedInput
+    pay?: PayUpdateOneWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutProductSnapshotsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    pay?: PayUncheckedUpdateOneWithoutOrderNestedInput
+  }
+
+  export type ProductUpsertWithoutProductSnapshotsInput = {
+    update: XOR<ProductUpdateWithoutProductSnapshotsInput, ProductUncheckedUpdateWithoutProductSnapshotsInput>
+    create: XOR<ProductCreateWithoutProductSnapshotsInput, ProductUncheckedCreateWithoutProductSnapshotsInput>
+  }
+
+  export type ProductUpdateWithoutProductSnapshotsInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+    tenant?: TenantUpdateOneRequiredWithoutProductsNestedInput
+  }
+
+  export type ProductUncheckedUpdateWithoutProductSnapshotsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type UserCreateWithoutOrdersInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    tenant: TenantCreateNestedOneWithoutUsersInput
+    profile?: UserProfileCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutUserInput
+    pays?: PayCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutOrdersInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    tenantId: number
+    profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutUserInput
+    pays?: PayUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutOrdersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutOrdersInput, UserUncheckedCreateWithoutOrdersInput>
+  }
+
+  export type TenantCreateWithoutOrdersInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    pays?: PayCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutOrdersInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    pays?: PayUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutOrdersInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutOrdersInput, TenantUncheckedCreateWithoutOrdersInput>
+  }
+
+  export type PayCreateWithoutOrderInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    status?: PayStatus
+    transactionId: string
+    user: UserCreateNestedOneWithoutPaysInput
+    tenant: TenantCreateNestedOneWithoutPaysInput
+  }
+
+  export type PayUncheckedCreateWithoutOrderInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    status?: PayStatus
+    transactionId: string
+  }
+
+  export type PayCreateOrConnectWithoutOrderInput = {
+    where: PayWhereUniqueInput
+    create: XOR<PayCreateWithoutOrderInput, PayUncheckedCreateWithoutOrderInput>
+  }
+
+  export type ProductSnapshotCreateWithoutOrderInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    user: UserCreateNestedOneWithoutProductSnapshotsInput
+    tenant: TenantCreateNestedOneWithoutProductSnapshotsInput
+    product: ProductCreateNestedOneWithoutProductSnapshotsInput
+  }
+
+  export type ProductSnapshotUncheckedCreateWithoutOrderInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    productId: number
+  }
+
+  export type ProductSnapshotCreateOrConnectWithoutOrderInput = {
+    where: ProductSnapshotWhereUniqueInput
+    create: XOR<ProductSnapshotCreateWithoutOrderInput, ProductSnapshotUncheckedCreateWithoutOrderInput>
+  }
+
+  export type ProductSnapshotCreateManyOrderInputEnvelope = {
+    data: Enumerable<ProductSnapshotCreateManyOrderInput>
+    skipDuplicates?: boolean
+  }
+
+  export type UserUpsertWithoutOrdersInput = {
+    update: XOR<UserUpdateWithoutOrdersInput, UserUncheckedUpdateWithoutOrdersInput>
+    create: XOR<UserCreateWithoutOrdersInput, UserUncheckedCreateWithoutOrdersInput>
+  }
+
+  export type UserUpdateWithoutOrdersInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    username?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    tenant?: TenantUpdateOneRequiredWithoutUsersNestedInput
+    profile?: UserProfileUpdateOneWithoutUserNestedInput
+    weixinProfile?: WeixinProfileUpdateOneWithoutUserNestedInput
+    orderProfile?: OrderProfileUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutUserNestedInput
+    pays?: PayUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutOrdersInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    username?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    tenantId?: IntFieldUpdateOperationsInput | number
+    profile?: UserProfileUncheckedUpdateOneWithoutUserNestedInput
+    weixinProfile?: WeixinProfileUncheckedUpdateOneWithoutUserNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput
+    pays?: PayUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type TenantUpsertWithoutOrdersInput = {
+    update: XOR<TenantUpdateWithoutOrdersInput, TenantUncheckedUpdateWithoutOrdersInput>
+    create: XOR<TenantCreateWithoutOrdersInput, TenantUncheckedCreateWithoutOrdersInput>
+  }
+
+  export type TenantUpdateWithoutOrdersInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    pays?: PayUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutOrdersInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    pays?: PayUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type PayUpsertWithoutOrderInput = {
+    update: XOR<PayUpdateWithoutOrderInput, PayUncheckedUpdateWithoutOrderInput>
+    create: XOR<PayCreateWithoutOrderInput, PayUncheckedCreateWithoutOrderInput>
+  }
+
+  export type PayUpdateWithoutOrderInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    transactionId?: StringFieldUpdateOperationsInput | string
+    user?: UserUpdateOneRequiredWithoutPaysNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutPaysNestedInput
+  }
+
+  export type PayUncheckedUpdateWithoutOrderInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    transactionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ProductSnapshotUpsertWithWhereUniqueWithoutOrderInput = {
+    where: ProductSnapshotWhereUniqueInput
+    update: XOR<ProductSnapshotUpdateWithoutOrderInput, ProductSnapshotUncheckedUpdateWithoutOrderInput>
+    create: XOR<ProductSnapshotCreateWithoutOrderInput, ProductSnapshotUncheckedCreateWithoutOrderInput>
+  }
+
+  export type ProductSnapshotUpdateWithWhereUniqueWithoutOrderInput = {
+    where: ProductSnapshotWhereUniqueInput
+    data: XOR<ProductSnapshotUpdateWithoutOrderInput, ProductSnapshotUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type ProductSnapshotUpdateManyWithWhereWithoutOrderInput = {
+    where: ProductSnapshotScalarWhereInput
+    data: XOR<ProductSnapshotUpdateManyMutationInput, ProductSnapshotUncheckedUpdateManyWithoutProductSnapshotsInput>
+  }
+
+  export type UserCreateWithoutPaysInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    tenant: TenantCreateNestedOneWithoutUsersInput
+    profile?: UserProfileCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutUserInput
+    orders?: OrderCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutPaysInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    username: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    recoveryCode?: string | null
+    recoveryToken?: string | null
+    email?: string | null
+    mobile?: string | null
+    anonymousCustomerToken?: string | null
+    image?: string | null
+    tenantId: number
+    profile?: UserProfileUncheckedCreateNestedOneWithoutUserInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedOneWithoutUserInput
+    orderProfile?: OrderProfileUncheckedCreateNestedOneWithoutUserInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutUserInput
+    orders?: OrderUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutPaysInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutPaysInput, UserUncheckedCreateWithoutPaysInput>
+  }
+
+  export type TenantCreateWithoutPaysInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuCreateNestedOneWithoutTenantInput
+    users?: UserCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutTenantInput
+    orders?: OrderCreateNestedManyWithoutTenantInput
+    products?: ProductCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutPaysInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    hashedPassword?: string | null
+    hashedRefreshToken?: string | null
+    displayName?: string | null
+    menu?: MenuUncheckedCreateNestedOneWithoutTenantInput
+    users?: UserUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefs?: DynamicTableDefUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedCreateNestedManyWithoutTenantInput
+    dynamicTableData?: DynamicTableDataUncheckedCreateNestedManyWithoutTenantInput
+    userPreSignup?: UserPreSignupUncheckedCreateNestedManyWithoutTenantInput
+    orderProfile?: OrderProfileUncheckedCreateNestedManyWithoutTenantInput
+    userProfile?: UserProfileUncheckedCreateNestedManyWithoutTenantInput
+    weixinProfile?: WeixinProfileUncheckedCreateNestedManyWithoutTenantInput
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutTenantInput
+    orders?: OrderUncheckedCreateNestedManyWithoutTenantInput
+    products?: ProductUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutPaysInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutPaysInput, TenantUncheckedCreateWithoutPaysInput>
+  }
+
+  export type OrderCreateWithoutPayInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    serial: number
+    status: OrderStatus
+    user: UserCreateNestedOneWithoutOrdersInput
+    tenant: TenantCreateNestedOneWithoutOrdersInput
+    productSnapshots?: ProductSnapshotCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderUncheckedCreateWithoutPayInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    serial: number
+    status: OrderStatus
+    productSnapshots?: ProductSnapshotUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutPayInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutPayInput, OrderUncheckedCreateWithoutPayInput>
+  }
+
+  export type UserUpsertWithoutPaysInput = {
+    update: XOR<UserUpdateWithoutPaysInput, UserUncheckedUpdateWithoutPaysInput>
+    create: XOR<UserCreateWithoutPaysInput, UserUncheckedCreateWithoutPaysInput>
+  }
+
+  export type UserUpdateWithoutPaysInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    username?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    tenant?: TenantUpdateOneRequiredWithoutUsersNestedInput
+    profile?: UserProfileUpdateOneWithoutUserNestedInput
+    weixinProfile?: WeixinProfileUpdateOneWithoutUserNestedInput
+    orderProfile?: OrderProfileUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutUserNestedInput
+    orders?: OrderUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutPaysInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    username?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
+    recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
+    image?: NullableStringFieldUpdateOperationsInput | string | null
+    tenantId?: IntFieldUpdateOperationsInput | number
+    profile?: UserProfileUncheckedUpdateOneWithoutUserNestedInput
+    weixinProfile?: WeixinProfileUncheckedUpdateOneWithoutUserNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type TenantUpsertWithoutPaysInput = {
+    update: XOR<TenantUpdateWithoutPaysInput, TenantUncheckedUpdateWithoutPaysInput>
+    create: XOR<TenantCreateWithoutPaysInput, TenantUncheckedCreateWithoutPaysInput>
+  }
+
+  export type TenantUpdateWithoutPaysInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUpdateOneWithoutTenantNestedInput
+    users?: UserUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutTenantNestedInput
+    orders?: OrderUpdateManyWithoutTenantNestedInput
+    products?: ProductUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutPaysInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    hashedPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    menu?: MenuUncheckedUpdateOneWithoutTenantNestedInput
+    users?: UserUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefs?: DynamicTableDefUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableDefColumns?: DynamicTableDefColumnUncheckedUpdateManyWithoutTenantNestedInput
+    dynamicTableData?: DynamicTableDataUncheckedUpdateManyWithoutTenantNestedInput
+    userPreSignup?: UserPreSignupUncheckedUpdateManyWithoutTenantNestedInput
+    orderProfile?: OrderProfileUncheckedUpdateManyWithoutTenantNestedInput
+    userProfile?: UserProfileUncheckedUpdateManyWithoutTenantNestedInput
+    weixinProfile?: WeixinProfileUncheckedUpdateManyWithoutTenantNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutTenantNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutTenantNestedInput
+    products?: ProductUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type OrderUpsertWithoutPayInput = {
+    update: XOR<OrderUpdateWithoutPayInput, OrderUncheckedUpdateWithoutPayInput>
+    create: XOR<OrderCreateWithoutPayInput, OrderUncheckedCreateWithoutPayInput>
+  }
+
+  export type OrderUpdateWithoutPayInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutOrdersNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutPayInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type UserCreateManyTenantInput = {
@@ -22771,9 +31219,9 @@ export namespace Prisma {
     hashedRefreshToken?: string | null
     recoveryCode?: string | null
     recoveryToken?: string | null
-    unionid?: string | null
     email?: string | null
     mobile?: string | null
+    anonymousCustomerToken?: string | null
     image?: string | null
   }
 
@@ -22798,7 +31246,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataCreateManyTenantInput = {
-    id?: string
+    id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -22841,12 +31289,63 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
-    unionid?: string | null
-    loginOpenid: string
-    headimgurl: string
-    nickname: string
-    sex: number
     userId: number
+    unionid?: string | null
+    loginOpenid?: string | null
+    headimgurl?: string | null
+    nickname?: string | null
+    sex?: number | null
+  }
+
+  export type ProductSnapshotCreateManyTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+    productId: number
+  }
+
+  export type OrderCreateManyTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    serial: number
+    status: OrderStatus
+  }
+
+  export type PayCreateManyTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    status?: PayStatus
+    orderId: number
+    transactionId: string
+  }
+
+  export type ProductCreateManyTenantInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    name: string
+    price: Decimal | DecimalJsLike | number | string
+    productType?: ProductType
+    plan?: number | null
+    amount?: number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: string | null
+    storeDuration?: number | null
+    hasAds?: string | null
+    tecSupport?: string | null
+    validityPeriod?: number | null
+    restricted?: number
   }
 
   export type UserUpdateWithoutTenantInput = {
@@ -22858,13 +31357,16 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     profile?: UserProfileUpdateOneWithoutUserNestedInput
     weixinProfile?: WeixinProfileUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutUserNestedInput
+    orders?: OrderUpdateManyWithoutUserNestedInput
+    pays?: PayUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTenantInput = {
@@ -22877,13 +31379,16 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
     profile?: UserProfileUncheckedUpdateOneWithoutUserNestedInput
     weixinProfile?: WeixinProfileUncheckedUpdateOneWithoutUserNestedInput
     orderProfile?: OrderProfileUncheckedUpdateOneWithoutUserNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutUserNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutUserNestedInput
+    pays?: PayUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutUsersInput = {
@@ -22896,9 +31401,9 @@ export namespace Prisma {
     hashedRefreshToken?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryCode?: NullableStringFieldUpdateOperationsInput | string | null
     recoveryToken?: NullableStringFieldUpdateOperationsInput | string | null
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
     email?: NullableStringFieldUpdateOperationsInput | string | null
     mobile?: NullableStringFieldUpdateOperationsInput | string | null
+    anonymousCustomerToken?: NullableStringFieldUpdateOperationsInput | string | null
     image?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -22965,7 +31470,6 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUpdateWithoutTenantInput = {
-    id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -22974,7 +31478,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedUpdateWithoutTenantInput = {
-    id?: StringFieldUpdateOperationsInput | string
+    id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -22983,7 +31487,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedUpdateManyWithoutDynamicTableDataInput = {
-    id?: StringFieldUpdateOperationsInput | string
+    id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -23083,10 +31587,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
     user?: UserUpdateOneRequiredWithoutWeixinProfileNestedInput
   }
 
@@ -23095,12 +31599,12 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
     userId?: IntFieldUpdateOperationsInput | number
+    unionid?: NullableStringFieldUpdateOperationsInput | string | null
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type WeixinProfileUncheckedUpdateManyWithoutWeixinProfileInput = {
@@ -23108,12 +31612,264 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    unionid?: NullableStringFieldUpdateOperationsInput | string | null
-    loginOpenid?: StringFieldUpdateOperationsInput | string
-    headimgurl?: StringFieldUpdateOperationsInput | string
-    nickname?: StringFieldUpdateOperationsInput | string
-    sex?: IntFieldUpdateOperationsInput | number
     userId?: IntFieldUpdateOperationsInput | number
+    unionid?: NullableStringFieldUpdateOperationsInput | string | null
+    loginOpenid?: NullableStringFieldUpdateOperationsInput | string | null
+    headimgurl?: NullableStringFieldUpdateOperationsInput | string | null
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    sex?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type ProductSnapshotUpdateWithoutTenantInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    user?: UserUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    order?: OrderUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    product?: ProductUpdateOneRequiredWithoutProductSnapshotsNestedInput
+  }
+
+  export type ProductSnapshotUncheckedUpdateWithoutTenantInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orderId?: IntFieldUpdateOperationsInput | number
+    productId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductSnapshotUncheckedUpdateManyWithoutProductSnapshotsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orderId?: IntFieldUpdateOperationsInput | number
+    productId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type OrderUpdateWithoutTenantInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    user?: UserUpdateOneRequiredWithoutOrdersNestedInput
+    pay?: PayUpdateOneWithoutOrderNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutTenantInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    pay?: PayUncheckedUpdateOneWithoutOrderNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateManyWithoutOrdersInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+  }
+
+  export type PayUpdateWithoutTenantInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    transactionId?: StringFieldUpdateOperationsInput | string
+    user?: UserUpdateOneRequiredWithoutPaysNestedInput
+    Order?: OrderUpdateOneRequiredWithoutPayNestedInput
+  }
+
+  export type PayUncheckedUpdateWithoutTenantInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    orderId?: IntFieldUpdateOperationsInput | number
+    transactionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PayUncheckedUpdateManyWithoutPaysInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    orderId?: IntFieldUpdateOperationsInput | number
+    transactionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ProductUpdateWithoutTenantInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+    productSnapshots?: ProductSnapshotUpdateManyWithoutProductNestedInput
+  }
+
+  export type ProductUncheckedUpdateWithoutTenantInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutProductNestedInput
+  }
+
+  export type ProductUncheckedUpdateManyWithoutProductsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    name?: StringFieldUpdateOperationsInput | string
+    price?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productType?: EnumProductTypeFieldUpdateOperationsInput | ProductType
+    plan?: NullableIntFieldUpdateOperationsInput | number | null
+    amount?: IntFieldUpdateOperationsInput | number
+    extendedDescriptionData?: NullableJsonNullValueInput | InputJsonValue
+    fileSize?: NullableStringFieldUpdateOperationsInput | string | null
+    storeDuration?: NullableIntFieldUpdateOperationsInput | number | null
+    hasAds?: NullableStringFieldUpdateOperationsInput | string | null
+    tecSupport?: NullableStringFieldUpdateOperationsInput | string | null
+    validityPeriod?: NullableIntFieldUpdateOperationsInput | number | null
+    restricted?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductSnapshotCreateManyUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+    productId: number
+  }
+
+  export type OrderCreateManyUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    serial: number
+    status: OrderStatus
+  }
+
+  export type PayCreateManyUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    tenantId: number
+    status?: PayStatus
+    orderId: number
+    transactionId: string
+  }
+
+  export type ProductSnapshotUpdateWithoutUserInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    tenant?: TenantUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    order?: OrderUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    product?: ProductUpdateOneRequiredWithoutProductSnapshotsNestedInput
+  }
+
+  export type ProductSnapshotUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orderId?: IntFieldUpdateOperationsInput | number
+    productId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type OrderUpdateWithoutUserInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    tenant?: TenantUpdateOneRequiredWithoutOrdersNestedInput
+    pay?: PayUpdateOneWithoutOrderNestedInput
+    productSnapshots?: ProductSnapshotUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
+    serial?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderStatusFieldUpdateOperationsInput | OrderStatus
+    pay?: PayUncheckedUpdateOneWithoutOrderNestedInput
+    productSnapshots?: ProductSnapshotUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type PayUpdateWithoutUserInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    transactionId?: StringFieldUpdateOperationsInput | string
+    tenant?: TenantUpdateOneRequiredWithoutPaysNestedInput
+    Order?: OrderUpdateOneRequiredWithoutPayNestedInput
+  }
+
+  export type PayUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    tenantId?: IntFieldUpdateOperationsInput | number
+    status?: EnumPayStatusFieldUpdateOperationsInput | PayStatus
+    orderId?: IntFieldUpdateOperationsInput | number
+    transactionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type DynamicTableDefColumnCreateManyDynamicTableDefInput = {
@@ -23128,7 +31884,7 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataCreateManyDynamicTableDefInput = {
-    id?: string
+    id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     isDeleted?: boolean
@@ -23158,7 +31914,6 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUpdateWithoutDynamicTableDefInput = {
-    id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -23167,12 +31922,76 @@ export namespace Prisma {
   }
 
   export type DynamicTableDataUncheckedUpdateWithoutDynamicTableDefInput = {
-    id?: StringFieldUpdateOperationsInput | string
+    id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     data?: JsonNullValueInput | InputJsonValue
     tenantId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductSnapshotCreateManyProductInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    orderId: number
+  }
+
+  export type ProductSnapshotUpdateWithoutProductInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    user?: UserUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    order?: OrderUpdateOneRequiredWithoutProductSnapshotsNestedInput
+  }
+
+  export type ProductSnapshotUncheckedUpdateWithoutProductInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    orderId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type ProductSnapshotCreateManyOrderInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isDeleted?: boolean
+    userId: number
+    tenantId: number
+    snapshotPrice: Decimal | DecimalJsLike | number | string
+    productId: number
+  }
+
+  export type ProductSnapshotUpdateWithoutOrderInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    user?: UserUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutProductSnapshotsNestedInput
+    product?: ProductUpdateOneRequiredWithoutProductSnapshotsNestedInput
+  }
+
+  export type ProductSnapshotUncheckedUpdateWithoutOrderInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    userId?: IntFieldUpdateOperationsInput | number
+    tenantId?: IntFieldUpdateOperationsInput | number
+    snapshotPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    productId?: IntFieldUpdateOperationsInput | number
   }
 
 

@@ -145,9 +145,9 @@ exports.Prisma.UserScalarFieldEnum = {
   hashedRefreshToken: 'hashedRefreshToken',
   recoveryCode: 'recoveryCode',
   recoveryToken: 'recoveryToken',
-  unionid: 'unionid',
   email: 'email',
   mobile: 'mobile',
+  anonymousCustomerToken: 'anonymousCustomerToken',
   image: 'image',
   tenantId: 'tenantId'
 };
@@ -239,13 +239,13 @@ exports.Prisma.WeixinProfileScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   isDeleted: 'isDeleted',
+  tenantId: 'tenantId',
+  userId: 'userId',
   unionid: 'unionid',
   loginOpenid: 'loginOpenid',
   headimgurl: 'headimgurl',
   nickname: 'nickname',
-  sex: 'sex',
-  userId: 'userId',
-  tenantId: 'tenantId'
+  sex: 'sex'
 };
 
 exports.Prisma.OrderProfileScalarFieldEnum = {
@@ -253,12 +253,67 @@ exports.Prisma.OrderProfileScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   isDeleted: 'isDeleted',
+  tenantId: 'tenantId',
   userId: 'userId',
   productType: 'productType',
   plan: 'plan',
   amount: 'amount',
-  expireAt: 'expireAt',
-  tenantId: 'tenantId'
+  expireAt: 'expireAt'
+};
+
+exports.Prisma.ProductScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  isDeleted: 'isDeleted',
+  tenantId: 'tenantId',
+  name: 'name',
+  price: 'price',
+  productType: 'productType',
+  plan: 'plan',
+  amount: 'amount',
+  extendedDescriptionData: 'extendedDescriptionData',
+  fileSize: 'fileSize',
+  storeDuration: 'storeDuration',
+  hasAds: 'hasAds',
+  tecSupport: 'tecSupport',
+  validityPeriod: 'validityPeriod',
+  restricted: 'restricted'
+};
+
+exports.Prisma.ProductSnapshotScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  isDeleted: 'isDeleted',
+  userId: 'userId',
+  tenantId: 'tenantId',
+  snapshotPrice: 'snapshotPrice',
+  orderId: 'orderId',
+  productId: 'productId'
+};
+
+exports.Prisma.OrderScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  isDeleted: 'isDeleted',
+  userId: 'userId',
+  tenantId: 'tenantId',
+  serial: 'serial',
+  status: 'status'
+};
+
+exports.Prisma.PayScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  isDeleted: 'isDeleted',
+  userId: 'userId',
+  tenantId: 'tenantId',
+  status: 'status',
+  orderId: 'orderId',
+  transactionId: 'transactionId'
 };
 
 exports.Prisma.SortOrder = {
@@ -300,6 +355,19 @@ exports.ProductType = {
   PLAN: 'PLAN'
 };
 
+exports.OrderStatus = {
+  INITIALIZED: 'INITIALIZED',
+  PAY_ASSOCIATED: 'PAY_ASSOCIATED',
+  FREE_DEAL: 'FREE_DEAL',
+  CANCELED: 'CANCELED'
+};
+
+exports.PayStatus = {
+  UNPAIED: 'UNPAIED',
+  PAIED: 'PAIED',
+  REFUND: 'REFUND'
+};
+
 exports.Prisma.ModelName = {
   Tenant: 'Tenant',
   TaskFormRelation: 'TaskFormRelation',
@@ -314,7 +382,11 @@ exports.Prisma.ModelName = {
   Menu: 'Menu',
   SentSms: 'SentSms',
   WeixinProfile: 'WeixinProfile',
-  OrderProfile: 'OrderProfile'
+  OrderProfile: 'OrderProfile',
+  Product: 'Product',
+  ProductSnapshot: 'ProductSnapshot',
+  Order: 'Order',
+  Pay: 'Pay'
 };
 
 /**

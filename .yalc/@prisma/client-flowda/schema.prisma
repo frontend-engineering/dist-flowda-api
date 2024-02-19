@@ -49,9 +49,10 @@ model Tenant {
   /// @schema.title 租户显示名称
   displayName String?
 
+  menu Menu?
+
   /// @schema.model_name User
   users                  User[]
-  menu                   Menu?
   /// @schema.model_name DynamicTableDef
   dynamicTableDefs       DynamicTableDef[]
   /// @schema.model_name DynamicTableDefColumn
@@ -66,6 +67,14 @@ model Tenant {
   userProfile            UserProfile[]
   /// @schema.model_name WeixinProfile
   weixinProfile          WeixinProfile[]
+  /// @schema.model_name ProductSnapshot
+  productSnapshots       ProductSnapshot[]
+  /// @schema.model_name Order
+  orders                 Order[]
+  /// @schema.model_name Pay
+  pays                   Pay[]
+  /// @schema.model_name Product
+  products               Product[]
 }
 
 /// @schema.display_name 节点和表单关联关系
@@ -107,14 +116,14 @@ model User {
   recoveryCode       String?
   recoveryToken      String? @db.VarChar(250)
 
-  /// @schema.title 微信 unionid
-  unionid String?
-
   /// @schema.title 邮箱
   email String? @unique()
 
   /// @schema.title 手机号
   mobile String? @unique()
+
+  /// @schema.title 快捷创建
+  anonymousCustomerToken String? @unique()
 
   /// @schema.title 头像
   image String?
@@ -126,6 +135,10 @@ model User {
   profile       UserProfile?
   weixinProfile WeixinProfile?
   orderProfile  OrderProfile?
+
+  productSnapshots ProductSnapshot[]
+  orders           Order[]
+  pays             Pay[]
 }
 
 // todo 目前是从 v1-sdk 迁移过来的（v1 仅支持 email）后续可以增加 mobile
@@ -247,7 +260,7 @@ enum DynamicColumnType {
 
 /// @schema.display_name 动态表数据
 model DynamicTableData {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   isDeleted Boolean  @default(false)
@@ -302,21 +315,22 @@ model WeixinProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   isDeleted Boolean  @default(false)
-
-  unionid     String?
-  loginOpenid String
-
-  headimgurl String
-  nickname   String
-  sex        Int
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
 
   user   User @relation(fields: [userId], references: [id])
   /// @schema.reference User
   userId Int  @unique
 
-  /// @schema.reference Tenant
-  tenantId Int
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  /// @schema.title 微信 unionid
+  unionid     String? @unique
+  /// @schema.title 微信 openid
+  loginOpenid String? @unique
+
+  headimgurl String?
+  nickname   String?
+  sex        Int?
 }
 
 /// @schema.primary_key id
@@ -327,6 +341,9 @@ model OrderProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   isDeleted Boolean  @default(false)
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
 
   user   User @relation(fields: [userId], references: [id])
   userId Int  @unique
@@ -337,13 +354,125 @@ model OrderProfile {
   /// @schema.title 额度
   amount   Int?
   expireAt DateTime?
-
-  /// @schema.reference Tenant
-  tenantId Int
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
 }
 
 enum ProductType {
   AMOUNT
   PLAN
+}
+
+enum OrderStatus {
+  INITIALIZED
+  PAY_ASSOCIATED
+  FREE_DEAL
+  CANCELED
+}
+
+enum PayStatus {
+  UNPAIED
+  PAIED
+  REFUND
+}
+
+/// @schema.primary_key id
+/// @schema.searchable_columns id,name
+/// @schema.display_name 产品
+/// @schema.display_column name
+model Product {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  /// @schema.title 产品名
+  name  String
+  /// @schema.title 价格
+  /// @schema.override_type integer
+  price Decimal
+
+  productType ProductType @default(PLAN)
+  plan        Int?
+  /// @schema.title 额度
+  // 根据 productType 判断
+  amount      Int         @default(0)
+
+  extendedDescriptionData Json?
+  fileSize                String? // 单文件大小上限
+  storeDuration           Int? // 存储时长，单位月
+  /// @schema.title 广告
+  hasAds                  String? // 是否有广告
+  /// @schema.title 技术支持
+  tecSupport              String?
+  /// @schema.model_name ProductSnapshot
+  /// @schema.foreign_key productId
+  /// @schema.primary_key id
+  productSnapshots        ProductSnapshot[] // 先手动定义，确保前端链路通，后面再看直接解析 prisma
+  /// @schema.title 有效期/天
+  validityPeriod          Int?
+
+  restricted Int @default(0) // 是否限购，默认0为不限购
+}
+
+model ProductSnapshot {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  snapshotPrice Decimal
+  order         Order   @relation(fields: [orderId], references: [id])
+  orderId       Int
+  product       Product @relation(fields: [productId], references: [id])
+  productId     Int
+}
+
+/// @schema.primary_key id
+/// @schema.display_name 订单
+/// @schema.display_primary_key true
+model Order {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  serial Int
+  status OrderStatus
+
+  // Order 1-1 Pay? 这里必须?，Pay 里写上 order + orderId @unique
+  pay              Pay?
+  // Order 1-n ProductSnapshot，ProductSnapshot 写 order + orderId 不用 unique
+  productSnapshots ProductSnapshot[]
+}
+
+model Pay {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  status        PayStatus @default(UNPAIED)
+  Order         Order     @relation(fields: [orderId], references: [id])
+  orderId       Int       @unique
+  transactionId String
 }

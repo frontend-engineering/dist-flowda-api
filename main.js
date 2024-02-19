@@ -818,12 +818,20 @@ const schema_router_1 = __webpack_require__("../../libs/flowda-services-trpc-ser
 const user_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/user.router.ts");
 const trpc_context_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts");
 const data_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/data.router.ts");
+const app_auth_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/app-auth-v4.router.ts");
+const customer_auth_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/customer-auth-v4.router.ts");
+const order_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/order-v4.router.ts");
+const product_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/product-v4.router.ts");
 exports.flowdaServiceTrpcServerModule = new inversify_1.ContainerModule(bind => {
     bind(trpc_service_1.TrpcService).toSelf().inSingletonScope();
     bind(trpc_context_1.ContextFactory).toSelf().inSingletonScope();
     bind(schema_router_1.SchemaRouter).toSelf().inSingletonScope();
     bind(user_router_1.UserRouter).toSelf().inSingletonScope();
     bind(data_router_1.DataRouter).toSelf().inSingletonScope();
+    bind(app_auth_v4_router_1.AppAuthV4Router).toSelf().inSingletonScope();
+    bind(customer_auth_v4_router_1.CustomerAuthV4Router).toSelf().inSingletonScope();
+    bind(order_v4_router_1.OrderV4Router).toSelf().inSingletonScope();
+    bind(product_v4_router_1.ProductV4Router).toSelf().inSingletonScope();
     (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, trpc_router_1.TrpcRouter);
 });
 
@@ -841,25 +849,6 @@ const zod_1 = __webpack_require__("zod");
 (0, zod_openapi_1.extendZodWithOpenApi)(zod_1.z);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services-trpc-server/src/flowdaServiceTrpcServer.module.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.router.ts"), exports);
-tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services-trpc-server/src/schemas.ts"), exports);
-
-
-/***/ }),
-
-/***/ "../../libs/flowda-services-trpc-server/src/schemas.ts":
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.appCreateV4SchemaDto = exports.appCreateV4Schema = void 0;
-const prisma_flowda_1 = __webpack_require__("../../libs/prisma-flowda/src/index.ts");
-const nestjs_zod_1 = __webpack_require__("nestjs-zod");
-exports.appCreateV4Schema = prisma_flowda_1.TenantSchema.pick({
-    displayName: true,
-});
-class appCreateV4SchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.appCreateV4Schema) {
-}
-exports.appCreateV4SchemaDto = appCreateV4SchemaDto;
 
 
 /***/ }),
@@ -966,6 +955,289 @@ exports.SchemaRouter = SchemaRouter = SchemaRouter_1 = tslib_1.__decorate([
 
 /***/ }),
 
+/***/ "../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/app-auth-v4.router.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var AppAuthV4Router_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AppAuthV4Router = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
+const zod_1 = __webpack_require__("zod");
+let AppAuthV4Router = AppAuthV4Router_1 = class AppAuthV4Router {
+    constructor(trpc, appAuthV4, loggerFactory) {
+        this.trpc = trpc;
+        this.appAuthV4 = appAuthV4;
+        this.router = this.trpc.router({
+            create: this.trpc.procedure.input(flowda_shared_types_1.appCreateV4Schema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.appAuthV4.create(input);
+            })),
+            validate: this.trpc.procedure
+                .input(zod_1.z.object({
+                appId: zod_1.z.string(),
+                appToken: zod_1.z.string(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.appAuthV4.validate(input.appId, input.appToken);
+            })),
+            refreshToken: this.trpc.procedure
+                .input(zod_1.z.object({
+                rt: zod_1.z.string(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.appAuthV4.refreshToken(input.rt);
+            })),
+            getApp: this.trpc.procedure
+                .input(zod_1.z.object({
+                tid: zod_1.z.number(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.appAuthV4.getApp(input.tid);
+            })),
+        });
+        this.logger = loggerFactory(AppAuthV4Router_1.name);
+    }
+};
+exports.AppAuthV4Router = AppAuthV4Router;
+exports.AppAuthV4Router = AppAuthV4Router = AppAuthV4Router_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
+    tslib_1.__param(1, (0, inversify_1.inject)(flowda_services_1.AppAuthV4Service)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.AppAuthV4Service !== "undefined" && flowda_services_1.AppAuthV4Service) === "function" ? _b : Object, Function])
+], AppAuthV4Router);
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/customer-auth-v4.router.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var CustomerAuthV4Router_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CustomerAuthV4Router = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
+const zod_1 = __webpack_require__("zod");
+let CustomerAuthV4Router = CustomerAuthV4Router_1 = class CustomerAuthV4Router {
+    constructor(trpc, customerV4, loggerFactory) {
+        this.trpc = trpc;
+        this.customerV4 = customerV4;
+        this.router = this.trpc.router({
+            preSignup: this.trpc.procedure
+                .input(flowda_shared_types_1.customerPreSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.preSignup(input);
+            })),
+            verifyAndSignup: this.trpc.procedure
+                .input(flowda_shared_types_1.customerSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.verifyAndSignup(input);
+            })),
+            validateUserReturnTokens: this.trpc.procedure
+                .input(zod_1.z.object({
+                tid: zod_1.z.number(),
+                name: zod_1.z.string(),
+                password: zod_1.z.string(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.validateUserReturnTokens(input.tid, input.name, input.password);
+            })),
+            wxValidateUser: this.trpc.procedure
+                .input(zod_1.z.object({
+                tid: zod_1.z.number(),
+                code: zod_1.z.string(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.wxValidateUser(input.tid, input.code);
+            })),
+            refreshToken: this.trpc.procedure
+                .input(zod_1.z.object({
+                rt: zod_1.z.string(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.refreshToken(input.rt);
+            })),
+            getUser: this.trpc.procedure
+                .input(zod_1.z.object({
+                userId: zod_1.z.number(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.getUser(input.userId);
+            })),
+            logoutApi: this.trpc.procedure.input(flowda_shared_types_1.userJwtPayloadSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.logoutApi(input);
+            })),
+            generateRecoveryCode: this.trpc.procedure
+                .input(flowda_shared_types_1.generateRecoveryCodeSchema.merge(zod_1.z.object({
+                appId: zod_1.z.string(),
+            })))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.generateRecoveryCode(input);
+            })),
+            resetPassword: this.trpc.procedure
+                .input(flowda_shared_types_1.resetPasswordWithRecoveryCodeSchema.merge(zod_1.z.object({
+                appId: zod_1.z.string(),
+            })))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.resetPassword(input);
+            })),
+            fwhLogin: this.trpc.procedure
+                .input(zod_1.z.object({
+                tid: zod_1.z.number(),
+                code: zod_1.z.string(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.fwhLogin(input.tid, input.code);
+            })),
+            amountUpdate: this.trpc.procedure
+                .input(flowda_shared_types_1.amountUpdateSchema.merge(flowda_shared_types_1.userJwtPayloadSchema))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.amountUpdate(input);
+            })),
+        });
+        this.logger = loggerFactory(CustomerAuthV4Router_1.name);
+    }
+};
+exports.CustomerAuthV4Router = CustomerAuthV4Router;
+exports.CustomerAuthV4Router = CustomerAuthV4Router = CustomerAuthV4Router_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
+    tslib_1.__param(1, (0, inversify_1.inject)(flowda_services_1.CustomerAuthV4Service)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.CustomerAuthV4Service !== "undefined" && flowda_services_1.CustomerAuthV4Service) === "function" ? _b : Object, Function])
+], CustomerAuthV4Router);
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/order-v4.router.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var OrderV4Router_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OrderV4Router = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
+const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
+const zod_1 = __webpack_require__("zod");
+let OrderV4Router = OrderV4Router_1 = class OrderV4Router {
+    constructor(trpc, orderV4, loggerFactory) {
+        this.trpc = trpc;
+        this.orderV4 = orderV4;
+        this.router = this.trpc.router({
+            query: this.trpc.procedure
+                .input(zod_1.z.object({
+                orderId: zod_1.z.number(),
+            }))
+                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.query(input.orderId);
+            })),
+            queryPay: this.trpc.procedure
+                .input(zod_1.z
+                .object({
+                orderId: zod_1.z.number(),
+            })
+                .merge(flowda_services_1.userJwtPayloadSchema))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.queryPay(input.tid, input.uid, input.orderId);
+            })),
+            createNative: this.trpc.procedure
+                .input(flowda_services_1.createOrderSchema.merge(flowda_services_1.userJwtPayloadSchema))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.createNative(input);
+            })),
+            createJSAPI: this.trpc.procedure
+                .input(flowda_services_1.createOrderSchema.merge(flowda_services_1.userJwtPayloadSchema))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.createJSAPI(input);
+            })),
+            createQuick: this.trpc.procedure
+                .input(flowda_services_1.createQuickOrderSchema.merge(flowda_services_1.tenantJwtPayloadSchema))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.createQuick(input);
+            })),
+            queryPayQuick: this.trpc.procedure
+                .input(zod_1.z.object({
+                tid: zod_1.z.number(),
+                orderId: zod_1.z.number(),
+                anonymousCustomerToken: zod_1.z.string(),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.queryPayQuick(input.tid, input.anonymousCustomerToken, input.orderId);
+            })),
+        });
+        this.logger = loggerFactory(OrderV4Router_1.name);
+    }
+};
+exports.OrderV4Router = OrderV4Router;
+exports.OrderV4Router = OrderV4Router = OrderV4Router_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
+    tslib_1.__param(1, (0, inversify_1.inject)(flowda_services_1.OrderV4Service)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.OrderV4Service !== "undefined" && flowda_services_1.OrderV4Service) === "function" ? _b : Object, Function])
+], OrderV4Router);
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/product-v4.router.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var ProductV4Router_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProductV4Router = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.service.ts");
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
+const zod_1 = __webpack_require__("zod");
+let ProductV4Router = ProductV4Router_1 = class ProductV4Router {
+    constructor(trpc, productV4, loggerFactory) {
+        this.trpc = trpc;
+        this.productV4 = productV4;
+        this.router = this.trpc.router({
+            createManyProducts: this.trpc.procedure
+                .input(zod_1.z.object({
+                tid: zod_1.z.number(),
+                products: zod_1.z.array(flowda_shared_types_1.productCreateManyItemSchema),
+            }))
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.productV4.createManyProducts(input.tid, input.products);
+            })),
+        });
+        this.logger = loggerFactory(ProductV4Router_1.name);
+    }
+};
+exports.ProductV4Router = ProductV4Router;
+exports.ProductV4Router = ProductV4Router = ProductV4Router_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
+    tslib_1.__param(1, (0, inversify_1.inject)(flowda_services_1.ProductV4Service)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.ProductV4Service !== "undefined" && flowda_services_1.ProductV4Service) === "function" ? _b : Object, Function])
+], ProductV4Router);
+
+
+/***/ }),
+
 /***/ "../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts":
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -1013,7 +1285,7 @@ function createContext(opts) {
 
 
 var TrpcRouter_1;
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d, _e, _f, _g, _h, _j;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TrpcRouter = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -1024,18 +1296,30 @@ const schema_router_1 = __webpack_require__("../../libs/flowda-services-trpc-ser
 const user_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/user.router.ts");
 const trpc_context_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts");
 const data_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/data.router.ts");
+const app_auth_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/app-auth-v4.router.ts");
+const customer_auth_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/customer-auth-v4.router.ts");
+const product_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/product-v4.router.ts");
+const order_v4_router_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/sdk-v4/order-v4.router.ts");
 // import { createOpenApiExpressMiddleware } from 'trpc-openapi'
 let TrpcRouter = TrpcRouter_1 = class TrpcRouter {
-    constructor(trpc, schemaRouter, userRouter, dataRouter, contextFactory, loggerFactory) {
+    constructor(trpc, schemaRouter, userRouter, dataRouter, appAuthV4Router, customerAuthV4Router, productV4Router, orderV4Router, contextFactory, loggerFactory) {
         this.trpc = trpc;
         this.schemaRouter = schemaRouter;
         this.userRouter = userRouter;
         this.dataRouter = dataRouter;
+        this.appAuthV4Router = appAuthV4Router;
+        this.customerAuthV4Router = customerAuthV4Router;
+        this.productV4Router = productV4Router;
+        this.orderV4Router = orderV4Router;
         this.contextFactory = contextFactory;
         this.appRouter = this.trpc.router({
             schema: this.schemaRouter.schemaRouter,
             user: this.userRouter.userRouter,
             data: this.dataRouter.router,
+            appAuthV4: this.appAuthV4Router.router,
+            customerAuthV4: this.customerAuthV4Router.router,
+            productV4: this.productV4Router.router,
+            orderV4: this.orderV4Router.router,
         });
         this.logger = loggerFactory(TrpcRouter_1.name);
     }
@@ -1055,9 +1339,13 @@ exports.TrpcRouter = TrpcRouter = TrpcRouter_1 = tslib_1.__decorate([
     tslib_1.__param(1, (0, inversify_1.inject)(schema_router_1.SchemaRouter)),
     tslib_1.__param(2, (0, inversify_1.inject)(user_router_1.UserRouter)),
     tslib_1.__param(3, (0, inversify_1.inject)(data_router_1.DataRouter)),
-    tslib_1.__param(4, (0, inversify_1.inject)(trpc_context_1.ContextFactory)),
-    tslib_1.__param(5, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, typeof (_c = typeof user_router_1.UserRouter !== "undefined" && user_router_1.UserRouter) === "function" ? _c : Object, typeof (_d = typeof data_router_1.DataRouter !== "undefined" && data_router_1.DataRouter) === "function" ? _d : Object, typeof (_e = typeof trpc_context_1.ContextFactory !== "undefined" && trpc_context_1.ContextFactory) === "function" ? _e : Object, Function])
+    tslib_1.__param(4, (0, inversify_1.inject)(app_auth_v4_router_1.AppAuthV4Router)),
+    tslib_1.__param(5, (0, inversify_1.inject)(customer_auth_v4_router_1.CustomerAuthV4Router)),
+    tslib_1.__param(6, (0, inversify_1.inject)(product_v4_router_1.ProductV4Router)),
+    tslib_1.__param(7, (0, inversify_1.inject)(order_v4_router_1.OrderV4Router)),
+    tslib_1.__param(8, (0, inversify_1.inject)(trpc_context_1.ContextFactory)),
+    tslib_1.__param(9, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof schema_router_1.SchemaRouter !== "undefined" && schema_router_1.SchemaRouter) === "function" ? _b : Object, typeof (_c = typeof user_router_1.UserRouter !== "undefined" && user_router_1.UserRouter) === "function" ? _c : Object, typeof (_d = typeof data_router_1.DataRouter !== "undefined" && data_router_1.DataRouter) === "function" ? _d : Object, typeof (_e = typeof app_auth_v4_router_1.AppAuthV4Router !== "undefined" && app_auth_v4_router_1.AppAuthV4Router) === "function" ? _e : Object, typeof (_f = typeof customer_auth_v4_router_1.CustomerAuthV4Router !== "undefined" && customer_auth_v4_router_1.CustomerAuthV4Router) === "function" ? _f : Object, typeof (_g = typeof product_v4_router_1.ProductV4Router !== "undefined" && product_v4_router_1.ProductV4Router) === "function" ? _g : Object, typeof (_h = typeof order_v4_router_1.OrderV4Router !== "undefined" && order_v4_router_1.OrderV4Router) === "function" ? _h : Object, typeof (_j = typeof trpc_context_1.ContextFactory !== "undefined" && trpc_context_1.ContextFactory) === "function" ? _j : Object, Function])
 ], TrpcRouter);
 
 
@@ -1239,9 +1527,7 @@ const common_1 = __webpack_require__("@nestjs/common");
 const zod_1 = __webpack_require__("zod");
 const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
 const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
-const bcrypt = tslib_1.__importStar(__webpack_require__("bcrypt"));
 const _ = tslib_1.__importStar(__webpack_require__("radash"));
-const schemas_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/schemas.ts");
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
 const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
 let UserRouter = UserRouter_1 = class UserRouter {
@@ -1299,13 +1585,8 @@ let UserRouter = UserRouter_1 = class UserRouter {
             getTenantByName: this.trpc.procedure.input(flowda_shared_types_1.getTenantByNameSchema).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.getTenantByName(input);
             })),
-            validateTenant: this.trpc.procedure
-                .input(zod_1.z.object({
-                name: zod_1.z.string(),
-                password: zod_1.z.string(),
-            }))
-                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.validateTenant(input.name, input.password);
+            validateTenant: this.trpc.procedure.input(flowda_shared_types_1.validateTenantSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.validateTenant(input);
             })),
             refreshTenantToken: this.trpc.procedure
                 .input(zod_1.z.object({
@@ -1320,17 +1601,10 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 password: zod_1.z.string(),
             }))
                 .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const ret = yield this.userService.validate(input.username, input.password);
-                return ret;
+                return this.userService.validate(input.username, input.password);
             })),
-            validateByEmail: this.trpc.procedure
-                .input(zod_1.z.object({
-                email: zod_1.z.string(),
-                tenantId: zod_1.z.number(),
-                password: zod_1.z.string(),
-            }))
-                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.validateByEmail(input.tenantId, input.email, input.password);
+            validateByEmail: this.trpc.procedure.input(flowda_shared_types_1.validateByEmailSchema).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.validateByEmail(input);
             })),
             findMany: this.trpc.procedure
                 .input(zod_1.z.object({
@@ -1381,82 +1655,23 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.verifyAccessToken(input.jwt);
             })),
-            createTenant: this.trpc.procedure.input(schemas_1.appCreateV4Schema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const randomAppId = _.uid(4).toUpperCase();
-                const randomAppToken = _.uid(24);
-                const hashedPassword = yield bcrypt.hash(randomAppToken, 10);
-                const ret = yield this.prisma.tenant.create({
-                    data: {
-                        name: randomAppId,
-                        displayName: input.displayName,
-                        hashedPassword,
-                    },
-                    select: flowda_services_1.tenantSelect,
-                });
-                // appToken 虽然是密码，但是需要返回给前台
-                return Object.assign({ appToken: randomAppToken }, _.omit(ret, ['hashedRefreshToken', 'hashedPassword']));
+            createTenant: this.trpc.procedure.input(flowda_shared_types_1.appCreateV4Schema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.createTenant(input);
             })),
             preSignup: this.trpc.procedure
                 .input(flowda_shared_types_1.customerPreSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const user = yield this.prisma.user.findUnique({
-                    where: { email: input.email },
-                });
-                if (user) {
-                    // https://docs.nestjs.com/exception-filters#built-in-http-exceptions
-                    throw new common_1.ConflictException('Email already exists');
-                }
-                const randomCode = _.uid(6).toUpperCase();
-                yield this.prisma.userPreSignup.create({
-                    data: {
-                        tenantId: input.tid,
-                        email: input.email,
-                        verifyCode: randomCode,
-                    },
-                });
-                // todo: 发送邮件
-                return {
-                    verifyCode: randomCode,
-                };
+                return this.userService.preSignup(input);
             })),
             verifyAndSignup: this.trpc.procedure
                 .input(flowda_shared_types_1.customerSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const ret = yield this.prisma.userPreSignup.findFirstOrThrow({
-                    where: {
-                        tenantId: input.tid,
-                        email: input.email,
-                        verifyCode: input.verifyCode,
-                        isDeleted: false,
-                    },
-                });
-                const hashedPassword = yield bcrypt.hash(input.password, 10);
-                const [userRet] = yield this.prisma.$transaction([
-                    this.prisma.user.create({
-                        data: {
-                            username: input.email, // 后续可以判断如果 email === username 则可以改动一次用户名
-                            email: input.email,
-                            hashedPassword: hashedPassword,
-                            hashedRefreshToken: null,
-                            tenantId: input.tid,
-                        },
-                        select: flowda_services_1.userSelect,
-                    }),
-                    this.prisma.userPreSignup.update({
-                        where: {
-                            id: ret.id,
-                        },
-                        data: {
-                            isDeleted: true,
-                        },
-                    }),
-                ]);
-                return _.omit(userRet, ['hashedRefreshToken', 'hashedPassword']);
+                return this.userService.verifyAndSignup(input);
             })),
             wxValidateUser: this.trpc.procedure
                 .input(flowda_shared_types_1.wxValidateUserSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.wxValidateUser(input.code, input.tid);
+                return this.userService.wxValidateUser(input);
             })),
             refreshToken: this.trpc.procedure.input(zod_1.z.object({ rt: zod_1.z.string() })).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.refreshToken(input.rt);
@@ -1562,61 +1777,16 @@ let UserRouter = UserRouter_1 = class UserRouter {
             amountUpdate: this.trpc.procedure
                 .input(flowda_shared_types_1.amountUpdateSchema.merge(flowda_shared_types_1.userJwtPayloadSchema))
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const profileRet = yield this.prisma.orderProfile.findUniqueOrThrow({
-                    where: {
-                        userId: input.uid,
-                    },
-                });
-                if (profileRet.expireAt && new Date(profileRet.expireAt).valueOf() < Date.now()) {
-                    throw new common_1.ForbiddenException('Order profile is expired', {
-                        description: `expired at ${profileRet.expireAt}`,
-                    });
-                }
-                const count = input.count || 1;
-                const action = input.action || 'decrement';
-                if (action === 'decrement' && (profileRet.amount == null || profileRet.amount < count)) {
-                    throw new common_1.ForbiddenException('Action not allowed', {
-                        description: `profile amount ${profileRet.amount} less than ${count}`,
-                    });
-                }
-                return this.prisma.user.update({
-                    where: {
-                        id: profileRet.userId,
-                    },
-                    select: flowda_services_1.userSelect,
-                    data: {
-                        orderProfile: {
-                            update: {
-                                amount: {
-                                    decrement: count,
-                                },
-                            },
-                        },
-                    },
-                });
+                return this.userService.amountUpdate(input);
             })),
             createQuick: this.trpc.procedure
                 .input(flowda_shared_types_1.createQuickOrderSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const userRet = yield this.prisma.user.findFirst({
-                    where: {
-                        username: input.anonymousCustomerToken,
-                        tenantId: input.tid,
-                    },
-                });
-                if (userRet) {
-                    throw new common_1.ConflictException('请确认支付快捷创建是已支付状态');
-                }
-                return this.prisma.user.create({
-                    data: {
-                        tenantId: input.tid,
-                        username: input.anonymousCustomerToken,
-                    },
-                    select: flowda_services_1.userSelect,
-                });
+                return this.userService.createQuick(input);
             })),
             updateAnonymousToPayOpenId: this.trpc.procedure
                 .input(zod_1.z.object({
+                tid: zod_1.z.number(),
                 id: zod_1.z.number(),
                 openid: zod_1.z.string(),
             }))
@@ -1628,6 +1798,17 @@ let UserRouter = UserRouter_1 = class UserRouter {
                     },
                     data: {
                         username: input.openid,
+                        weixinProfile: {
+                            connectOrCreate: {
+                                where: {
+                                    loginOpenid: input.openid,
+                                },
+                                create: {
+                                    loginOpenid: input.openid,
+                                    tenantId: input.tid,
+                                },
+                            },
+                        },
                     },
                 });
             })),
@@ -1696,11 +1877,22 @@ const wechat_oauth_1 = tslib_1.__importDefault(__webpack_require__("wechat-oauth
 const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
 const weixin_login_service_1 = __webpack_require__("../../libs/flowda-services/src/services/weixin-login.service.ts");
 const weixin_fuwuhao_login_service_1 = __webpack_require__("../../libs/flowda-services/src/services/weixin-fuwuhao-login.service.ts");
+const wechatpay_node_v3_1 = tslib_1.__importDefault(__webpack_require__("wechatpay-node-v3"));
+const appAuthV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/appAuthV4.service.ts");
+const customerAuthV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/customerAuthV4.service.ts");
+const orderV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/orderV4.service.ts");
+const productV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/productV4.service.ts");
 exports.flowdaServiceModule = new inversify_1.ContainerModule((bind) => {
     bind(flowda_shared_1.PrismaZodSchemaSymbol).toConstantValue(prisma_flowda_1.zt);
     bind(flowda_shared_1.CustomZodSchemaSymbol).toConstantValue(schema);
     bind(flowda_shared_1.APISymbol).toConstantValue(axios_1.axiosApiInstance);
     bind(flowda_shared_1.WechatOAuthSymbol).toConstantValue(new wechat_oauth_1.default(flowda_env_1.FLOWDA_ENV.freecharger_pc_appid, flowda_env_1.FLOWDA_ENV.freecharger_pc_appSecret));
+    bind(flowda_shared_types_1.WechatpayNodeV3Symbol).toConstantValue(new wechatpay_node_v3_1.default({
+        appid: flowda_env_1.FLOWDA_ENV.appid,
+        mchid: flowda_env_1.FLOWDA_ENV.mchid,
+        publicKey: Buffer.from(flowda_env_1.FLOWDA_ENV['apiclient_cert.pem'], 'utf-8'),
+        privateKey: Buffer.from(flowda_env_1.FLOWDA_ENV['apiclient_key.pem'], 'utf-8'),
+    }));
     (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, task_service_1.TaskService);
     (0, flowda_shared_1.bindService)(bind, flowda_shared_1.ServiceSymbol, user_service_1.UserService);
     (0, flowda_shared_1.bindServiceSymbol)(bind, flowda_shared_1.ServiceSymbol, flowda_shared_types_1.DynamicTableDefServiceSymbol, dynamic_table_def_service_1.DynamicTableDefService);
@@ -1708,6 +1900,10 @@ exports.flowdaServiceModule = new inversify_1.ContainerModule((bind) => {
     (0, flowda_shared_1.bindServiceSymbol)(bind, flowda_shared_1.ServiceSymbol, flowda_shared_types_1.MenuServiceSymbol, menu_service_1.MenuService);
     bind(weixin_login_service_1.WeixinLoginService).toSelf().inSingletonScope();
     bind(weixin_fuwuhao_login_service_1.WeixinFuwuhaoLoginService).toSelf().inSingletonScope();
+    bind(appAuthV4_service_1.AppAuthV4Service).toSelf().inSingletonScope();
+    bind(customerAuthV4_service_1.CustomerAuthV4Service).toSelf().inSingletonScope();
+    bind(orderV4_service_1.OrderV4Service).toSelf().inSingletonScope();
+    bind(productV4_service_1.ProductV4Service).toSelf().inSingletonScope();
 });
 
 
@@ -1732,6 +1928,10 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/service
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/menu.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/weixin-login.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/weixin-fuwuhao-login.service.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/sdk/appAuthV4.service.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/sdk/customerAuthV4.service.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/sdk/orderV4.service.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/sdk/productV4.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared-types/src/index.ts"), exports);
 
 
@@ -1768,6 +1968,11 @@ exports.FLOWDA_ENV = (0, znv_1.parseEnv)(process.env, {
     // 微信服务号
     freecharger_fuwuhao_appid: zod_1.z.string().min(1),
     freecharger_fuwuhao_secret: zod_1.z.string().min(1),
+    // 微信支付
+    appid: zod_1.z.string().min(1),
+    mchid: zod_1.z.string().min(1),
+    'apiclient_cert.pem': zod_1.z.string().min(1),
+    'apiclient_key.pem': zod_1.z.string().min(1),
 });
 
 
@@ -2245,6 +2450,666 @@ exports.MenuService = MenuService = MenuService_1 = tslib_1.__decorate([
 
 /***/ }),
 
+/***/ "../../libs/flowda-services/src/services/sdk/appAuthV4.service.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var AppAuthV4Service_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AppAuthV4Service = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const common_1 = __webpack_require__("@nestjs/common");
+const user_service_1 = __webpack_require__("../../libs/flowda-services/src/services/user.service.ts");
+const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
+/*
+和账户相关的，目前仅仅作为委托和 input output map（保持 v1 接口）
+等后续 db 迁移到 flowda 之后，再直接调用 service
+ */
+let AppAuthV4Service = AppAuthV4Service_1 = class AppAuthV4Service {
+    constructor(user, loggerFactory) {
+        this.user = user;
+        this.logger = loggerFactory(AppAuthV4Service_1.name);
+    }
+    create(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const tenantRet = yield this.user.createTenant({
+                displayName: dto.displayName,
+            });
+            return Object.assign({
+                appToken: tenantRet.appToken,
+            }, mapTenantToApp(tenantRet));
+        });
+    }
+    validate(appId, appToken) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.validateTenant({
+                name: appId,
+                password: appToken,
+            });
+            return {
+                at: ret.at.token,
+                rt: ret.rt.token,
+                app: mapTenantToApp(ret.tenant),
+                expireAt: ret.at.exp,
+            };
+        });
+    }
+    refreshToken(rt) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.refreshTenantToken(rt);
+            return {
+                at: ret.at.token,
+                expireAt: ret.at.exp,
+                app: mapTenantToApp(ret),
+            };
+        });
+    }
+    getApp(tid) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.logger.debug(`[getApp] tid ${tid}`);
+            const tenant = yield this.user.getTenantInfo(tid);
+            if (!tenant) {
+                const description = `tenant not found, tid:${tid}`;
+                throw new common_1.NotFoundException({ description });
+            }
+            return mapTenantToApp(tenant);
+        });
+    }
+    getAccessTokenSecret() {
+        const ret = flowda_env_1.FLOWDA_ENV.TENANT_ACCESS_TOKEN_SECRET;
+        return ret;
+    }
+};
+exports.AppAuthV4Service = AppAuthV4Service;
+exports.AppAuthV4Service = AppAuthV4Service = AppAuthV4Service_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(user_service_1.UserService)),
+    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _a : Object, Function])
+], AppAuthV4Service);
+// 映射 tenant -> 和原来的 app 表
+function mapTenantToApp(tenant) {
+    return {
+        id: tenant.id,
+        appId: tenant.name,
+        displayName: tenant.displayName,
+        description: '',
+    };
+}
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services/src/services/sdk/customerAuthV4.service.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var CustomerAuthV4Service_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.mapUserToCustomer = exports.CustomerAuthV4Service = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+const user_service_1 = __webpack_require__("../../libs/flowda-services/src/services/user.service.ts");
+const _ = tslib_1.__importStar(__webpack_require__("radash"));
+const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
+const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
+let CustomerAuthV4Service = CustomerAuthV4Service_1 = class CustomerAuthV4Service {
+    constructor(prisma, user, loggerFactory) {
+        this.prisma = prisma;
+        this.user = user;
+        this.logger = loggerFactory(CustomerAuthV4Service_1.name);
+    }
+    preSignup(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.preSignup({
+                tid: dto.tid,
+                email: dto.email,
+            });
+            return ret;
+        });
+    }
+    verifyAndSignup(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.verifyAndSignup(dto);
+            return {
+                id: String(ret.id),
+                name: ret.username,
+                email: ret.email,
+            };
+        });
+    }
+    validateUserReturnTokens(tid, name, password) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.validateByEmail({
+                tenantId: tid,
+                email: name,
+                password: password,
+            });
+            return {
+                at: ret.at.token,
+                rt: ret.rt.token,
+                user: mapUserToCustomer(ret.user),
+                expireAt: ret.at.exp,
+            };
+        });
+    }
+    wxValidateUser(tid, code) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.wxValidateUser({
+                tid,
+                code,
+            });
+            return {
+                at: ret.at.token,
+                rt: ret.rt.token,
+                user: mapUserToCustomer(ret.user),
+                expireAt: ret.at.exp,
+            };
+        });
+    }
+    refreshToken(rt) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.refreshToken(rt);
+            return {
+                at: ret.at.token,
+                user: mapUserToCustomer(ret.user),
+                expireAt: ret.at.exp,
+            };
+        });
+    }
+    getUser(userId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const userRet = yield this.prisma.user.findUniqueOrThrow({
+                where: {
+                    id: userId,
+                },
+                select: user_service_1.userSelect,
+            });
+            return mapUserToCustomer(_.omit(userRet, ['hashedRefreshToken', 'hashedPassword']));
+        });
+    }
+    getAccessTokenSecret() {
+        const ret = flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_SECRET;
+        return ret;
+    }
+    logoutApi(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            yield this.prisma.user.update({
+                where: {
+                    id: dto.uid,
+                },
+                data: {
+                    hashedRefreshToken: null,
+                },
+            });
+        });
+    }
+    generateRecoveryCode(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            return this.user.generateRecoveryCode({
+                email: dto.email,
+                tid: Number(dto.appId),
+            });
+        });
+    }
+    resetPassword(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const userRet = yield this.user.resetPasswordWithRecoveryCode({
+                recoveryCode: dto.recoveryCode,
+                password: dto.password,
+                tid: Number(dto.appId),
+            });
+            return mapUserToCustomer(userRet);
+        });
+    }
+    fwhLogin(tid, code) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.fwhLogin({ tid, code });
+            return {
+                at: ret.at.token,
+                rt: ret.rt.token,
+                user: mapUserToCustomer(ret.user),
+                expireAt: ret.at.exp,
+            };
+        });
+    }
+    amountUpdate(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.user.amountUpdate(dto);
+            return mapUserToCustomer(ret);
+        });
+    }
+};
+exports.CustomerAuthV4Service = CustomerAuthV4Service;
+exports.CustomerAuthV4Service = CustomerAuthV4Service = CustomerAuthV4Service_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_types_1.PrismaClientSymbol)),
+    tslib_1.__param(1, (0, inversify_1.inject)(user_service_1.UserService)),
+    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof db !== "undefined" && db.PrismaClient) === "function" ? _a : Object, typeof (_b = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _b : Object, Function])
+], CustomerAuthV4Service);
+function mapUserToCustomer(user) {
+    return {
+        id: String(user.id),
+        appId: user.tenant.name,
+        tid: user.tenantId,
+        name: user.username,
+        email: user.email,
+        image: user.image,
+        weixinProfile: user.weixinProfile,
+        profile: user.orderProfile,
+    };
+}
+exports.mapUserToCustomer = mapUserToCustomer;
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services/src/services/sdk/orderV4.service.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var OrderV4Service_1;
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OrderV4Service = exports.orderSelect = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const common_1 = __webpack_require__("@nestjs/common");
+const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+const user_service_1 = __webpack_require__("../../libs/flowda-services/src/services/user.service.ts");
+const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
+exports.orderSelect = db.Prisma.validator()({
+    id: true,
+    serial: true,
+    status: true,
+    userId: true,
+    tenantId: true,
+    user: {
+        select: user_service_1.userSelect,
+    },
+    productSnapshots: {
+        select: {
+            id: true,
+            snapshotPrice: true,
+            productId: true,
+        },
+    },
+});
+let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
+    constructor(wxPayService, user, prisma, loggerFactory) {
+        this.wxPayService = wxPayService;
+        this.user = user;
+        this.prisma = prisma;
+        this.logger = loggerFactory(OrderV4Service_1.name);
+    }
+    query(orderId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.prisma.order.findMany({
+                where: { id: orderId },
+                select: exports.orderSelect,
+            });
+            return ret;
+        });
+    }
+    queryPay(tid, userId, orderId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.logger.log(`querying order, uid:${userId}, orderId:${orderId}`);
+            const userRet = yield this.prisma.user.findUniqueOrThrow({
+                where: {
+                    id: userId,
+                },
+            });
+            const orderRet = yield this.prisma.order.findFirstOrThrow({
+                select: exports.orderSelect,
+                where: { id: orderId },
+            });
+            if (orderRet.userId !== userId) {
+                throw new common_1.ForbiddenException('订单关联的买家ID和登录信息不一致');
+            }
+            this.logger.log(`order found ${orderRet.id}, query request to wx`);
+            const payQueryRet = yield this.wxPayService.query(orderId);
+            this.logger.log(`order query response from wx ${payQueryRet === null || payQueryRet === void 0 ? void 0 : payQueryRet.trade_state}`);
+            if (payQueryRet.status !== 200 || payQueryRet.trade_state !== 'SUCCESS') {
+                throw new common_1.InternalServerErrorException('微信支付查询失败');
+            }
+            this.logger.log(`order query success`);
+            // todo: 后续重构成 productSnapshot 和 order 1-1，暂时先取第一个
+            const productId = orderRet.productSnapshots[0].productId;
+            const productRet = yield this.prisma.product.findUniqueOrThrow({
+                where: {
+                    id: productId,
+                },
+            });
+            const [userRet2, payRet] = yield this.prisma.$transaction([
+                // 更新用户 orderProfile
+                this.prisma.user.update({
+                    where: {
+                        id: userId,
+                    },
+                    select: user_service_1.userSelect,
+                    data: {
+                        orderProfile: {
+                            upsert: {
+                                update: {
+                                    productType: productRet.productType,
+                                    plan: productRet.plan,
+                                    amount: {
+                                        increment: productRet.amount || 0,
+                                    },
+                                },
+                                create: {
+                                    tenantId: userRet.tenantId,
+                                    productType: productRet.productType,
+                                    plan: productRet.plan,
+                                    amount: productRet.amount,
+                                    expireAt: productRet.validityPeriod != null ? (0, dayjs_1.default)().add(productRet.validityPeriod, 'day').toDate() : null,
+                                },
+                            },
+                        },
+                    },
+                }),
+                // 创建支付关联订单
+                this.prisma.pay.upsert({
+                    where: {
+                        orderId: orderId,
+                    },
+                    create: {
+                        tenantId: userRet.tenantId,
+                        userId: userRet.id,
+                        status: db.PayStatus.PAIED,
+                        orderId: orderId,
+                        transactionId: payQueryRet.transaction_id,
+                    },
+                    update: {
+                        status: db.PayStatus.PAIED,
+                        transactionId: payQueryRet.transaction_id,
+                    },
+                }),
+            ]);
+            return {
+                order: orderRet,
+                payQueryRet,
+            };
+        });
+    }
+    createNative(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            return this.createInner(dto, this.wxPayService.transactionsNative.bind(this.wxPayService));
+        });
+    }
+    createJSAPI(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            return this.createInner(dto, this.wxPayService.transactionsJSAPI.bind(this.wxPayService));
+        });
+    }
+    /*
+    直接用 callback 比 template method 简化不少代码也方便测试
+     */
+    createInner(dto, transactionCallback) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.logger.log(`creating order:tid:${dto.tid},uid:${dto.uid},productId:${dto.productId}`);
+            const productRet = yield this.prisma.product.findUniqueOrThrow({
+                where: {
+                    id: dto.productId,
+                },
+            });
+            if (productRet.restricted /*如果限购*/) {
+                const purchased = yield this.prisma.order.count({
+                    where: {
+                        tenantId: dto.tid,
+                        userId: dto.uid,
+                        productSnapshots: {
+                            some: {
+                                productId: dto.productId,
+                            },
+                        },
+                    },
+                });
+                if (purchased > 0) {
+                    throw new common_1.ForbiddenException(`Product is restricted`, {
+                        description: `order history length: ${purchased}`,
+                    });
+                }
+            }
+            const lastRet = yield this.prisma.order.findFirst({
+                orderBy: [
+                    {
+                        createdAt: 'desc',
+                    },
+                ],
+            });
+            let serial;
+            if (lastRet == null || lastRet.serial >= flowda_shared_types_1.Serial_Max) {
+                serial = flowda_shared_types_1.Serial_Min;
+            }
+            else {
+                serial = lastRet.serial + 1;
+            }
+            if (productRet.price.toNumber() === 0 /*免费产品*/) {
+                const orderProfileRet = yield this.prisma.orderProfile.findUnique({
+                    where: {
+                        userId: dto.uid,
+                    },
+                });
+                if (orderProfileRet && orderProfileRet.plan === flowda_shared_types_1.EPlan.VIP) {
+                    throw new common_1.ConflictException(`User has a paid plan`, {
+                        description: `profileId:${orderProfileRet.id}`,
+                    });
+                }
+                const [orderRet, userRet] = yield this.prisma.$transaction([
+                    this.prisma.order.create({
+                        data: {
+                            tenantId: dto.tid,
+                            userId: dto.uid,
+                            status: db.OrderStatus.FREE_DEAL,
+                            serial: serial,
+                            productSnapshots: {
+                                create: {
+                                    snapshotPrice: productRet.price,
+                                    productId: productRet.id,
+                                    userId: dto.uid,
+                                    tenantId: dto.tid,
+                                },
+                            },
+                        },
+                        select: exports.orderSelect,
+                    }),
+                    this.prisma.user.update({
+                        where: {
+                            id: dto.uid,
+                        },
+                        select: user_service_1.userSelect,
+                        data: {
+                            orderProfile: {
+                                upsert: {
+                                    update: {
+                                        productType: productRet.productType,
+                                        plan: productRet.plan,
+                                        amount: {
+                                            increment: productRet.amount || 0,
+                                        },
+                                    },
+                                    create: {
+                                        tenantId: dto.tid,
+                                        productType: productRet.productType,
+                                        plan: productRet.plan,
+                                        amount: productRet.amount,
+                                        expireAt: productRet.validityPeriod != null ? (0, dayjs_1.default)().add(productRet.validityPeriod, 'day').toDate() : null,
+                                    },
+                                },
+                            },
+                        },
+                    }),
+                ]);
+                this.logger.log(`order created: ${orderRet.id}`);
+                return {
+                    customer: userRet,
+                    order: orderRet,
+                    wxRet: null,
+                };
+            }
+            // 付费产品
+            // 1. 创建订单
+            const orderRet = yield this.prisma.order.create({
+                data: {
+                    tenantId: dto.tid,
+                    userId: dto.uid,
+                    status: db.OrderStatus.INITIALIZED,
+                    serial: serial,
+                    productSnapshots: {
+                        create: {
+                            snapshotPrice: productRet.price,
+                            productId: productRet.id,
+                            tenantId: dto.tid,
+                            userId: dto.uid,
+                        },
+                    },
+                },
+                select: exports.orderSelect,
+            });
+            try {
+                // 2. 尝试发起微信支付 失败不影响订单
+                // todo 添加失败重试
+                const wxRet = yield transactionCallback({
+                    openid: dto.openid,
+                    orderId: String(orderRet.id),
+                    desc: productRet.name,
+                    total: productRet.price.toNumber(),
+                });
+                const orderRet2 = yield this.prisma.order.update({
+                    where: {
+                        id: orderRet.id,
+                    },
+                    data: {
+                        status: db.OrderStatus.PAY_ASSOCIATED,
+                    },
+                    select: exports.orderSelect,
+                });
+                return {
+                    order: orderRet2,
+                    wxRet: wxRet,
+                };
+            }
+            catch (e) {
+                this.logger.error(e);
+                return {
+                    order: orderRet,
+                    wxRet: {
+                        success: false,
+                    },
+                };
+            }
+        });
+    }
+    createQuick(dto) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const userRet = yield this.user.createQuick(dto);
+            return this.createNative({
+                tid: userRet.tenantId,
+                uid: userRet.id,
+                productId: dto.productId,
+            });
+        });
+    }
+    queryPayQuick(tid, anonymousCustomerToken, orderId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const userRet = yield yield this.prisma.user.findFirstOrThrow({
+                where: {
+                    username: anonymousCustomerToken,
+                    tenantId: tid,
+                },
+            });
+            this.logger.debug(`start queryPay`);
+            const ret = yield this.queryPay(tid, userRet.id, orderId);
+            this.logger.debug(`succeed queryPay`);
+            const openid = ret.payQueryRet.payer.openid;
+            const updateUserRet = yield this.prisma.user.update({
+                select: user_service_1.userSelect,
+                where: {
+                    id: userRet.id,
+                },
+                data: {
+                    username: openid,
+                    weixinProfile: {
+                        connectOrCreate: {
+                            where: {
+                                loginOpenid: openid,
+                            },
+                            create: {
+                                loginOpenid: openid,
+                                tenantId: tid,
+                            },
+                        },
+                    },
+                },
+            });
+            return Object.assign(Object.assign({}, ret), {
+                user: updateUserRet,
+            });
+        });
+    }
+};
+exports.OrderV4Service = OrderV4Service;
+exports.OrderV4Service = OrderV4Service = OrderV4Service_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_types_1.WechatpayNodeV3Symbol)),
+    tslib_1.__param(1, (0, inversify_1.inject)(user_service_1.UserService)),
+    tslib_1.__param(2, (0, inversify_1.inject)(flowda_shared_types_1.PrismaClientSymbol)),
+    tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [Object, typeof (_a = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _a : Object, typeof (_b = typeof db !== "undefined" && db.PrismaClient) === "function" ? _b : Object, Function])
+], OrderV4Service);
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services/src/services/sdk/productV4.service.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var ProductV4Service_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProductV4Service = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const inversify_1 = __webpack_require__("inversify");
+const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+let ProductV4Service = ProductV4Service_1 = class ProductV4Service {
+    constructor(prisma, loggerFactory) {
+        this.prisma = prisma;
+        this.logger = loggerFactory(ProductV4Service_1.name);
+    }
+    createManyProducts(tid, list) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const data = list.map(item => (Object.assign(Object.assign({}, item), { tenantId: tid, productType: item.productType, restricted: item.restricted || 0, amount: item.amount, 
+                // 以下是为了处理 prisma null
+                plan: item.plan === undefined ? null : item.plan, extendedDescriptionData: item.extendedDescriptionData, fileSize: item.fileSize === undefined ? null : item.fileSize, storeDuration: item.storeDuration === undefined ? null : item.storeDuration, hasAds: item.hasAds === undefined ? null : item.hasAds, tecSupport: item.tecSupport === undefined ? null : item.tecSupport, validityPeriod: null })));
+            yield this.prisma.product.createMany({ data });
+            return this.prisma.product.findMany({
+                where: {
+                    tenantId: tid,
+                },
+            });
+        });
+    }
+};
+exports.ProductV4Service = ProductV4Service;
+exports.ProductV4Service = ProductV4Service = ProductV4Service_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_types_1.PrismaClientSymbol)),
+    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof db !== "undefined" && db.PrismaClient) === "function" ? _a : Object, Function])
+], ProductV4Service);
+
+
+/***/ }),
+
 /***/ "../../libs/flowda-services/src/services/task.service.ts":
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -2402,14 +3267,13 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateRecoveryToken = exports.generateVerificationCode = exports.UserService = exports.userSelect = exports.tenantSelect = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const inversify_1 = __webpack_require__("inversify");
-const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
 const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
 const bcrypt = tslib_1.__importStar(__webpack_require__("bcrypt"));
 const jwt = tslib_1.__importStar(__webpack_require__("jsonwebtoken"));
 const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
 const common_1 = __webpack_require__("@nestjs/common");
 const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
-const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
 const weixin_login_service_1 = __webpack_require__("../../libs/flowda-services/src/services/weixin-login.service.ts");
 const _ = tslib_1.__importStar(__webpack_require__("radash"));
 const weixin_fuwuhao_login_service_1 = __webpack_require__("../../libs/flowda-services/src/services/weixin-fuwuhao-login.service.ts");
@@ -2513,8 +3377,9 @@ let UserService = UserService_1 = class UserService {
             });
         });
     }
-    validateByEmail(tenantId, email, password) {
+    validateByEmail(input) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { tenantId, email, password } = input;
             const userRet = yield this.prisma.user.findFirstOrThrow({
                 where: {
                     email: email,
@@ -2563,8 +3428,9 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
-    validateTenant(name, password) {
+    validateTenant(dto) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { name, password } = dto;
             const tenant = yield this.prisma.tenant.findFirst({
                 where: {
                     name: name,
@@ -2739,7 +3605,9 @@ let UserService = UserService_1 = class UserService {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const ret = yield this.prisma.user.findFirst({
                 where: {
-                    unionid: dto.unionid,
+                    weixinProfile: {
+                        unionid: dto.unionid,
+                    },
                     tenantId: dto.tenantId,
                 },
             });
@@ -2750,7 +3618,9 @@ let UserService = UserService_1 = class UserService {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const user = yield this.prisma.user.findFirst({
                 where: {
-                    unionid: dto.unionid,
+                    weixinProfile: {
+                        unionid: dto.unionid,
+                    },
                     tenantId: dto.tenantId,
                 },
             });
@@ -2762,20 +3632,28 @@ let UserService = UserService_1 = class UserService {
                     username: dto.unionid, // 后续可以判断如果 unionid === username 则可以改动一次用户名
                     hashedPassword: null,
                     hashedRefreshToken: null,
-                    unionid: dto.unionid,
+                    weixinProfile: {
+                        create: {
+                            unionid: dto.unionid,
+                            tenantId: dto.tenantId,
+                        },
+                    },
                     tenantId: dto.tenantId,
                 },
             });
             return aUser;
         });
     }
-    wxValidateUser(code, tid) {
+    wxValidateUser(dto) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { tid, code } = dto;
             const wxRet = yield this.weixinLogin.getAccessToken(code);
             const data = wxRet.data;
             let userRet = yield this.prisma.user.findFirst({
                 where: {
-                    unionid: data.unionid,
+                    weixinProfile: {
+                        unionid: data.unionid,
+                    },
                     tenantId: tid,
                 },
                 select: exports.userSelect,
@@ -2787,7 +3665,6 @@ let UserService = UserService_1 = class UserService {
                         username: data.unionid, // 后续可以判断如果 unionid === username 则可以改动一次用户名
                         hashedPassword: null,
                         hashedRefreshToken: null,
-                        unionid: data.unionid,
                         tenantId: tid,
                         weixinProfile: {
                             create: {
@@ -3002,11 +3879,142 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
+    createTenant(input) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const randomAppId = _.uid(4).toUpperCase();
+            const randomAppToken = _.uid(24);
+            const hashedPassword = yield bcrypt.hash(randomAppToken, 10);
+            const ret = yield this.prisma.tenant.create({
+                data: {
+                    name: randomAppId,
+                    displayName: input.displayName,
+                    hashedPassword,
+                },
+                select: exports.tenantSelect,
+            });
+            // appToken 虽然是密码，但是需要返回给前台
+            return Object.assign({ appToken: randomAppToken }, _.omit(ret, ['hashedRefreshToken', 'hashedPassword']));
+        });
+    }
+    preSignup(input) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const user = yield this.prisma.user.findUnique({
+                where: { email: input.email },
+            });
+            if (user) {
+                // https://docs.nestjs.com/exception-filters#built-in-http-exceptions
+                throw new common_1.ConflictException('Email already exists');
+            }
+            const randomCode = _.uid(6).toUpperCase();
+            yield this.prisma.userPreSignup.create({
+                data: {
+                    tenantId: input.tid,
+                    email: input.email,
+                    verifyCode: randomCode,
+                },
+            });
+            // todo: 发送邮件
+            return {
+                verifyCode: randomCode,
+            };
+        });
+    }
+    verifyAndSignup(input) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ret = yield this.prisma.userPreSignup.findFirstOrThrow({
+                where: {
+                    tenantId: input.tid,
+                    email: input.email,
+                    verifyCode: input.verifyCode,
+                    isDeleted: false,
+                },
+            });
+            const hashedPassword = yield bcrypt.hash(input.password, 10);
+            const [userRet] = yield this.prisma.$transaction([
+                this.prisma.user.create({
+                    data: {
+                        username: input.email, // 后续可以判断如果 email === username 则可以改动一次用户名
+                        email: input.email,
+                        hashedPassword: hashedPassword,
+                        hashedRefreshToken: null,
+                        tenantId: input.tid,
+                    },
+                    select: exports.userSelect,
+                }),
+                this.prisma.userPreSignup.update({
+                    where: {
+                        id: ret.id,
+                    },
+                    data: {
+                        isDeleted: true,
+                    },
+                }),
+            ]);
+            return _.omit(userRet, ['hashedRefreshToken', 'hashedPassword']);
+        });
+    }
+    amountUpdate(input) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const profileRet = yield this.prisma.orderProfile.findUniqueOrThrow({
+                where: {
+                    userId: input.uid,
+                },
+            });
+            if (profileRet.expireAt && new Date(profileRet.expireAt).valueOf() < Date.now()) {
+                throw new common_1.ForbiddenException('Order profile is expired', {
+                    description: `expired at ${profileRet.expireAt}`,
+                });
+            }
+            const count = input.count || 1;
+            const action = input.action || 'decrement';
+            if (action === 'decrement' && (profileRet.amount == null || profileRet.amount < count)) {
+                throw new common_1.ForbiddenException('Action not allowed', {
+                    description: `profile amount ${profileRet.amount} less than ${count}`,
+                });
+            }
+            return this.prisma.user.update({
+                where: {
+                    id: profileRet.userId,
+                },
+                select: exports.userSelect,
+                data: {
+                    orderProfile: {
+                        update: {
+                            amount: {
+                                decrement: count,
+                            },
+                        },
+                    },
+                },
+            });
+        });
+    }
+    createQuick(input) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const userRet = yield this.prisma.user.findFirst({
+                where: {
+                    username: input.anonymousCustomerToken,
+                    tenantId: input.tid,
+                },
+            });
+            if (userRet) {
+                throw new common_1.ConflictException('请确认支付快捷创建是已支付状态');
+            }
+            return this.prisma.user.create({
+                data: {
+                    tenantId: input.tid,
+                    username: input.anonymousCustomerToken,
+                    anonymousCustomerToken: input.anonymousCustomerToken,
+                },
+                select: exports.userSelect,
+            });
+        });
+    }
 };
 exports.UserService = UserService;
 exports.UserService = UserService = UserService_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
-    tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_1.PrismaClientSymbol)),
+    tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_types_1.PrismaClientSymbol)),
     tslib_1.__param(1, (0, inversify_1.inject)(flowda_shared_types_1.SmsClientSymbol)),
     tslib_1.__param(2, (0, inversify_1.inject)(weixin_login_service_1.WeixinLoginService)),
     tslib_1.__param(3, (0, inversify_1.inject)(weixin_fuwuhao_login_service_1.WeixinFuwuhaoLoginService)),
@@ -3443,7 +4451,7 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared-types/src/zod
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MenuServiceSymbol = exports.DynamicTableDefServiceSymbol = exports.DynamicTableDataServiceSymbol = exports.WechatOAuthSymbol = exports.SmsClientSymbol = exports.COSSymbol = exports.K3CloudIdentifyInfoSymbol = exports.CustomZodSchemaSymbol = exports.PrismaZodSchemaSymbol = exports.ENVSymbol = exports.URLSymbol = exports.APISymbol = exports.ServiceSymbol = exports.PrismaClientSymbol = exports.FlowdaGatewayTrpcClientSymbol = exports.FlowdaTrpcClientSymbol = exports.DynamicTableSchemaTransformerSymbol = exports.SchemaServiceSymbol = exports.DataServiceSymbol = exports.PrismaUtilsSymbol = exports.SchemaTransformerSymbol = exports.PrismaSchemaServiceSymbol = void 0;
+exports.WechatpayNodeV3FactorySymbol = exports.WechatpayNodeV3Symbol = exports.MenuServiceSymbol = exports.DynamicTableDefServiceSymbol = exports.DynamicTableDataServiceSymbol = exports.WechatOAuthSymbol = exports.SmsClientSymbol = exports.COSSymbol = exports.K3CloudIdentifyInfoSymbol = exports.CustomZodSchemaSymbol = exports.PrismaZodSchemaSymbol = exports.ENVSymbol = exports.URLSymbol = exports.APISymbol = exports.ServiceSymbol = exports.PrismaClientSymbol = exports.FlowdaGatewayTrpcClientSymbol = exports.FlowdaTrpcClientSymbol = exports.DynamicTableSchemaTransformerSymbol = exports.SchemaServiceSymbol = exports.DataServiceSymbol = exports.PrismaUtilsSymbol = exports.SchemaTransformerSymbol = exports.PrismaSchemaServiceSymbol = void 0;
 exports.PrismaSchemaServiceSymbol = Symbol.for('PrismaSchemaService');
 exports.SchemaTransformerSymbol = Symbol.for('SchemaTransformer');
 exports.PrismaUtilsSymbol = Symbol.for('PrismaUtils');
@@ -3470,6 +4478,8 @@ exports.WechatOAuthSymbol = Symbol.for('WechatOAuth');
 exports.DynamicTableDataServiceSymbol = Symbol.for('DynamicTableDataService');
 exports.DynamicTableDefServiceSymbol = Symbol.for('DynamicTableDefService');
 exports.MenuServiceSymbol = Symbol.for('MenuService');
+exports.WechatpayNodeV3Symbol = Symbol.for('WechatpayNodeV3Symbol');
+exports.WechatpayNodeV3FactorySymbol = Symbol.for('WechatpayNodeV3FactorySymbol');
 
 
 /***/ }),
@@ -3496,8 +4506,8 @@ exports.Serial_Max = 99999;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fwhLoginTenantJwtPayloadSchemaDto = exports.fwhLoginSchema = exports.wxPayQuerySchema = exports.updateFreeProfileSchema = exports.updatePaidProfileSchema = exports.SdkProductCreateManyItemDto = exports.productCreateManyItemSchema = exports.ResetPasswordDto = exports.resetPasswordWithRecoveryCodeTenantJwtSchemaDto = exports.resetPasswordWithRecoveryCodeSchemaDto = exports.resetPasswordWithRecoveryCodeSchema = exports.GenerateRecoveryCodeDto = exports.generateRecoveryCodeTenantJwtSchemaDto = exports.generateRecoveryCodeSchemaDto = exports.generateRecoveryCodeSchema = exports.wxValidateUserSchemaDto = exports.wxValidateUserSchema = exports.wxGetUserRes = exports.wxGetAccessTokenRes = exports.customerSignupSchemaDto = exports.customerSignupSchema = exports.customerPreSignupSchemaDto = exports.customerPreSignupSchema = exports.userJwtPayloadSchema = exports.tenantJwtPayloadSchema = exports.verifyMobileSchemaDto = exports.verifyMobileSchema = exports.resetPasswordSchemaDto = exports.resetPasswordSchema = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = exports.prismaFilterSchema = exports.agSortSchema = exports.agFilterSchema = exports.agFilter2Schema = exports.agFilter1Schema = exports.agFilterInner2Schema = exports.agFilterInnerSchema = exports.resourceSchema = exports.resourceColumnSchema = exports.resourceAssociationSchema = exports.selectOptionSchema = void 0;
-exports.createQuickOrderTenantJWTPayloadSchemaDto = exports.SdkCreateQuickOrderDto = exports.createQuickOrderSchema = exports.SdkCreateOrderInJSAPIDto = exports.createOrderJSAPISchema = exports.transactionsNativeSchemaDto = exports.transactionsNativeSchema = exports.createOrderUserJwtPayloadSchemaDto = exports.SdkCreateOrderDto = exports.createOrderSchema = exports.amountUpdateUserJwtPayloadSchemaDto = exports.amountUpdateSchemaDto = exports.amountUpdateSchema = void 0;
+exports.updateFreeProfileSchema = exports.updatePaidProfileSchema = exports.SdkProductCreateManyItemDto = exports.productCreateManyItemSchema = exports.ResetPasswordDto = exports.resetPasswordWithRecoveryCodeTenantJwtSchemaDto = exports.resetPasswordWithRecoveryCodeSchemaDto = exports.resetPasswordWithRecoveryCodeSchema = exports.GenerateRecoveryCodeDto = exports.generateRecoveryCodeTenantJwtSchemaDto = exports.generateRecoveryCodeSchemaDto = exports.generateRecoveryCodeSchema = exports.wxValidateUserTenantJwtPayloadSchemaDto = exports.wxValidateUserSchema = exports.wxGetUserRes = exports.wxGetAccessTokenRes = exports.customerSignupTenantJwtPayloadSchemaDto = exports.customerSignupSchemaDto = exports.customerSignupSchema = exports.customerPreSignupTenantJwtPayloadSchemaDto = exports.customerPreSignupSchemaDto = exports.customerPreSignupSchema = exports.userJwtPayloadSchemaDto = exports.userJwtPayloadSchema = exports.tenantJwtPayloadSchema = exports.verifyMobileSchemaDto = exports.verifyMobileSchema = exports.resetPasswordSchemaDto = exports.resetPasswordSchema = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = exports.prismaFilterSchema = exports.agSortSchema = exports.agFilterSchema = exports.agFilter2Schema = exports.agFilter1Schema = exports.agFilterInner2Schema = exports.agFilterInnerSchema = exports.resourceSchema = exports.resourceColumnSchema = exports.resourceAssociationSchema = exports.selectOptionSchema = void 0;
+exports.validateByEmailSchemaDto = exports.validateByEmailSchema = exports.validateTenantSchemaDto = exports.validateTenantSchema = exports.appCreateV4SchemaDto = exports.appCreateV4Schema = exports.createQuickOrderTenantJWTPayloadSchemaDto = exports.SdkCreateQuickOrderDto = exports.createQuickOrderSchema = exports.SdkCreateOrderInJSAPIDto = exports.createOrderJSAPISchema = exports.transactionsNativeSchemaDto = exports.transactionsNativeSchema = exports.createOrderUserJwtPayloadSchemaDto = exports.SdkCreateOrderDto = exports.createOrderSchema = exports.amountUpdateUserJwtPayloadSchemaDto = exports.amountUpdateSchemaDto = exports.amountUpdateSchema = exports.fwhLoginTenantJwtPayloadSchemaDto = exports.fwhLoginSchema = exports.wxPayQuerySchema = void 0;
 const zod_1 = __webpack_require__("zod");
 const nestjs_zod_1 = __webpack_require__("nestjs-zod");
 exports.selectOptionSchema = zod_1.z.object({
@@ -3646,12 +4656,18 @@ exports.userJwtPayloadSchema = zod_1.z.object({
     uid: zod_1.z.number(),
     tid: zod_1.z.number(),
 });
+class userJwtPayloadSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.userJwtPayloadSchema) {
+}
+exports.userJwtPayloadSchemaDto = userJwtPayloadSchemaDto;
 exports.customerPreSignupSchema = zod_1.z.object({
     email: zod_1.z.string(),
 });
 class customerPreSignupSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.customerPreSignupSchema) {
 }
 exports.customerPreSignupSchemaDto = customerPreSignupSchemaDto;
+class customerPreSignupTenantJwtPayloadSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.customerPreSignupSchema.merge(exports.tenantJwtPayloadSchema)) {
+}
+exports.customerPreSignupTenantJwtPayloadSchemaDto = customerPreSignupTenantJwtPayloadSchemaDto;
 exports.customerSignupSchema = zod_1.z.object({
     email: zod_1.z.string(),
     verifyCode: zod_1.z.string(),
@@ -3660,6 +4676,9 @@ exports.customerSignupSchema = zod_1.z.object({
 class customerSignupSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.customerSignupSchema) {
 }
 exports.customerSignupSchemaDto = customerSignupSchemaDto;
+class customerSignupTenantJwtPayloadSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.customerSignupSchema.merge(exports.tenantJwtPayloadSchema)) {
+}
+exports.customerSignupTenantJwtPayloadSchemaDto = customerSignupTenantJwtPayloadSchemaDto;
 exports.wxGetAccessTokenRes = zod_1.z.object({
     access_token: zod_1.z.string(),
     expires_in: zod_1.z.string(),
@@ -3684,9 +4703,9 @@ exports.wxGetUserRes = zod_1.z.object({
 exports.wxValidateUserSchema = zod_1.z.object({
     code: zod_1.z.string(),
 });
-class wxValidateUserSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.wxValidateUserSchema) {
+class wxValidateUserTenantJwtPayloadSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.wxValidateUserSchema.merge(exports.tenantJwtPayloadSchema)) {
 }
-exports.wxValidateUserSchemaDto = wxValidateUserSchemaDto;
+exports.wxValidateUserTenantJwtPayloadSchemaDto = wxValidateUserTenantJwtPayloadSchemaDto;
 exports.generateRecoveryCodeSchema = zod_1.z.object({
     email: zod_1.z.string(),
 });
@@ -3773,7 +4792,7 @@ class amountUpdateUserJwtPayloadSchemaDto extends (0, nestjs_zod_1.createZodDto)
 }
 exports.amountUpdateUserJwtPayloadSchemaDto = amountUpdateUserJwtPayloadSchemaDto;
 exports.createOrderSchema = zod_1.z.object({
-    productId: zod_1.z.string(),
+    productId: zod_1.z.number(),
     openid: zod_1.z.string().optional(),
 });
 class SdkCreateOrderDto extends (0, nestjs_zod_1.createZodDto)(exports.createOrderSchema) {
@@ -3805,6 +4824,27 @@ exports.SdkCreateQuickOrderDto = SdkCreateQuickOrderDto;
 class createQuickOrderTenantJWTPayloadSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.createQuickOrderSchema.merge(exports.tenantJwtPayloadSchema)) {
 }
 exports.createQuickOrderTenantJWTPayloadSchemaDto = createQuickOrderTenantJWTPayloadSchemaDto;
+exports.appCreateV4Schema = zod_1.z.object({
+    displayName: zod_1.z.string(),
+});
+class appCreateV4SchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.appCreateV4Schema) {
+}
+exports.appCreateV4SchemaDto = appCreateV4SchemaDto;
+exports.validateTenantSchema = zod_1.z.object({
+    name: zod_1.z.string(),
+    password: zod_1.z.string(),
+});
+class validateTenantSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.validateTenantSchema) {
+}
+exports.validateTenantSchemaDto = validateTenantSchemaDto;
+exports.validateByEmailSchema = zod_1.z.object({
+    email: zod_1.z.string(),
+    tenantId: zod_1.z.number(),
+    password: zod_1.z.string(),
+});
+class validateByEmailSchemaDto extends (0, nestjs_zod_1.createZodDto)(exports.validateByEmailSchema) {
+}
+exports.validateByEmailSchemaDto = validateByEmailSchemaDto;
 
 
 /***/ }),
@@ -3859,6 +4899,7 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/utils/bro
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/utils/ag-grid-utils.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/utils/schema-utils.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/utils/custom-error.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/utils/dayjs-utils.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/services/schema/meta.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/services/schema/schemaTransformer.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared/src/services/schema/dynamicTableSchemaTransformer.ts"), exports);
@@ -5109,6 +6150,39 @@ exports.CustomError = CustomError;
 
 /***/ }),
 
+/***/ "../../libs/flowda-shared/src/utils/dayjs-utils.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getTimeByDay = exports.getTimeExpire = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const utc_1 = tslib_1.__importDefault(__webpack_require__("dayjs/plugin/utc"));
+const timezone_1 = tslib_1.__importDefault(__webpack_require__("dayjs/plugin/timezone"));
+const advancedFormat_1 = tslib_1.__importDefault(__webpack_require__("dayjs/plugin/advancedFormat"));
+const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
+dayjs_1.default.extend(utc_1.default);
+dayjs_1.default.extend(timezone_1.default);
+dayjs_1.default.extend(advancedFormat_1.default);
+function getTimeExpire(min) {
+    const fmt = (0, dayjs_1.default)().tz('Asia/Shanghai').add(min, 'minute').format('YYYY-MM-DDTHH:mm:ss+z');
+    const ret = fmt.match(/.*(GMT\+(\d))/);
+    if (ret == null) {
+        return '';
+    }
+    else {
+        return ret[0].replace(ret[1], ret[2].padStart(2, '0') + ':00');
+    }
+}
+exports.getTimeExpire = getTimeExpire;
+function getTimeByDay(day) {
+    return (0, dayjs_1.default)().tz('Asia/Shanghai').add(day, 'day').toDate();
+}
+exports.getTimeByDay = getTimeByDay;
+
+
+/***/ }),
+
 /***/ "../../libs/flowda-shared/src/utils/getServices.ts":
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -5229,7 +6303,8 @@ exports.zt = tslib_1.__importStar(__webpack_require__("../../libs/prisma-flowda/
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.OrderProfileWithRelationsSchema = exports.OrderProfileSchema = exports.WeixinProfileWithRelationsSchema = exports.WeixinProfileSchema = exports.SentSmsSchema = exports.MenuWithRelationsSchema = exports.MenuSchema = exports.DynamicTableDataWithRelationsSchema = exports.DynamicTableDataSchema = exports.DynamicTableDefColumnWithRelationsSchema = exports.DynamicTableDefColumnSchema = exports.DynamicTableDefWithRelationsSchema = exports.DynamicTableDefSchema = exports.AuditsSchema = exports.UserProfileWithRelationsSchema = exports.UserProfileSchema = exports.UserPreSignupWithRelationsSchema = exports.UserPreSignupSchema = exports.UserWithRelationsSchema = exports.UserSchema = exports.TableFilterSchema = exports.TaskFormRelationSchema = exports.TenantWithRelationsSchema = exports.TenantSchema = exports.ProductTypeSchema = exports.DynamicColumnTypeSchema = exports.JsonNullValueFilterSchema = exports.NullsOrderSchema = exports.JsonNullValueInputSchema = exports.NullableJsonNullValueInputSchema = exports.SortOrderSchema = exports.OrderProfileScalarFieldEnumSchema = exports.WeixinProfileScalarFieldEnumSchema = exports.SentSmsScalarFieldEnumSchema = exports.MenuScalarFieldEnumSchema = exports.DynamicTableDataScalarFieldEnumSchema = exports.DynamicTableDefColumnScalarFieldEnumSchema = exports.DynamicTableDefScalarFieldEnumSchema = exports.AuditsScalarFieldEnumSchema = exports.UserProfileScalarFieldEnumSchema = exports.UserPreSignupScalarFieldEnumSchema = exports.UserScalarFieldEnumSchema = exports.TableFilterScalarFieldEnumSchema = exports.TaskFormRelationScalarFieldEnumSchema = exports.TenantScalarFieldEnumSchema = exports.TransactionIsolationLevelSchema = exports.InputJsonValue = exports.NullableJsonValue = exports.JsonValue = exports.transformJsonNull = void 0;
+exports.DynamicTableDefColumnSchema = exports.DynamicTableDefWithRelationsSchema = exports.DynamicTableDefSchema = exports.AuditsSchema = exports.UserProfileWithRelationsSchema = exports.UserProfileSchema = exports.UserPreSignupWithRelationsSchema = exports.UserPreSignupSchema = exports.UserWithRelationsSchema = exports.UserSchema = exports.TableFilterSchema = exports.TaskFormRelationSchema = exports.TenantWithRelationsSchema = exports.TenantSchema = exports.PayStatusSchema = exports.OrderStatusSchema = exports.ProductTypeSchema = exports.DynamicColumnTypeSchema = exports.JsonNullValueFilterSchema = exports.NullsOrderSchema = exports.JsonNullValueInputSchema = exports.NullableJsonNullValueInputSchema = exports.SortOrderSchema = exports.PayScalarFieldEnumSchema = exports.OrderScalarFieldEnumSchema = exports.ProductSnapshotScalarFieldEnumSchema = exports.ProductScalarFieldEnumSchema = exports.OrderProfileScalarFieldEnumSchema = exports.WeixinProfileScalarFieldEnumSchema = exports.SentSmsScalarFieldEnumSchema = exports.MenuScalarFieldEnumSchema = exports.DynamicTableDataScalarFieldEnumSchema = exports.DynamicTableDefColumnScalarFieldEnumSchema = exports.DynamicTableDefScalarFieldEnumSchema = exports.AuditsScalarFieldEnumSchema = exports.UserProfileScalarFieldEnumSchema = exports.UserPreSignupScalarFieldEnumSchema = exports.UserScalarFieldEnumSchema = exports.TableFilterScalarFieldEnumSchema = exports.TaskFormRelationScalarFieldEnumSchema = exports.TenantScalarFieldEnumSchema = exports.TransactionIsolationLevelSchema = exports.isValidDecimalInput = exports.DECIMAL_STRING_REGEX = exports.DecimalJSLikeListSchema = exports.DecimalJSLikeSchema = exports.InputJsonValue = exports.NullableJsonValue = exports.JsonValue = exports.transformJsonNull = void 0;
+exports.PayWithRelationsSchema = exports.PaySchema = exports.OrderWithRelationsSchema = exports.OrderSchema = exports.ProductSnapshotWithRelationsSchema = exports.ProductSnapshotSchema = exports.ProductWithRelationsSchema = exports.ProductSchema = exports.OrderProfileWithRelationsSchema = exports.OrderProfileSchema = exports.WeixinProfileWithRelationsSchema = exports.WeixinProfileSchema = exports.SentSmsSchema = exports.MenuWithRelationsSchema = exports.MenuSchema = exports.DynamicTableDataWithRelationsSchema = exports.DynamicTableDataSchema = exports.DynamicTableDefColumnWithRelationsSchema = void 0;
 const zod_1 = __webpack_require__("zod");
 const client_flowda_1 = __webpack_require__("@prisma/client-flowda");
 const zod_openapi_1 = __webpack_require__("@anatine/zod-openapi");
@@ -5260,6 +6335,19 @@ exports.InputJsonValue = zod_1.z.union([
     zod_1.z.lazy(() => zod_1.z.array(exports.InputJsonValue.nullable())),
     zod_1.z.lazy(() => zod_1.z.record(exports.InputJsonValue.nullable())),
 ]);
+// DECIMAL
+//------------------------------------------------------
+exports.DecimalJSLikeSchema = zod_1.z.object({ d: zod_1.z.array(zod_1.z.number()), e: zod_1.z.number(), s: zod_1.z.number(), toFixed: zod_1.z.function().args().returns(zod_1.z.string()), });
+exports.DecimalJSLikeListSchema = zod_1.z.object({ d: zod_1.z.array(zod_1.z.number()), e: zod_1.z.number(), s: zod_1.z.number(), toFixed: zod_1.z.function().args().returns(zod_1.z.string()), }).array();
+exports.DECIMAL_STRING_REGEX = /^[0-9.,e+-bxffo_cp]+$|Infinity|NaN/;
+const isValidDecimalInput = (v) => {
+    if (v === undefined || v === null)
+        return false;
+    return ((typeof v === 'object' && 'd' in v && 'e' in v && 's' in v && 'toFixed' in v) ||
+        (typeof v === 'string' && exports.DECIMAL_STRING_REGEX.test(v)) ||
+        typeof v === 'number');
+};
+exports.isValidDecimalInput = isValidDecimalInput;
 /////////////////////////////////////////
 // ENUMS
 /////////////////////////////////////////
@@ -5267,7 +6355,7 @@ exports.TransactionIsolationLevelSchema = zod_1.z.enum(['ReadUncommitted', 'Read
 exports.TenantScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'name', 'hashedPassword', 'hashedRefreshToken', 'displayName']);
 exports.TaskFormRelationScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'taskDefinitionKey', 'formKey']);
 exports.TableFilterScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'path', 'name', 'filterJSON']);
-exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'recoveryCode', 'recoveryToken', 'unionid', 'email', 'mobile', 'image', 'tenantId']);
+exports.UserScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'username', 'hashedPassword', 'hashedRefreshToken', 'recoveryCode', 'recoveryToken', 'email', 'mobile', 'anonymousCustomerToken', 'image', 'tenantId']);
 exports.UserPreSignupScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'email', 'verifyCode', 'tenantId']);
 exports.UserProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'fullName', 'tenantId']);
 exports.AuditsScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'auditId', 'auditType', 'userId', 'username', 'action', 'auditChanges', 'version']);
@@ -5276,8 +6364,12 @@ exports.DynamicTableDefColumnScalarFieldEnumSchema = zod_1.z.enum(['id', 'create
 exports.DynamicTableDataScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'dynamicTableDefId', 'data', 'tenantId']);
 exports.MenuScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'treeData', 'tenantId']);
 exports.SentSmsScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'mobile', 'code']);
-exports.WeixinProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'unionid', 'loginOpenid', 'headimgurl', 'nickname', 'sex', 'userId', 'tenantId']);
-exports.OrderProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'productType', 'plan', 'amount', 'expireAt', 'tenantId']);
+exports.WeixinProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'tenantId', 'userId', 'unionid', 'loginOpenid', 'headimgurl', 'nickname', 'sex']);
+exports.OrderProfileScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'tenantId', 'userId', 'productType', 'plan', 'amount', 'expireAt']);
+exports.ProductScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'tenantId', 'name', 'price', 'productType', 'plan', 'amount', 'extendedDescriptionData', 'fileSize', 'storeDuration', 'hasAds', 'tecSupport', 'validityPeriod', 'restricted']);
+exports.ProductSnapshotScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'tenantId', 'snapshotPrice', 'orderId', 'productId']);
+exports.OrderScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'tenantId', 'serial', 'status']);
+exports.PayScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'tenantId', 'status', 'orderId', 'transactionId']);
 exports.SortOrderSchema = zod_1.z.enum(['asc', 'desc']);
 exports.NullableJsonNullValueInputSchema = zod_1.z.enum(['DbNull', 'JsonNull',]).transform((v) => (0, exports.transformJsonNull)(v));
 exports.JsonNullValueInputSchema = zod_1.z.enum(['JsonNull',]);
@@ -5285,6 +6377,8 @@ exports.NullsOrderSchema = zod_1.z.enum(['first', 'last']);
 exports.JsonNullValueFilterSchema = zod_1.z.enum(['DbNull', 'JsonNull', 'AnyNull',]);
 exports.DynamicColumnTypeSchema = zod_1.z.enum(['string', 'textarea', 'integer', 'boolean', 'datetime', 'tag', 'reference']);
 exports.ProductTypeSchema = zod_1.z.enum(['AMOUNT', 'PLAN']);
+exports.OrderStatusSchema = zod_1.z.enum(['INITIALIZED', 'PAY_ASSOCIATED', 'FREE_DEAL', 'CANCELED']);
+exports.PayStatusSchema = zod_1.z.enum(['UNPAIED', 'PAIED', 'REFUND']);
 /////////////////////////////////////////
 // MODELS
 /////////////////////////////////////////
@@ -5302,8 +6396,8 @@ exports.TenantSchema = zod_1.z.object({
     displayName: zod_1.z.string().nullable().openapi({ "title": "租户显示名称" }),
 }).openapi({ "display_name": "租户信息", "display_column": "name" });
 exports.TenantWithRelationsSchema = exports.TenantSchema.merge(zod_1.z.object({
-    users: zod_1.z.lazy(() => exports.UserWithRelationsSchema).array().openapi({ "model_name": "User" }),
     menu: zod_1.z.lazy(() => exports.MenuWithRelationsSchema).nullable(),
+    users: zod_1.z.lazy(() => exports.UserWithRelationsSchema).array().openapi({ "model_name": "User" }),
     dynamicTableDefs: zod_1.z.lazy(() => exports.DynamicTableDefWithRelationsSchema).array().openapi({ "model_name": "DynamicTableDef" }),
     dynamicTableDefColumns: zod_1.z.lazy(() => exports.DynamicTableDefColumnWithRelationsSchema).array().openapi({ "model_name": "DynamicTableDefColumn" }),
     dynamicTableData: zod_1.z.lazy(() => exports.DynamicTableDataWithRelationsSchema).array().openapi({ "model_name": "DynamicTableData" }),
@@ -5311,6 +6405,10 @@ exports.TenantWithRelationsSchema = exports.TenantSchema.merge(zod_1.z.object({
     orderProfile: zod_1.z.lazy(() => exports.OrderProfileWithRelationsSchema).array().openapi({ "model_name": "OrderProfile" }),
     userProfile: zod_1.z.lazy(() => exports.UserProfileWithRelationsSchema).array().openapi({ "model_name": "UserProfile" }),
     weixinProfile: zod_1.z.lazy(() => exports.WeixinProfileWithRelationsSchema).array().openapi({ "model_name": "WeixinProfile" }),
+    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array().openapi({ "model_name": "ProductSnapshot" }),
+    orders: zod_1.z.lazy(() => exports.OrderWithRelationsSchema).array().openapi({ "model_name": "Order" }),
+    pays: zod_1.z.lazy(() => exports.PayWithRelationsSchema).array().openapi({ "model_name": "Pay" }),
+    products: zod_1.z.lazy(() => exports.ProductWithRelationsSchema).array().openapi({ "model_name": "Product" }),
 }));
 /////////////////////////////////////////
 // TASK FORM RELATION SCHEMA
@@ -5348,9 +6446,9 @@ exports.UserSchema = zod_1.z.object({
     hashedRefreshToken: zod_1.z.string().nullable(),
     recoveryCode: zod_1.z.string().nullable(),
     recoveryToken: zod_1.z.string().nullable(),
-    unionid: zod_1.z.string().nullable().openapi({ "title": "微信" }),
     email: zod_1.z.string().nullable().openapi({ "title": "邮箱" }),
     mobile: zod_1.z.string().nullable().openapi({ "title": "手机号" }),
+    anonymousCustomerToken: zod_1.z.string().nullable().openapi({ "title": "快捷创建" }),
     image: zod_1.z.string().nullable().openapi({ "title": "头像" }),
     tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
 }).openapi({ "display_name": "员工", "display_column": "username" });
@@ -5359,6 +6457,9 @@ exports.UserWithRelationsSchema = exports.UserSchema.merge(zod_1.z.object({
     profile: zod_1.z.lazy(() => exports.UserProfileWithRelationsSchema).nullable(),
     weixinProfile: zod_1.z.lazy(() => exports.WeixinProfileWithRelationsSchema).nullable(),
     orderProfile: zod_1.z.lazy(() => exports.OrderProfileWithRelationsSchema).nullable(),
+    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array(),
+    orders: zod_1.z.lazy(() => exports.OrderWithRelationsSchema).array(),
+    pays: zod_1.z.lazy(() => exports.PayWithRelationsSchema).array(),
 }));
 /////////////////////////////////////////
 // USER PRE SIGNUP SCHEMA
@@ -5444,7 +6545,7 @@ exports.DynamicTableDefColumnWithRelationsSchema = exports.DynamicTableDefColumn
 // DYNAMIC TABLE DATA SCHEMA
 /////////////////////////////////////////
 exports.DynamicTableDataSchema = zod_1.z.object({
-    id: zod_1.z.string().cuid(),
+    id: zod_1.z.number().int(),
     createdAt: zod_1.z.date(),
     updatedAt: zod_1.z.date(),
     isDeleted: zod_1.z.boolean(),
@@ -5489,17 +6590,17 @@ exports.WeixinProfileSchema = zod_1.z.object({
     createdAt: zod_1.z.date(),
     updatedAt: zod_1.z.date(),
     isDeleted: zod_1.z.boolean(),
-    unionid: zod_1.z.string().nullable(),
-    loginOpenid: zod_1.z.string(),
-    headimgurl: zod_1.z.string(),
-    nickname: zod_1.z.string(),
-    sex: zod_1.z.number().int(),
-    userId: zod_1.z.number().int().openapi({ "reference": "User" }),
     tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
+    userId: zod_1.z.number().int().openapi({ "reference": "User" }),
+    unionid: zod_1.z.string().nullable().openapi({ "title": "微信" }),
+    loginOpenid: zod_1.z.string().nullable().openapi({ "title": "微信" }),
+    headimgurl: zod_1.z.string().nullable(),
+    nickname: zod_1.z.string().nullable(),
+    sex: zod_1.z.number().int().nullable(),
 }).openapi({ "primary_key": "id", "display_name": "微信用户信息", "display_column": "nickname" });
 exports.WeixinProfileWithRelationsSchema = exports.WeixinProfileSchema.merge(zod_1.z.object({
-    user: zod_1.z.lazy(() => exports.UserWithRelationsSchema),
     tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
+    user: zod_1.z.lazy(() => exports.UserWithRelationsSchema),
 }));
 /////////////////////////////////////////
 // ORDER PROFILE SCHEMA
@@ -5510,15 +6611,102 @@ exports.OrderProfileSchema = zod_1.z.object({
     createdAt: zod_1.z.date(),
     updatedAt: zod_1.z.date(),
     isDeleted: zod_1.z.boolean(),
+    tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
     userId: zod_1.z.number().int(),
     plan: zod_1.z.number().int().nullable(),
     amount: zod_1.z.number().int().nullable().openapi({ "title": "额度" }),
     expireAt: zod_1.z.date().nullable(),
-    tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
 }).openapi({ "primary_key": "id", "display_name": "用户订单信息", "display_column": "productType" });
 exports.OrderProfileWithRelationsSchema = exports.OrderProfileSchema.merge(zod_1.z.object({
+    tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
+    user: zod_1.z.lazy(() => exports.UserWithRelationsSchema),
+}));
+/////////////////////////////////////////
+// PRODUCT SCHEMA
+/////////////////////////////////////////
+exports.ProductSchema = zod_1.z.object({
+    productType: exports.ProductTypeSchema,
+    id: zod_1.z.number().int(),
+    createdAt: zod_1.z.date(),
+    updatedAt: zod_1.z.date(),
+    isDeleted: zod_1.z.boolean(),
+    tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
+    name: zod_1.z.string().openapi({ "title": "产品名" }),
+    /**
+     * @schema.override_type integer
+     */
+    price: zod_1.z.union([zod_1.z.number(), zod_1.z.string(), exports.DecimalJSLikeSchema,]).refine((v) => (0, exports.isValidDecimalInput)(v), { message: "Field 'price' must be a Decimal. Location: ['Models', 'Product']", }).openapi({ "title": "价格", "override_type": "integer" }),
+    plan: zod_1.z.number().int().nullable(),
+    amount: zod_1.z.number().int().openapi({ "title": "额度" }),
+    extendedDescriptionData: exports.NullableJsonValue.optional(),
+    fileSize: zod_1.z.string().nullable(),
+    storeDuration: zod_1.z.number().int().nullable(),
+    hasAds: zod_1.z.string().nullable().openapi({ "title": "广告" }),
+    tecSupport: zod_1.z.string().nullable().openapi({ "title": "技术支持" }),
+    validityPeriod: zod_1.z.number().int().nullable().openapi({ "title": "有效期/天" }),
+    restricted: zod_1.z.number().int(),
+}).openapi({ "primary_key": "id", "searchable_columns": "id,name", "display_name": "产品", "display_column": "name" });
+exports.ProductWithRelationsSchema = exports.ProductSchema.merge(zod_1.z.object({
+    tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
+    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array().openapi({ "model_name": "ProductSnapshot", "foreign_key": "productId", "primary_key": "id" }),
+}));
+/////////////////////////////////////////
+// PRODUCT SNAPSHOT SCHEMA
+/////////////////////////////////////////
+exports.ProductSnapshotSchema = zod_1.z.object({
+    id: zod_1.z.number().int(),
+    createdAt: zod_1.z.date(),
+    updatedAt: zod_1.z.date(),
+    isDeleted: zod_1.z.boolean(),
+    userId: zod_1.z.number().int().openapi({ "reference": "User" }),
+    tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
+    snapshotPrice: zod_1.z.union([zod_1.z.number(), zod_1.z.string(), exports.DecimalJSLikeSchema,]).refine((v) => (0, exports.isValidDecimalInput)(v), { message: "Field 'snapshotPrice' must be a Decimal. Location: ['Models', 'ProductSnapshot']", }),
+    orderId: zod_1.z.number().int(),
+    productId: zod_1.z.number().int(),
+});
+exports.ProductSnapshotWithRelationsSchema = exports.ProductSnapshotSchema.merge(zod_1.z.object({
     user: zod_1.z.lazy(() => exports.UserWithRelationsSchema),
     tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
+    order: zod_1.z.lazy(() => exports.OrderWithRelationsSchema),
+    product: zod_1.z.lazy(() => exports.ProductWithRelationsSchema),
+}));
+/////////////////////////////////////////
+// ORDER SCHEMA
+/////////////////////////////////////////
+exports.OrderSchema = zod_1.z.object({
+    status: exports.OrderStatusSchema,
+    id: zod_1.z.number().int(),
+    createdAt: zod_1.z.date(),
+    updatedAt: zod_1.z.date(),
+    isDeleted: zod_1.z.boolean(),
+    userId: zod_1.z.number().int().openapi({ "reference": "User" }),
+    tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
+    serial: zod_1.z.number().int(),
+}).openapi({ "primary_key": "id", "display_name": "订单", "display_primary_key": "true" });
+exports.OrderWithRelationsSchema = exports.OrderSchema.merge(zod_1.z.object({
+    user: zod_1.z.lazy(() => exports.UserWithRelationsSchema),
+    tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
+    pay: zod_1.z.lazy(() => exports.PayWithRelationsSchema).nullable(),
+    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array(),
+}));
+/////////////////////////////////////////
+// PAY SCHEMA
+/////////////////////////////////////////
+exports.PaySchema = zod_1.z.object({
+    status: exports.PayStatusSchema,
+    id: zod_1.z.number().int(),
+    createdAt: zod_1.z.date(),
+    updatedAt: zod_1.z.date(),
+    isDeleted: zod_1.z.boolean(),
+    userId: zod_1.z.number().int().openapi({ "reference": "User" }),
+    tenantId: zod_1.z.number().int().openapi({ "reference": "Tenant" }),
+    orderId: zod_1.z.number().int(),
+    transactionId: zod_1.z.string(),
+});
+exports.PayWithRelationsSchema = exports.PaySchema.merge(zod_1.z.object({
+    user: zod_1.z.lazy(() => exports.UserWithRelationsSchema),
+    tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
+    Order: zod_1.z.lazy(() => exports.OrderWithRelationsSchema),
 }));
 
 
@@ -5615,6 +6803,27 @@ module.exports = require("dayjs");
 
 /***/ }),
 
+/***/ "dayjs/plugin/advancedFormat":
+/***/ ((module) => {
+
+module.exports = require("dayjs/plugin/advancedFormat");
+
+/***/ }),
+
+/***/ "dayjs/plugin/timezone":
+/***/ ((module) => {
+
+module.exports = require("dayjs/plugin/timezone");
+
+/***/ }),
+
+/***/ "dayjs/plugin/utc":
+/***/ ((module) => {
+
+module.exports = require("dayjs/plugin/utc");
+
+/***/ }),
+
 /***/ "express":
 /***/ ((module) => {
 
@@ -5703,6 +6912,13 @@ module.exports = require("tslib");
 /***/ ((module) => {
 
 module.exports = require("wechat-oauth");
+
+/***/ }),
+
+/***/ "wechatpay-node-v3":
+/***/ ((module) => {
+
+module.exports = require("wechatpay-node-v3");
 
 /***/ }),
 
