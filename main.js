@@ -992,12 +992,8 @@ let AppAuthV4Router = AppAuthV4Router_1 = class AppAuthV4Router {
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.appAuthV4.refreshToken(input.rt);
             })),
-            getApp: this.trpc.procedure
-                .input(zod_1.z.object({
-                tid: zod_1.z.number(),
-            }))
-                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.appAuthV4.getApp(input.tid);
+            getApp: this.trpc.tenantProtectedProcedure.input(zod_1.z.object({})).query(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return ctx.tenant;
             })),
         });
         this.logger = loggerFactory(AppAuthV4Router_1.name);
@@ -1034,76 +1030,69 @@ let CustomerAuthV4Router = CustomerAuthV4Router_1 = class CustomerAuthV4Router {
         this.trpc = trpc;
         this.customerV4 = customerV4;
         this.router = this.trpc.router({
-            preSignup: this.trpc.procedure
-                .input(flowda_shared_types_1.customerPreSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.preSignup(input);
+            preSignup: this.trpc.tenantProtectedProcedure.input(flowda_shared_types_1.customerPreSignupSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.preSignup(Object.assign({ tid: ctx.tenant.id }, input));
             })),
-            verifyAndSignup: this.trpc.procedure
-                .input(flowda_shared_types_1.customerSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.verifyAndSignup(input);
+            verifyAndSignup: this.trpc.tenantProtectedProcedure.input(flowda_shared_types_1.customerSignupSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.verifyAndSignup(Object.assign({ tid: ctx.tenant.id }, input));
             })),
-            validateUserReturnTokens: this.trpc.procedure
+            validateUserReturnTokens: this.trpc.tenantProtectedProcedure
                 .input(zod_1.z.object({
-                tid: zod_1.z.number(),
-                name: zod_1.z.string(),
+                email: zod_1.z.string(),
                 password: zod_1.z.string(),
             }))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.validateUserReturnTokens(input.tid, input.name, input.password);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.validateUserReturnTokens(ctx.tenant.id, input.email, input.password);
             })),
-            wxValidateUser: this.trpc.procedure
+            wxValidateUser: this.trpc.tenantProtectedProcedure
                 .input(zod_1.z.object({
-                tid: zod_1.z.number(),
                 code: zod_1.z.string(),
             }))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.wxValidateUser(input.tid, input.code);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.wxValidateUser(ctx.tenant.id, input.code);
             })),
-            refreshToken: this.trpc.procedure
+            refreshToken: this.trpc.tenantProtectedProcedure
                 .input(zod_1.z.object({
                 rt: zod_1.z.string(),
             }))
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.customerV4.refreshToken(input.rt);
             })),
-            getUser: this.trpc.procedure
+            getUser: this.trpc.userProtectedProcedure.input(zod_1.z.object({})).query(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return ctx.user;
+            })),
+            logoutApi: this.trpc.userProtectedProcedure.input(zod_1.z.object({})).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.logoutApi({
+                    uid: ctx.user.id,
+                    tid: ctx.user.tenantId,
+                });
+            })),
+            generateRecoveryCode: this.trpc.tenantProtectedProcedure
+                .input(flowda_shared_types_1.generateRecoveryCodeSchema)
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.generateRecoveryCode(Object.assign({
+                    tid: ctx.tenant.id,
+                }, input));
+            })),
+            resetPassword: this.trpc.tenantProtectedProcedure
+                .input(flowda_shared_types_1.resetPasswordWithRecoveryCodeSchema)
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.resetPassword(Object.assign({
+                    tid: ctx.tenant.id,
+                }, input));
+            })),
+            fwhLogin: this.trpc.tenantProtectedProcedure
                 .input(zod_1.z.object({
-                userId: zod_1.z.number(),
-            }))
-                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.getUser(input.userId);
-            })),
-            logoutApi: this.trpc.procedure.input(flowda_shared_types_1.userJwtPayloadSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.logoutApi(input);
-            })),
-            generateRecoveryCode: this.trpc.procedure
-                .input(flowda_shared_types_1.generateRecoveryCodeSchema.merge(zod_1.z.object({
-                appId: zod_1.z.string(),
-            })))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.generateRecoveryCode(input);
-            })),
-            resetPassword: this.trpc.procedure
-                .input(flowda_shared_types_1.resetPasswordWithRecoveryCodeSchema.merge(zod_1.z.object({
-                appId: zod_1.z.string(),
-            })))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.resetPassword(input);
-            })),
-            fwhLogin: this.trpc.procedure
-                .input(zod_1.z.object({
-                tid: zod_1.z.number(),
                 code: zod_1.z.string(),
             }))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.fwhLogin(input.tid, input.code);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.fwhLogin(ctx.tenant.id, input.code);
             })),
-            amountUpdate: this.trpc.procedure
-                .input(flowda_shared_types_1.amountUpdateSchema.merge(flowda_shared_types_1.userJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.customerV4.amountUpdate(input);
+            amountUpdate: this.trpc.userProtectedProcedure.input(flowda_shared_types_1.amountUpdateSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.customerV4.amountUpdate(Object.assign({
+                    uid: ctx.user.id,
+                    tid: ctx.user.tenantId,
+                }, input));
             })),
         });
         this.logger = loggerFactory(CustomerAuthV4Router_1.name);
@@ -1139,45 +1128,44 @@ let OrderV4Router = OrderV4Router_1 = class OrderV4Router {
         this.trpc = trpc;
         this.orderV4 = orderV4;
         this.router = this.trpc.router({
-            query: this.trpc.procedure
+            query: this.trpc.userProtectedProcedure
                 .input(zod_1.z.object({
                 orderId: zod_1.z.number(),
             }))
                 .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.orderV4.query(input.orderId);
             })),
-            queryPay: this.trpc.procedure
-                .input(zod_1.z
-                .object({
-                orderId: zod_1.z.number(),
-            })
-                .merge(flowda_services_1.userJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.orderV4.queryPay(input.tid, input.uid, input.orderId);
-            })),
-            createNative: this.trpc.procedure
-                .input(flowda_services_1.createOrderSchema.merge(flowda_services_1.userJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.orderV4.createNative(input);
-            })),
-            createJSAPI: this.trpc.procedure
-                .input(flowda_services_1.createOrderSchema.merge(flowda_services_1.userJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.orderV4.createJSAPI(input);
-            })),
-            createQuick: this.trpc.procedure
-                .input(flowda_services_1.createQuickOrderSchema.merge(flowda_services_1.tenantJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.orderV4.createQuick(input);
-            })),
-            queryPayQuick: this.trpc.procedure
+            queryPay: this.trpc.userProtectedProcedure
                 .input(zod_1.z.object({
-                tid: zod_1.z.number(),
+                orderId: zod_1.z.number(),
+            }))
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.queryPay(ctx.user.tenantId, ctx.user.id, input.orderId);
+            })),
+            createNative: this.trpc.userProtectedProcedure.input(flowda_services_1.createOrderSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.createNative(Object.assign({
+                    tid: ctx.user.tenantId,
+                    uid: ctx.user.id,
+                }, input));
+            })),
+            createJSAPI: this.trpc.userProtectedProcedure.input(flowda_services_1.createOrderSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.createJSAPI(Object.assign({
+                    tid: ctx.user.tenantId,
+                    uid: ctx.user.id,
+                }, input));
+            })),
+            createQuick: this.trpc.tenantProtectedProcedure.input(flowda_services_1.createQuickOrderSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.createQuick(Object.assign({
+                    tid: ctx.tenant.id,
+                }, input));
+            })),
+            queryPayQuick: this.trpc.tenantProtectedProcedure
+                .input(zod_1.z.object({
                 orderId: zod_1.z.number(),
                 anonymousCustomerToken: zod_1.z.string(),
             }))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.orderV4.queryPayQuick(input.tid, input.anonymousCustomerToken, input.orderId);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.orderV4.queryPayQuick(ctx.tenant.id, input.anonymousCustomerToken, input.orderId);
             })),
         });
         this.logger = loggerFactory(OrderV4Router_1.name);
@@ -1200,7 +1188,7 @@ exports.OrderV4Router = OrderV4Router = OrderV4Router_1 = tslib_1.__decorate([
 
 
 var ProductV4Router_1;
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ProductV4Router = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -1209,18 +1197,24 @@ const trpc_service_1 = __webpack_require__("../../libs/flowda-services-trpc-serv
 const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
 const zod_1 = __webpack_require__("zod");
+const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
 let ProductV4Router = ProductV4Router_1 = class ProductV4Router {
-    constructor(trpc, productV4, loggerFactory) {
+    constructor(trpc, productV4, prisma, loggerFactory) {
         this.trpc = trpc;
         this.productV4 = productV4;
+        this.prisma = prisma;
         this.router = this.trpc.router({
-            createManyProducts: this.trpc.procedure
-                .input(zod_1.z.object({
-                tid: zod_1.z.number(),
-                products: zod_1.z.array(flowda_shared_types_1.productCreateManyItemSchema),
-            }))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.productV4.createManyProducts(input.tid, input.products);
+            createManyProducts: this.trpc.tenantProtectedProcedure
+                .input(zod_1.z.array(flowda_shared_types_1.productCreateManyItemSchema))
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.productV4.createManyProducts(ctx.tenant.id, input);
+            })),
+            findAll: this.trpc.tenantProtectedProcedure.input(zod_1.z.object({})).query(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.prisma.product.findMany({
+                    where: {
+                        tenantId: ctx.tenant.id,
+                    },
+                });
             })),
         });
         this.logger = loggerFactory(ProductV4Router_1.name);
@@ -1231,8 +1225,9 @@ exports.ProductV4Router = ProductV4Router = ProductV4Router_1 = tslib_1.__decora
     (0, inversify_1.injectable)(),
     tslib_1.__param(0, (0, inversify_1.inject)(trpc_service_1.TrpcService)),
     tslib_1.__param(1, (0, inversify_1.inject)(flowda_services_1.ProductV4Service)),
-    tslib_1.__param(2, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.ProductV4Service !== "undefined" && flowda_services_1.ProductV4Service) === "function" ? _b : Object, Function])
+    tslib_1.__param(2, (0, inversify_1.inject)(flowda_shared_types_1.PrismaClientSymbol)),
+    tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof trpc_service_1.TrpcService !== "undefined" && trpc_service_1.TrpcService) === "function" ? _a : Object, typeof (_b = typeof flowda_services_1.ProductV4Service !== "undefined" && flowda_services_1.ProductV4Service) === "function" ? _b : Object, typeof (_c = typeof db !== "undefined" && db.PrismaClient) === "function" ? _c : Object, Function])
 ], ProductV4Router);
 
 
@@ -1245,11 +1240,10 @@ exports.ProductV4Router = ProductV4Router = ProductV4Router_1 = tslib_1.__decora
 /// <reference types="@types/express-serve-static-core" />
 var ContextFactory_1;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ContextFactory = exports.REQ_END = void 0;
+exports.ContextFactory = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const inversify_1 = __webpack_require__("inversify");
-const consola_1 = tslib_1.__importDefault(__webpack_require__("consola"));
-exports.REQ_END = '================================================ End ================================================\n';
+const flowda_shared_node_1 = __webpack_require__("../../libs/flowda-shared-node/src/index.ts");
 let ContextFactory = ContextFactory_1 = class ContextFactory {
     constructor(loggerFactory) {
         this.createContext = (opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -1266,10 +1260,7 @@ exports.ContextFactory = ContextFactory = ContextFactory_1 = tslib_1.__decorate(
 ], ContextFactory);
 function createContext(opts) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const req = opts.req;
-        console.log('=============================================== Start ===============================================');
-        consola_1.default.info('url          :', req.url.split('?')[0]);
-        consola_1.default.info('from         :', req.headers['x-from']);
+        (0, flowda_shared_node_1.logContext)(opts);
         return {
             req: opts.req,
             res: opts.res,
@@ -1362,13 +1353,11 @@ exports.TrpcService = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const server_1 = __webpack_require__("@trpc/server");
 const inversify_1 = __webpack_require__("inversify");
-const trpc_context_1 = __webpack_require__("../../libs/flowda-services-trpc-server/src/trpc/trpc.context.ts");
+const common_1 = __webpack_require__("@nestjs/common");
+const flowda_shared_node_1 = __webpack_require__("../../libs/flowda-shared-node/src/index.ts");
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
-const http_exception_1 = __webpack_require__("@nestjs/common/exceptions/http.exception");
 const consola_1 = tslib_1.__importDefault(__webpack_require__("consola"));
-const _ = tslib_1.__importStar(__webpack_require__("radash"));
 // import { OpenApiMeta } from 'trpc-openapi'
-const ERROR_END = '***************************************** ERROR END *****************************************';
 let TrpcService = TrpcService_1 = class TrpcService {
     constructor(userService, loggerFactory) {
         this.userService = userService;
@@ -1376,74 +1365,55 @@ let TrpcService = TrpcService_1 = class TrpcService {
             .context()
             // .meta<OpenApiMeta>()
             .create({
-            // 默认值
-            // https://github.com/trpc/trpc/blob/next/packages/client/src/internals/transformer.ts#L57
-            transformer: {
-                input: {
-                    // on client
-                    serialize: object => object,
-                    // on server -> resolver
-                    deserialize: object => {
-                        consola_1.default.info('request args :');
-                        console.log(object);
-                        console.log();
-                        return object;
-                    },
-                },
-                output: {
-                    // on server -> client
-                    serialize: object => {
-                        console.log();
-                        consola_1.default.info('response data:');
-                        console.log(object);
-                        console.log(trpc_context_1.REQ_END);
-                        return object;
-                    },
-                    // on client
-                    deserialize: object => object,
-                },
-            },
-            errorFormatter(opts) {
-                consola_1.default.error('**************************************** ERROR START ****************************************');
-                const procedure = `${opts.path}.${opts.type}`;
-                consola_1.default.info(`procedure   :`, `${opts.path}.${opts.type}`);
-                consola_1.default.info(`input       :`);
-                console.log(opts.input);
-                consola_1.default.info(`stack       :`, opts.error.stack);
-                // 如果是 nestjs HttpException
-                if (opts.error.cause instanceof http_exception_1.HttpException) {
-                    const { shape } = opts;
-                    const cause = opts.error.cause;
-                    consola_1.default.info(`cause`);
-                    console.log(`    status    :`, cause.getStatus());
-                    const message = cause.getResponse()['message'];
-                    const error = cause.getResponse()['error'];
-                    console.log(`    message   :`, message);
-                    console.log(`    error     :`, error);
-                    consola_1.default.error(ERROR_END);
-                    const key = getStatusKeyFromStatus(cause.getStatus());
-                    const code = getErrorCodeFromKey(key);
-                    return Object.assign(Object.assign({}, shape), { code, 
-                        // message // message 无需替代 throw new ConflictException('<message>') 第一个参数已经替代了 https://docs.nestjs.com/exception-filters#built-in-http-exceptions
-                        data: Object.assign(Object.assign({}, shape.data), {
-                            code: key, // 替换成 HttpException 对应的 短字符
-                            httpStatus: cause.getStatus(), // 替换成 http status code
-                            description: {
-                                // 详情
-                                procedure,
-                                input: opts.input,
-                                error,
-                            },
-                        }) });
-                }
-                else {
-                    consola_1.default.info(`message     :`, opts.error.message);
-                    consola_1.default.error(ERROR_END);
-                    return opts.shape;
-                }
-            },
+            transformer: flowda_shared_node_1.transformer,
+            errorFormatter: flowda_shared_node_1.errorFormatter,
         });
         this.procedure = this.trpc.procedure;
+        this.tenantProtectedProcedure = this.trpc.procedure.use((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ctx = opts.ctx;
+            const at = typeof ctx.req.headers['tenant-authorization'] === 'string'
+                ? ctx.req.headers['tenant-authorization'].split(' ')[1]
+                : null;
+            if (at) {
+                const { tid } = this.userService.verifyTenantAccessToken(at);
+                const tenant = yield this.userService.getTenantInfo(tid);
+                if (!tenant) {
+                    throw new server_1.TRPCError({ code: 'UNAUTHORIZED' });
+                }
+                consola_1.default.info('tenant', tenant);
+                return opts.next({
+                    ctx: {
+                        tenant: tenant,
+                        req: ctx.req,
+                        res: ctx.res,
+                    },
+                });
+            }
+            else {
+                throw new common_1.ForbiddenException('no tenant authorization token');
+            }
+        }));
+        this.userProtectedProcedure = this.trpc.procedure.use((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const ctx = opts.ctx;
+            const at = typeof ctx.req.headers['authorization'] === 'string' ? ctx.req.headers['authorization'].split(' ')[1] : null;
+            if (at) {
+                const { uid } = this.userService.verifyAccessToken(at);
+                const user = yield this.userService.getUserInfo(uid);
+                if (!user) {
+                    throw new server_1.TRPCError({ code: 'UNAUTHORIZED' });
+                }
+                return opts.next({
+                    ctx: {
+                        user: user,
+                        req: ctx.req,
+                        res: ctx.res,
+                    },
+                });
+            }
+            else {
+                throw new common_1.ForbiddenException('no authorization token');
+            }
+        }));
         this.router = this.trpc.router;
         this.mergeRouters = this.trpc.mergeRouters;
         this.logger = loggerFactory(TrpcService_1.name);
@@ -1456,58 +1426,6 @@ exports.TrpcService = TrpcService = TrpcService_1 = tslib_1.__decorate([
     tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
     tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof flowda_services_1.UserService !== "undefined" && flowda_services_1.UserService) === "function" ? _a : Object, Function])
 ], TrpcService);
-function getStatusKeyFromStatus(status) {
-    var _a;
-    return (_a = JSONRPC2_TO_HTTP_STATUS[status]) !== null && _a !== void 0 ? _a : 'INTERNAL_SERVER_ERROR';
-}
-function getErrorCodeFromKey(key) {
-    var _a;
-    return (_a = TRPC_ERROR_CODES_BY_KEY[key]) !== null && _a !== void 0 ? _a : -32603;
-}
-const JSONRPC2_TO_HTTP_CODE = {
-    PARSE_ERROR: 400,
-    BAD_REQUEST: 400,
-    UNAUTHORIZED: 401,
-    NOT_FOUND: 404,
-    FORBIDDEN: 403,
-    METHOD_NOT_SUPPORTED: 405,
-    TIMEOUT: 408,
-    CONFLICT: 409,
-    PRECONDITION_FAILED: 412,
-    PAYLOAD_TOO_LARGE: 413,
-    UNPROCESSABLE_CONTENT: 422,
-    TOO_MANY_REQUESTS: 429,
-    CLIENT_CLOSED_REQUEST: 499,
-    INTERNAL_SERVER_ERROR: 500,
-    NOT_IMPLEMENTED: 501,
-};
-const JSONRPC2_TO_HTTP_STATUS = _.invert(JSONRPC2_TO_HTTP_CODE);
-const TRPC_ERROR_CODES_BY_KEY = {
-    /**
-     * Invalid JSON was received by the server.
-     * An error occurred on the server while parsing the JSON text.
-     */
-    PARSE_ERROR: -32700,
-    /**
-     * The JSON sent is not a valid Request object.
-     */
-    BAD_REQUEST: -32600, // 400
-    // Internal JSON-RPC error
-    INTERNAL_SERVER_ERROR: -32603,
-    NOT_IMPLEMENTED: -32603,
-    // Implementation specific errors
-    UNAUTHORIZED: -32001, // 401
-    FORBIDDEN: -32003, // 403
-    NOT_FOUND: -32004, // 404
-    METHOD_NOT_SUPPORTED: -32005, // 405
-    TIMEOUT: -32008, // 408
-    CONFLICT: -32009, // 409
-    PRECONDITION_FAILED: -32012, // 412
-    PAYLOAD_TOO_LARGE: -32013, // 413
-    UNPROCESSABLE_CONTENT: -32022, // 422
-    TOO_MANY_REQUESTS: -32029, // 429
-    CLIENT_CLOSED_REQUEST: -32099, // 499
-};
 
 
 /***/ }),
@@ -1882,6 +1800,7 @@ const appAuthV4_service_1 = __webpack_require__("../../libs/flowda-services/src/
 const customerAuthV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/customerAuthV4.service.ts");
 const orderV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/orderV4.service.ts");
 const productV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/productV4.service.ts");
+const weixin_pay_service_1 = __webpack_require__("../../libs/flowda-services/src/services/weixin-pay.service.ts");
 exports.flowdaServiceModule = new inversify_1.ContainerModule((bind) => {
     bind(flowda_shared_1.PrismaZodSchemaSymbol).toConstantValue(prisma_flowda_1.zt);
     bind(flowda_shared_1.CustomZodSchemaSymbol).toConstantValue(schema);
@@ -1900,6 +1819,7 @@ exports.flowdaServiceModule = new inversify_1.ContainerModule((bind) => {
     (0, flowda_shared_1.bindServiceSymbol)(bind, flowda_shared_1.ServiceSymbol, flowda_shared_types_1.MenuServiceSymbol, menu_service_1.MenuService);
     bind(weixin_login_service_1.WeixinLoginService).toSelf().inSingletonScope();
     bind(weixin_fuwuhao_login_service_1.WeixinFuwuhaoLoginService).toSelf().inSingletonScope();
+    bind(weixin_pay_service_1.WeixinPayService).toSelf().inSingletonScope();
     bind(appAuthV4_service_1.AppAuthV4Service).toSelf().inSingletonScope();
     bind(customerAuthV4_service_1.CustomerAuthV4Service).toSelf().inSingletonScope();
     bind(orderV4_service_1.OrderV4Service).toSelf().inSingletonScope();
@@ -1928,6 +1848,7 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/service
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/menu.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/weixin-login.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/weixin-fuwuhao-login.service.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/weixin-pay.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/sdk/appAuthV4.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/sdk/customerAuthV4.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-services/src/services/sdk/orderV4.service.ts"), exports);
@@ -2502,7 +2423,7 @@ let AppAuthV4Service = AppAuthV4Service_1 = class AppAuthV4Service {
             return {
                 at: ret.at.token,
                 expireAt: ret.at.exp,
-                app: mapTenantToApp(ret),
+                app: mapTenantToApp(ret.tenant),
             };
         });
     }
@@ -2582,17 +2503,17 @@ let CustomerAuthV4Service = CustomerAuthV4Service_1 = class CustomerAuthV4Servic
             };
         });
     }
-    validateUserReturnTokens(tid, name, password) {
+    validateUserReturnTokens(tid, email, password) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const ret = yield this.user.validateByEmail({
                 tenantId: tid,
-                email: name,
+                email,
                 password: password,
             });
             return {
                 at: ret.at.token,
                 rt: ret.rt.token,
-                user: mapUserToCustomer(ret.user),
+                user: ret.user,
                 expireAt: ret.at.exp,
             };
         });
@@ -2646,13 +2567,14 @@ let CustomerAuthV4Service = CustomerAuthV4Service_1 = class CustomerAuthV4Servic
                     hashedRefreshToken: null,
                 },
             });
+            return {};
         });
     }
     generateRecoveryCode(dto) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return this.user.generateRecoveryCode({
                 email: dto.email,
-                tid: Number(dto.appId),
+                tid: dto.tid,
             });
         });
     }
@@ -2661,7 +2583,7 @@ let CustomerAuthV4Service = CustomerAuthV4Service_1 = class CustomerAuthV4Servic
             const userRet = yield this.user.resetPasswordWithRecoveryCode({
                 recoveryCode: dto.recoveryCode,
                 password: dto.password,
-                tid: Number(dto.appId),
+                tid: dto.tid,
             });
             return mapUserToCustomer(userRet);
         });
@@ -2714,17 +2636,20 @@ exports.mapUserToCustomer = mapUserToCustomer;
 
 
 var OrderV4Service_1;
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.OrderV4Service = exports.orderSelect = void 0;
+exports.OrderV4Service = exports.orderSelect = exports.orderIncludeUserSelect = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const inversify_1 = __webpack_require__("inversify");
 const common_1 = __webpack_require__("@nestjs/common");
 const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
 const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+const weixin_pay_service_1 = __webpack_require__("../../libs/flowda-services/src/services/weixin-pay.service.ts");
 const user_service_1 = __webpack_require__("../../libs/flowda-services/src/services/user.service.ts");
 const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
-exports.orderSelect = db.Prisma.validator()({
+const customerAuthV4_service_1 = __webpack_require__("../../libs/flowda-services/src/services/sdk/customerAuthV4.service.ts");
+const _ = tslib_1.__importStar(__webpack_require__("radash"));
+exports.orderIncludeUserSelect = db.Prisma.validator()({
     id: true,
     serial: true,
     status: true,
@@ -2733,6 +2658,20 @@ exports.orderSelect = db.Prisma.validator()({
     user: {
         select: user_service_1.userSelect,
     },
+    productSnapshots: {
+        select: {
+            id: true,
+            snapshotPrice: true,
+            productId: true,
+        },
+    },
+});
+exports.orderSelect = db.Prisma.validator()({
+    id: true,
+    serial: true,
+    status: true,
+    userId: true,
+    tenantId: true,
     productSnapshots: {
         select: {
             id: true,
@@ -2752,7 +2691,7 @@ let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const ret = yield this.prisma.order.findMany({
                 where: { id: orderId },
-                select: exports.orderSelect,
+                select: exports.orderIncludeUserSelect,
             });
             return ret;
         });
@@ -2766,7 +2705,7 @@ let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
                 },
             });
             const orderRet = yield this.prisma.order.findFirstOrThrow({
-                select: exports.orderSelect,
+                select: exports.orderIncludeUserSelect,
                 where: { id: orderId },
             });
             if (orderRet.userId !== userId) {
@@ -2840,12 +2779,12 @@ let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
     }
     createNative(dto) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            return this.createInner(dto, this.wxPayService.transactionsNative.bind(this.wxPayService));
+            return this.createInner(dto, this.wxPayService.transactionsNative);
         });
     }
     createJSAPI(dto) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            return this.createInner(dto, this.wxPayService.transactionsJSAPI.bind(this.wxPayService));
+            return this.createInner(dto, this.wxPayService.transactionsJSAPI);
         });
     }
     /*
@@ -2949,7 +2888,7 @@ let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
                 ]);
                 this.logger.log(`order created: ${orderRet.id}`);
                 return {
-                    customer: userRet,
+                    customer: (0, customerAuthV4_service_1.mapUserToCustomer)(userRet),
                     order: orderRet,
                     wxRet: null,
                 };
@@ -2971,7 +2910,7 @@ let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
                         },
                     },
                 },
-                select: exports.orderSelect,
+                select: exports.orderIncludeUserSelect,
             });
             try {
                 // 2. 尝试发起微信支付 失败不影响订单
@@ -2989,17 +2928,19 @@ let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
                     data: {
                         status: db.OrderStatus.PAY_ASSOCIATED,
                     },
-                    select: exports.orderSelect,
+                    select: exports.orderIncludeUserSelect,
                 });
                 return {
-                    order: orderRet2,
+                    order: _.omit(orderRet2, ['user']),
+                    customer: (0, customerAuthV4_service_1.mapUserToCustomer)(orderRet2.user),
                     wxRet: wxRet,
                 };
             }
             catch (e) {
                 this.logger.error(e);
                 return {
-                    order: orderRet,
+                    order: _.omit(orderRet, ['user']),
+                    customer: (0, customerAuthV4_service_1.mapUserToCustomer)(orderRet.user),
                     wxRet: {
                         success: false,
                     },
@@ -3058,11 +2999,11 @@ let OrderV4Service = OrderV4Service_1 = class OrderV4Service {
 exports.OrderV4Service = OrderV4Service;
 exports.OrderV4Service = OrderV4Service = OrderV4Service_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
-    tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_types_1.WechatpayNodeV3Symbol)),
+    tslib_1.__param(0, (0, inversify_1.inject)(weixin_pay_service_1.WeixinPayService)),
     tslib_1.__param(1, (0, inversify_1.inject)(user_service_1.UserService)),
     tslib_1.__param(2, (0, inversify_1.inject)(flowda_shared_types_1.PrismaClientSymbol)),
     tslib_1.__param(3, (0, inversify_1.inject)('Factory<Logger>')),
-    tslib_1.__metadata("design:paramtypes", [Object, typeof (_a = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _a : Object, typeof (_b = typeof db !== "undefined" && db.PrismaClient) === "function" ? _b : Object, Function])
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof weixin_pay_service_1.WeixinPayService !== "undefined" && weixin_pay_service_1.WeixinPayService) === "function" ? _a : Object, typeof (_b = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _b : Object, typeof (_c = typeof db !== "undefined" && db.PrismaClient) === "function" ? _c : Object, Function])
 ], OrderV4Service);
 
 
@@ -3497,16 +3438,18 @@ let UserService = UserService_1 = class UserService {
     verifyAccessToken(at) {
         return jwt.verify(at, flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_SECRET);
     }
+    verifyTenantAccessToken(at) {
+        return jwt.verify(at, flowda_env_1.FLOWDA_ENV.TENANT_ACCESS_TOKEN_SECRET);
+    }
     getUserInfo(uid) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            // todo: 后续可以放 profile
             const ret = yield this.prisma.user.findUniqueOrThrow({
                 where: {
                     id: uid,
                 },
                 select: exports.userSelect,
             });
-            return ret;
+            return _.omit(ret, ['hashedRefreshToken', 'hashedPassword']);
         });
     }
     getTenantInfo(tid) {
@@ -4091,6 +4034,7 @@ function generateTenantRefreshToken(payload) {
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
+var WeixinFuwuhaoLoginService_1;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WeixinFuwuhaoLoginService = void 0;
 const tslib_1 = __webpack_require__("tslib");
@@ -4098,7 +4042,10 @@ const inversify_1 = __webpack_require__("inversify");
 const axios_1 = tslib_1.__importDefault(__webpack_require__("axios"));
 const common_1 = __webpack_require__("@nestjs/common");
 const flowda_env_1 = __webpack_require__("../../libs/flowda-services/src/lib/flowda-env.ts");
-let WeixinFuwuhaoLoginService = class WeixinFuwuhaoLoginService {
+let WeixinFuwuhaoLoginService = WeixinFuwuhaoLoginService_1 = class WeixinFuwuhaoLoginService {
+    constructor(loggerFactory) {
+        this.logger = loggerFactory(WeixinFuwuhaoLoginService_1.name);
+    }
     getAccessToken() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const appid = flowda_env_1.FLOWDA_ENV.freecharger_fuwuhao_appid;
@@ -4130,8 +4077,10 @@ let WeixinFuwuhaoLoginService = class WeixinFuwuhaoLoginService {
     }
 };
 exports.WeixinFuwuhaoLoginService = WeixinFuwuhaoLoginService;
-exports.WeixinFuwuhaoLoginService = WeixinFuwuhaoLoginService = tslib_1.__decorate([
-    (0, inversify_1.injectable)()
+exports.WeixinFuwuhaoLoginService = WeixinFuwuhaoLoginService = WeixinFuwuhaoLoginService_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [Function])
 ], WeixinFuwuhaoLoginService);
 
 
@@ -4141,6 +4090,7 @@ exports.WeixinFuwuhaoLoginService = WeixinFuwuhaoLoginService = tslib_1.__decora
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
+var WeixinLoginService_1;
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WeixinLoginService = void 0;
@@ -4148,9 +4098,10 @@ const tslib_1 = __webpack_require__("tslib");
 const inversify_1 = __webpack_require__("inversify");
 const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
 const wechat_oauth_1 = tslib_1.__importDefault(__webpack_require__("wechat-oauth"));
-let WeixinLoginService = class WeixinLoginService {
-    constructor(wechatOAuth) {
+let WeixinLoginService = WeixinLoginService_1 = class WeixinLoginService {
+    constructor(wechatOAuth, loggerFactory) {
         this.wechatOAuth = wechatOAuth;
+        this.logger = loggerFactory(WeixinLoginService_1.name);
     }
     getAuthorizeURLForWebsite(redirectUrl) {
         const url = this.wechatOAuth.getAuthorizeURLForWebsite(redirectUrl);
@@ -4184,11 +4135,150 @@ let WeixinLoginService = class WeixinLoginService {
     }
 };
 exports.WeixinLoginService = WeixinLoginService;
-exports.WeixinLoginService = WeixinLoginService = tslib_1.__decorate([
+exports.WeixinLoginService = WeixinLoginService = WeixinLoginService_1 = tslib_1.__decorate([
     (0, inversify_1.injectable)(),
     tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_types_1.WechatOAuthSymbol)),
-    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof wechat_oauth_1.default !== "undefined" && wechat_oauth_1.default) === "function" ? _a : Object])
+    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof wechat_oauth_1.default !== "undefined" && wechat_oauth_1.default) === "function" ? _a : Object, Function])
 ], WeixinLoginService);
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-services/src/services/weixin-pay.service.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+var WeixinPayService_1;
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.WeixinPayService = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const flowda_shared_types_1 = __webpack_require__("../../libs/flowda-shared-types/src/index.ts");
+const wechatpay_node_v3_1 = tslib_1.__importDefault(__webpack_require__("wechatpay-node-v3"));
+const common_1 = __webpack_require__("@nestjs/common");
+const inversify_1 = __webpack_require__("inversify");
+const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
+let WeixinPayService = WeixinPayService_1 = class WeixinPayService {
+    constructor(wechatPayNodeV3, loggerFactory) {
+        this.wechatPayNodeV3 = wechatPayNodeV3;
+        this.logger = loggerFactory(WeixinPayService_1.name);
+        this.transactionsNative = this.transactionsNative.bind(this);
+        this.transactionsJSAPI = this.transactionsJSAPI.bind(this);
+    }
+    /*
+    {
+    "status": 200,
+    "appId": "xx",
+    "timeStamp": "1682132086",
+    "nonceStr": "xx",
+    "package": "prepay_id=xx",
+    "signType": "RSA",
+    "paySign": "xx"
+  }
+     */
+    transactionsJSAPI(input) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const timeExpire = (0, flowda_shared_1.getTimeExpire)(5);
+            const params = {
+                description: input.desc, ///商品描述
+                out_trade_no: String(input.orderId), ///户系统内部订单号，只能是数字、大小写字母_-*且在同一个商户号下唯一
+                time_expire: timeExpire /*订单失效时间，遵循rfc3339标准格式，格式为yyyy-MM-DDTHH:mm:ss+TIMEZONE，yyyy-MM-DD表示年月日，T出现在字符串中，表示time元素的开头，HH:mm:ss表示时分秒，TIMEZONE表示时区（+08:00表示东八区时间，领先UTC8小时，即北京时间）。例如：2015-05-20T13:29:35+08:00表示，北京时间2015年5月20日 13点29分35秒。 */,
+                attach: '附加数据', ///附加数据，在查询API和支付通知中原样返回，可作为自定义参数使用，实际情况下只有支付完成状态才会返回该字段。
+                notify_url: 'https://www.weixin.qq.com/wxpay/pay.php', // todo /* 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。 公网域名必须为https，如果是走专线接入，使用专线NAT IP或者私有回调域名可使用http */
+                support_fapiao: false, ///传入true时，支付成功消息和支付详情页将出现开票入口。需要在微信支付商户平台或微信公众平台开通电子发票功能，传此字段才可生效。
+                amount: {
+                    total: input.total * 100, ///订单总金额，单位为“分”
+                    currency: 'CNY', /// CNY：人民币，境内商户号仅支持人民币。
+                },
+                payer: {
+                    openid: input.openid, ///用户在直连商户appid下的唯一标识，不可混用
+                },
+                settle_info: {
+                    profit_sharing: false, ///是否指定分账
+                },
+            };
+            const wxRet = yield this.wechatPayNodeV3.transactions_jsapi(params);
+            this.logger.log(`wechat transactions_jsapi resp ${JSON.stringify(wxRet)}`);
+            if (wxRet['status'] !== 200) {
+                throw new common_1.InternalServerErrorException('发起微信支付 (jsapi) 失败');
+            }
+            return wxRet;
+        });
+    }
+    /*
+    {"status":200,"code_url":"weixin://wxpay/bizpayurl?pr=pUnqLjbzz"}
+     */
+    transactionsNative(input) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const timeExpire = (0, flowda_shared_1.getTimeExpire)(5);
+            const params = {
+                description: input.desc, ///商品描述
+                out_trade_no: String(input.orderId), ///户系统内部订单号，只能是数字、大小写字母_-*且在同一个商户号下唯一
+                // '2022-11-11T23:59:59+08:00'
+                time_expire: timeExpire,
+                /*订单失效时间，遵循rfc3339标准格式，格式为yyyy-MM-DDTHH:mm:ss+TIMEZONE，yyyy-MM-DD表示年月日，T出现在字符串中，表示time元素的开头，HH:mm:ss表示时分秒，TIMEZONE表示时区（+08:00表示东八区时间，领先UTC8小时，即北京时间）。例如：2015-05-20T13:29:35+08:00表示，北京时间2015年5月20日 13点29分35秒。 */
+                attach: '附加数据', ///附加数据，在查询API和支付通知中原样返回，可作为自定义参数使用，实际情况下只有支付完成状态才会返回该字段。
+                notify_url: 'https://www.weixin.qq.com/wxpay/pay.php', // todo /* 异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。 公网域名必须为https，如果是走专线接入，使用专线NAT IP或者私有回调域名可使用http */
+                support_fapiao: false, ///传入true时，支付成功消息和支付详情页将出现开票入口。需要在微信支付商户平台或微信公众平台开通电子发票功能，传此字段才可生效。
+                amount: {
+                    total: input.total * 100, ///订单总金额，单位为“分”
+                    currency: 'CNY', /// CNY：人民币，境内商户号仅支持人民币。
+                },
+                settle_info: {
+                    profit_sharing: false, ///是否指定分账
+                },
+            };
+            this.logger.log(`wechat start to transactions_native ${JSON.stringify(params)}`);
+            const wxRet = (yield this.wechatPayNodeV3.transactions_native(params));
+            this.logger.log(`wechat transactions_native resp ${JSON.stringify(wxRet)}`);
+            if (wxRet.status !== 200) {
+                throw new common_1.InternalServerErrorException('发起微信支付 (native) 失败');
+            }
+            return wxRet;
+        });
+    }
+    /*
+    {
+      "status": 200,
+      "amount": {
+          "currency": "CNY",
+          "payer_currency": "CNY",
+          "payer_total": 1,
+          "total": 1
+      },
+      "appid": "wx6ecc94d7d5133fde",
+      "attach": "附加数据",
+      "bank_type": "OTHERS",
+      "mchid": "1634638724",
+      "out_trade_no": "claz2v5la0000tzp2ivnp5gpm",
+      "payer": {
+          "openid": "oQBzz5GM-9aCngjG3eNpqJIlzJj4"
+      },
+      "promotion_detail": [],
+      "success_time": "2022-11-27T16:07:27+08:00",
+      "trade_state": "SUCCESS",
+      "trade_state_desc": "支付成功",
+      "trade_type": "NATIVE",
+      "transaction_id": "4200001645202211278892941061"
+  }
+     */
+    query(outTradeNo) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.logger.log(`wx pay query with tradeNo ${outTradeNo}`);
+            const ret = yield this.wechatPayNodeV3.query({ out_trade_no: String(outTradeNo) });
+            this.logger.log(`wx pay query resp: ${JSON.stringify(ret)}`);
+            return ret;
+        });
+    }
+};
+exports.WeixinPayService = WeixinPayService;
+exports.WeixinPayService = WeixinPayService = WeixinPayService_1 = tslib_1.__decorate([
+    (0, inversify_1.injectable)(),
+    tslib_1.__param(0, (0, inversify_1.inject)(flowda_shared_types_1.WechatpayNodeV3Symbol)),
+    tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
+    tslib_1.__metadata("design:paramtypes", [typeof (_a = typeof wechatpay_node_v3_1.default !== "undefined" && wechatpay_node_v3_1.default) === "function" ? _a : Object, Function])
+], WeixinPayService);
 
 
 /***/ }),
@@ -4285,6 +4375,7 @@ tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared-node/src/flow
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared-node/src/filters/appExceptionFilter.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared-node/src/services/table-filter.service.ts"), exports);
 tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared-node/src/services/audit.service.ts"), exports);
+tslib_1.__exportStar(__webpack_require__("../../libs/flowda-shared-node/src/trpc/trpc-utils.ts"), exports);
 
 
 /***/ }),
@@ -4429,6 +4520,177 @@ exports.TableFilterService = TableFilterService = TableFilterService_1 = tslib_1
     tslib_1.__param(1, (0, inversify_1.inject)('Factory<Logger>')),
     tslib_1.__metadata("design:paramtypes", [Object, Function])
 ], TableFilterService);
+
+
+/***/ }),
+
+/***/ "../../libs/flowda-shared-node/src/trpc/trpc-utils.ts":
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+/// <reference types="@types/express-serve-static-core" />
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.transformer = exports.errorFormatter = exports.transformHttpException = exports.logErrorEnd = exports.logErrorStart = exports.getErrorCodeFromKey = exports.getStatusKeyFromStatus = exports.logContext = exports.logOutputSerialize = exports.logInputSerialize = exports.ERROR_END = exports.REQ_END = void 0;
+const tslib_1 = __webpack_require__("tslib");
+const consola_1 = tslib_1.__importDefault(__webpack_require__("consola"));
+const _ = tslib_1.__importStar(__webpack_require__("radash"));
+const common_1 = __webpack_require__("@nestjs/common");
+exports.REQ_END = '================================================ End ================================================\n';
+exports.ERROR_END = '***************************************** ERROR END *****************************************';
+function logInputSerialize(object) {
+    consola_1.default.info('request args  :');
+    console.log(object);
+    console.log();
+}
+exports.logInputSerialize = logInputSerialize;
+function logOutputSerialize(object) {
+    console.log();
+    if ((object === null || object === void 0 ? void 0 : object.code) < 0) {
+        consola_1.default.info('response error:');
+        console.log(Object.assign(Object.assign({}, object), { message: '<...>', data: Object.assign(Object.assign({}, object.data), { stack: '<...>' }) }));
+    }
+    else {
+        consola_1.default.info('response data :');
+        console.log(object);
+    }
+    console.log(exports.REQ_END);
+}
+exports.logOutputSerialize = logOutputSerialize;
+function logContext(opts) {
+    const req = opts.req;
+    console.log('=============================================== Start ===============================================');
+    consola_1.default.info('url           :', req.url.split('?')[0]);
+    consola_1.default.info('from          :', req.headers['x-from']);
+}
+exports.logContext = logContext;
+function getStatusKeyFromStatus(status) {
+    var _a;
+    return (_a = JSONRPC2_TO_HTTP_STATUS[status]) !== null && _a !== void 0 ? _a : 'INTERNAL_SERVER_ERROR';
+}
+exports.getStatusKeyFromStatus = getStatusKeyFromStatus;
+function getErrorCodeFromKey(key) {
+    var _a;
+    return (_a = TRPC_ERROR_CODES_BY_KEY[key]) !== null && _a !== void 0 ? _a : -32603;
+}
+exports.getErrorCodeFromKey = getErrorCodeFromKey;
+const JSONRPC2_TO_HTTP_CODE = {
+    PARSE_ERROR: 400,
+    BAD_REQUEST: 400,
+    UNAUTHORIZED: 401,
+    NOT_FOUND: 404,
+    FORBIDDEN: 403,
+    METHOD_NOT_SUPPORTED: 405,
+    TIMEOUT: 408,
+    CONFLICT: 409,
+    PRECONDITION_FAILED: 412,
+    PAYLOAD_TOO_LARGE: 413,
+    UNPROCESSABLE_CONTENT: 422,
+    TOO_MANY_REQUESTS: 429,
+    CLIENT_CLOSED_REQUEST: 499,
+    INTERNAL_SERVER_ERROR: 500,
+    NOT_IMPLEMENTED: 501,
+};
+const JSONRPC2_TO_HTTP_STATUS = _.invert(JSONRPC2_TO_HTTP_CODE);
+const TRPC_ERROR_CODES_BY_KEY = {
+    /**
+     * Invalid JSON was received by the server.
+     * An error occurred on the server while parsing the JSON text.
+     */
+    PARSE_ERROR: -32700,
+    /**
+     * The JSON sent is not a valid Request object.
+     */
+    BAD_REQUEST: -32600, // 400
+    // Internal JSON-RPC error
+    INTERNAL_SERVER_ERROR: -32603,
+    NOT_IMPLEMENTED: -32603,
+    // Implementation specific errors
+    UNAUTHORIZED: -32001, // 401
+    FORBIDDEN: -32003, // 403
+    NOT_FOUND: -32004, // 404
+    METHOD_NOT_SUPPORTED: -32005, // 405
+    TIMEOUT: -32008, // 408
+    CONFLICT: -32009, // 409
+    PRECONDITION_FAILED: -32012, // 412
+    PAYLOAD_TOO_LARGE: -32013, // 413
+    UNPROCESSABLE_CONTENT: -32022, // 422
+    TOO_MANY_REQUESTS: -32029, // 429
+    CLIENT_CLOSED_REQUEST: -32099, // 499
+};
+function logErrorStart(opts) {
+    consola_1.default.error('**************************************** ERROR START ****************************************');
+    consola_1.default.info(`procedure    :`, `${opts.path}.${opts.type}`);
+    consola_1.default.info(`input        :`);
+    console.log(opts.input);
+}
+exports.logErrorStart = logErrorStart;
+function logErrorEnd(opts) {
+    consola_1.default.info(`message      :`, opts.error.message);
+    consola_1.default.info(`stack        :`, opts.error.stack);
+    consola_1.default.error(exports.ERROR_END);
+}
+exports.logErrorEnd = logErrorEnd;
+function transformHttpException(opts, cause, stack) {
+    const shape = opts.shape;
+    const message = cause.getResponse()['message'];
+    const error = cause.getResponse()['error'];
+    const key = getStatusKeyFromStatus(cause.getStatus());
+    const code = getErrorCodeFromKey(key);
+    consola_1.default.info(`cause`);
+    console.log(`    status     :`, cause.getStatus());
+    console.log(`    message    :`, message);
+    console.log(`    error      :`, error);
+    consola_1.default.info(`stack        :`, stack);
+    consola_1.default.error(exports.ERROR_END);
+    return Object.assign(Object.assign({}, shape), { code, 
+        // message // message 无需替代 throw new ConflictException('<message>') 第一个参数已经替代了 https://docs.nestjs.com/exception-filters#built-in-http-exceptions
+        data: Object.assign(Object.assign({}, shape.data), {
+            code: key, // 替换成 HttpException 对应的 短字符
+            httpStatus: cause.getStatus(), // 替换成 http status code
+            description: {
+                // 详情
+                procedure: `${opts.path}.${opts.type}`,
+                input: opts.input,
+                error,
+            },
+        }) });
+}
+exports.transformHttpException = transformHttpException;
+function errorFormatter(opts) {
+    logErrorStart(opts);
+    // 如果是 nestjs HttpException
+    if (opts.error.cause instanceof common_1.HttpException) {
+        const ret = transformHttpException(opts, opts.error.cause, opts.error.stack);
+        return ret;
+    }
+    else {
+        logErrorEnd(opts);
+        return opts.shape;
+    }
+}
+exports.errorFormatter = errorFormatter;
+// object => object 是默认值
+// https://github.com/trpc/trpc/blob/next/packages/client/src/internals/transformer.ts#L57
+exports.transformer = {
+    input: {
+        // on client
+        serialize: (object) => object,
+        // on server -> resolver
+        deserialize: (object) => {
+            logInputSerialize(object);
+            return object;
+        },
+    },
+    output: {
+        // on server -> client
+        serialize: (object) => {
+            logOutputSerialize(object);
+            return object;
+        },
+        // on client
+        deserialize: (object) => object,
+    },
+};
 
 
 /***/ }),
@@ -6723,13 +6985,6 @@ module.exports = require("@anatine/zod-openapi");
 /***/ ((module) => {
 
 module.exports = require("@nestjs/common");
-
-/***/ }),
-
-/***/ "@nestjs/common/exceptions/http.exception":
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common/exceptions/http.exception");
 
 /***/ }),
 
