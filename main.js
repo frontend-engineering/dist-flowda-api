@@ -1441,7 +1441,7 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .input(zod_1.z.object({
                 rt: zod_1.z.string(),
             }))
-                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.refreshTenantToken(input.rt);
             })),
             validate: this.trpc.procedure
@@ -1522,7 +1522,7 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.wxValidateUser(input, ctx);
             })),
-            refreshToken: this.trpc.procedure.input(zod_1.z.object({ rt: zod_1.z.string() })).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            refreshToken: this.trpc.procedure.input(zod_1.z.object({ rt: zod_1.z.string() })).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.refreshToken(input.rt);
             })),
             logout: this.trpc.procedure.input(flowda_shared_types_1.userJwtPayloadSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {

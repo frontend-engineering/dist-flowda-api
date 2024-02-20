@@ -22124,6 +22124,9 @@ export namespace Prisma {
     email?: string
     mobile?: string
     anonymousCustomerToken?: string
+    tenantId_username?: UserTenantIdUsernameCompoundUniqueInput
+    tenantId_mobile?: UserTenantIdMobileCompoundUniqueInput
+    tenantId_email?: UserTenantIdEmailCompoundUniqueInput
   }
 
   export type UserOrderByWithAggregationInput = {
@@ -24975,6 +24978,21 @@ export namespace Prisma {
   export type OrderProfileRelationFilter = {
     is?: OrderProfileWhereInput | null
     isNot?: OrderProfileWhereInput | null
+  }
+
+  export type UserTenantIdUsernameCompoundUniqueInput = {
+    tenantId: number
+    username: string
+  }
+
+  export type UserTenantIdMobileCompoundUniqueInput = {
+    tenantId: number
+    mobile: string
+  }
+
+  export type UserTenantIdEmailCompoundUniqueInput = {
+    tenantId: number
+    email: string
   }
 
   export type UserCountOrderByAggregateInput = {

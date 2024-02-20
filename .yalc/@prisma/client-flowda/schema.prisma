@@ -141,6 +141,10 @@ model User {
   productSnapshots ProductSnapshot[]
   orders           Order[]
   pays             Pay[]
+
+  @@unique([tenantId, username])
+  @@unique([tenantId, mobile])
+  @@unique([tenantId, email])
 }
 
 // todo 目前是从 v1-sdk 迁移过来的（v1 仅支持 email）后续可以增加 mobile
