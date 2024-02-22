@@ -132,8 +132,17 @@ export type UserPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultAr
     profile: UserProfilePayload<ExtArgs> | null
     weixinProfile: WeixinProfilePayload<ExtArgs> | null
     orderProfile: OrderProfilePayload<ExtArgs> | null
+    /**
+     * @schema.model_name ProductSnapshot
+     */
     productSnapshots: ProductSnapshotPayload<ExtArgs>[]
+    /**
+     * @schema.model_name Order
+     */
     orders: OrderPayload<ExtArgs>[]
+    /**
+     * @schema.model_name Pay
+     */
     pays: PayPayload<ExtArgs>[]
   }
   scalars: $Extensions.GetResult<{
@@ -439,6 +448,9 @@ export type SentSms = runtime.Types.DefaultSelection<SentSmsPayload>
 export type WeixinProfilePayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
   name: "WeixinProfile"
   objects: {
+    /**
+     * @schema.model_name User
+     */
     users: UserPayload<ExtArgs>[]
   }
   scalars: $Extensions.GetResult<{
@@ -605,6 +617,9 @@ export type OrderPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultA
     user: UserPayload<ExtArgs>
     tenant: TenantPayload<ExtArgs>
     pay: PayPayload<ExtArgs> | null
+    /**
+     * @schema.model_name ProductSnapshot
+     */
     productSnapshots: ProductSnapshotPayload<ExtArgs>[]
   }
   scalars: $Extensions.GetResult<{
@@ -671,6 +686,7 @@ export type RequestErrorLogPayload<ExtArgs extends $Extensions.Args = $Extension
   scalars: $Extensions.GetResult<{
     id: string
     createdAt: Date
+    isDeleted: boolean
     requestId: string
     tenantId: number | null
     userId: number | null
@@ -21672,6 +21688,7 @@ export namespace Prisma {
   export type RequestErrorLogMinAggregateOutputType = {
     id: string | null
     createdAt: Date | null
+    isDeleted: boolean | null
     requestId: string | null
     tenantId: number | null
     userId: number | null
@@ -21680,6 +21697,7 @@ export namespace Prisma {
   export type RequestErrorLogMaxAggregateOutputType = {
     id: string | null
     createdAt: Date | null
+    isDeleted: boolean | null
     requestId: string | null
     tenantId: number | null
     userId: number | null
@@ -21688,6 +21706,7 @@ export namespace Prisma {
   export type RequestErrorLogCountAggregateOutputType = {
     id: number
     createdAt: number
+    isDeleted: number
     requestId: number
     tenantId: number
     userId: number
@@ -21709,6 +21728,7 @@ export namespace Prisma {
   export type RequestErrorLogMinAggregateInputType = {
     id?: true
     createdAt?: true
+    isDeleted?: true
     requestId?: true
     tenantId?: true
     userId?: true
@@ -21717,6 +21737,7 @@ export namespace Prisma {
   export type RequestErrorLogMaxAggregateInputType = {
     id?: true
     createdAt?: true
+    isDeleted?: true
     requestId?: true
     tenantId?: true
     userId?: true
@@ -21725,6 +21746,7 @@ export namespace Prisma {
   export type RequestErrorLogCountAggregateInputType = {
     id?: true
     createdAt?: true
+    isDeleted?: true
     requestId?: true
     tenantId?: true
     userId?: true
@@ -21822,6 +21844,7 @@ export namespace Prisma {
   export type RequestErrorLogGroupByOutputType = {
     id: string
     createdAt: Date
+    isDeleted: boolean
     requestId: string
     tenantId: number | null
     userId: number | null
@@ -21850,6 +21873,7 @@ export namespace Prisma {
   export type RequestErrorLogSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     createdAt?: boolean
+    isDeleted?: boolean
     requestId?: boolean
     tenantId?: boolean
     userId?: boolean
@@ -21859,6 +21883,7 @@ export namespace Prisma {
   export type RequestErrorLogSelectScalar = {
     id?: boolean
     createdAt?: boolean
+    isDeleted?: boolean
     requestId?: boolean
     tenantId?: boolean
     userId?: boolean
@@ -22849,6 +22874,7 @@ export namespace Prisma {
   export const RequestErrorLogScalarFieldEnum: {
     id: 'id',
     createdAt: 'createdAt',
+    isDeleted: 'isDeleted',
     requestId: 'requestId',
     tenantId: 'tenantId',
     userId: 'userId',
@@ -24130,6 +24156,7 @@ export namespace Prisma {
     NOT?: Enumerable<RequestErrorLogWhereInput>
     id?: StringFilter | string
     createdAt?: DateTimeFilter | Date | string
+    isDeleted?: BoolFilter | boolean
     requestId?: StringFilter | string
     tenantId?: IntNullableFilter | number | null
     userId?: IntNullableFilter | number | null
@@ -24139,6 +24166,7 @@ export namespace Prisma {
   export type RequestErrorLogOrderByWithRelationInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    isDeleted?: SortOrder
     requestId?: SortOrder
     tenantId?: SortOrderInput | SortOrder
     userId?: SortOrderInput | SortOrder
@@ -24152,6 +24180,7 @@ export namespace Prisma {
   export type RequestErrorLogOrderByWithAggregationInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    isDeleted?: SortOrder
     requestId?: SortOrder
     tenantId?: SortOrderInput | SortOrder
     userId?: SortOrderInput | SortOrder
@@ -24169,6 +24198,7 @@ export namespace Prisma {
     NOT?: Enumerable<RequestErrorLogScalarWhereWithAggregatesInput>
     id?: StringWithAggregatesFilter | string
     createdAt?: DateTimeWithAggregatesFilter | Date | string
+    isDeleted?: BoolWithAggregatesFilter | boolean
     requestId?: StringWithAggregatesFilter | string
     tenantId?: IntNullableWithAggregatesFilter | number | null
     userId?: IntNullableWithAggregatesFilter | number | null
@@ -25670,6 +25700,7 @@ export namespace Prisma {
   export type RequestErrorLogCreateInput = {
     id?: string
     createdAt?: Date | string
+    isDeleted?: boolean
     requestId: string
     tenantId?: number | null
     userId?: number | null
@@ -25679,6 +25710,7 @@ export namespace Prisma {
   export type RequestErrorLogUncheckedCreateInput = {
     id?: string
     createdAt?: Date | string
+    isDeleted?: boolean
     requestId: string
     tenantId?: number | null
     userId?: number | null
@@ -25688,6 +25720,7 @@ export namespace Prisma {
   export type RequestErrorLogUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
     requestId?: StringFieldUpdateOperationsInput | string
     tenantId?: NullableIntFieldUpdateOperationsInput | number | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
@@ -25697,6 +25730,7 @@ export namespace Prisma {
   export type RequestErrorLogUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
     requestId?: StringFieldUpdateOperationsInput | string
     tenantId?: NullableIntFieldUpdateOperationsInput | number | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
@@ -25706,6 +25740,7 @@ export namespace Prisma {
   export type RequestErrorLogCreateManyInput = {
     id?: string
     createdAt?: Date | string
+    isDeleted?: boolean
     requestId: string
     tenantId?: number | null
     userId?: number | null
@@ -25715,6 +25750,7 @@ export namespace Prisma {
   export type RequestErrorLogUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
     requestId?: StringFieldUpdateOperationsInput | string
     tenantId?: NullableIntFieldUpdateOperationsInput | number | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
@@ -25724,6 +25760,7 @@ export namespace Prisma {
   export type RequestErrorLogUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
     requestId?: StringFieldUpdateOperationsInput | string
     tenantId?: NullableIntFieldUpdateOperationsInput | number | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
@@ -27120,6 +27157,7 @@ export namespace Prisma {
   export type RequestErrorLogCountOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    isDeleted?: SortOrder
     requestId?: SortOrder
     tenantId?: SortOrder
     userId?: SortOrder
@@ -27134,6 +27172,7 @@ export namespace Prisma {
   export type RequestErrorLogMaxOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    isDeleted?: SortOrder
     requestId?: SortOrder
     tenantId?: SortOrder
     userId?: SortOrder
@@ -27142,6 +27181,7 @@ export namespace Prisma {
   export type RequestErrorLogMinOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    isDeleted?: SortOrder
     requestId?: SortOrder
     tenantId?: SortOrder
     userId?: SortOrder

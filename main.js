@@ -1846,11 +1846,11 @@ exports.FLOWDA_ENV = (0, znv_1.parseEnv)(process.env, {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DynamicTableDataResourceSchema = exports.DynamicTableDefColumnResourceSchema = exports.DynamicTableDefResourceSchema = exports.WorkflowUserResourceSchema = exports.ProcessDefinitionResourceSchema = exports.TaskResourceSchema = exports.TaskFormRelationResourceSchema = exports.MenuResourceSchema = exports.TenantResourceSchema = exports.UserResourceSchema = void 0;
+exports.PayResourceSchema = exports.OrderResourceSchema = exports.ProductSnapshotResourceSchema = exports.ProductResourceSchema = exports.RequestErrorLogResourceSchema = exports.SentSmsResourceSchema = exports.WeixinProfileResourceSchema = exports.UserProfileResourceSchema = exports.OrderProfileResourceSchema = exports.UserPreSignupResourceSchema = exports.DynamicTableDataResourceSchema = exports.DynamicTableDefColumnResourceSchema = exports.DynamicTableDefResourceSchema = exports.WorkflowUserResourceSchema = exports.ProcessDefinitionResourceSchema = exports.TaskResourceSchema = exports.TaskFormRelationResourceSchema = exports.MenuResourceSchema = exports.TenantResourceSchema = exports.UserResourceSchema = void 0;
 const prisma_flowda_1 = __webpack_require__("../../libs/prisma-flowda/src/index.ts");
 const flowda_shared_1 = __webpack_require__("../../libs/flowda-shared/src/index.ts");
 const zod_1 = __webpack_require__("zod");
-exports.UserResourceSchema = prisma_flowda_1.UserSchema.omit({
+exports.UserResourceSchema = prisma_flowda_1.UserWithRelationsSchema.omit({
     hashedPassword: true,
     hashedRefreshToken: true,
 })
@@ -1985,6 +1985,96 @@ exports.DynamicTableDataResourceSchema = prisma_flowda_1.DynamicTableDataWithRel
 }).openapi({
     custom: {
         route_prefix: '/tenant_admin/dynamic_table',
+    },
+});
+exports.UserPreSignupResourceSchema = prisma_flowda_1.UserPreSignupWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'UserPreSignupSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/tenant_admin/tenant',
+    },
+});
+exports.OrderProfileResourceSchema = prisma_flowda_1.OrderProfileWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'OrderProfileSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/tenant_admin/tenant',
+    },
+});
+exports.UserProfileResourceSchema = prisma_flowda_1.UserProfileWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'UserProfileSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/tenant_admin/tenant',
+    },
+});
+exports.WeixinProfileResourceSchema = prisma_flowda_1.WeixinProfileWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'WeixinProfileSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/tenant_admin/tenant',
+    },
+});
+exports.SentSmsResourceSchema = prisma_flowda_1.SentSmsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'SentSmsSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/utilities/notification',
+    },
+});
+exports.RequestErrorLogResourceSchema = prisma_flowda_1.RequestErrorLogSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'RequestErrorLogSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/utilities/log',
+    },
+});
+exports.ProductResourceSchema = prisma_flowda_1.ProductWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'ProductSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/order_admin/product',
+    },
+});
+exports.ProductSnapshotResourceSchema = prisma_flowda_1.ProductSnapshotWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'ProductSnapshotSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/order_admin/product',
+    },
+});
+exports.OrderResourceSchema = prisma_flowda_1.OrderWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'OrderSchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/order_admin/order',
+    },
+});
+exports.PayResourceSchema = prisma_flowda_1.PayWithRelationsSchema.extend({
+    __meta: (0, flowda_shared_1.meta)({
+        extends: 'PaySchema',
+    }),
+}).openapi({
+    custom: {
+        route_prefix: '/order_admin/order',
     },
 });
 
@@ -2256,12 +2346,6 @@ const tenantMenu = [
                     { id: 'menus', name: '菜单', slug: 'menus' },
                 ],
             },
-            {
-                name: '动态表',
-                slug: 'dynamic_table',
-                id: 'dynamic_table',
-                children: [{ id: 'dynamic_table_defs', name: '动态表定义列表', slug: 'dynamic_table_defs' }],
-            },
         ],
     },
 ];
@@ -2283,20 +2367,29 @@ let MenuService = MenuService_1 = class MenuService {
             if (tenantRet == null) {
                 throw new Error('No tenant');
             }
-            const menuRet = yield this.prisma.menu.findUnique({
-                where: {
-                    tenantId: reqUser.tid,
-                },
-            });
             if (tenantRet.name === 'superadmin') {
-                if (menuRet && Array.isArray(menuRet.treeData)) {
-                    return menuRet.treeData.concat(tenantMenu);
+                const menuRets = yield this.prisma.menu.findMany({
+                    where: {
+                        isDeleted: false,
+                    },
+                });
+                const menuRet = menuRets.reduce((acc, cur) => {
+                    acc = acc.concat(cur.treeData);
+                    return acc;
+                }, []);
+                if (menuRet.length > 0) {
+                    return menuRet;
                 }
                 else {
-                    return tenantMenu;
+                    return tenantMenu; // 默认的菜单
                 }
             }
             else {
+                const menuRet = yield this.prisma.menu.findUnique({
+                    where: {
+                        tenantId: reqUser.tid,
+                    },
+                });
                 return (menuRet === null || menuRet === void 0 ? void 0 : menuRet.treeData) || [];
             }
         });
@@ -6412,7 +6505,8 @@ const tslib_1 = __webpack_require__("tslib");
 const plur = tslib_1.__importStar(__webpack_require__("pluralize"));
 const _ = tslib_1.__importStar(__webpack_require__("lodash"));
 plur.addSingularRule(/data/i, 'data');
-plur.addSingularRule(/defs/i, 'def');
+plur.addSingularRule(/data/i, 'data');
+plur.addSingularRule(/sms/i, 'sms');
 // s* equipment 不可数
 const REG = /(([a-z_]+s*)\/?([A-Za-z0-9-_:]+)?)+/g;
 const NUM_REG = /^-?\d+(\.\d+)?$/;
@@ -6569,7 +6663,7 @@ exports.ProductScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updated
 exports.ProductSnapshotScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'tenantId', 'snapshotPrice', 'orderId', 'productId']);
 exports.OrderScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'tenantId', 'serial', 'status']);
 exports.PayScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'updatedAt', 'isDeleted', 'userId', 'tenantId', 'status', 'orderId', 'transactionId']);
-exports.RequestErrorLogScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'requestId', 'tenantId', 'userId', 'log']);
+exports.RequestErrorLogScalarFieldEnumSchema = zod_1.z.enum(['id', 'createdAt', 'isDeleted', 'requestId', 'tenantId', 'userId', 'log']);
 exports.SortOrderSchema = zod_1.z.enum(['asc', 'desc']);
 exports.NullableJsonNullValueInputSchema = zod_1.z.enum(['DbNull', 'JsonNull',]).transform((v) => (0, exports.transformJsonNull)(v));
 exports.JsonNullValueInputSchema = zod_1.z.enum(['JsonNull',]);
@@ -6657,9 +6751,9 @@ exports.UserWithRelationsSchema = exports.UserSchema.merge(zod_1.z.object({
     profile: zod_1.z.lazy(() => exports.UserProfileWithRelationsSchema).nullable(),
     weixinProfile: zod_1.z.lazy(() => exports.WeixinProfileWithRelationsSchema).nullable(),
     orderProfile: zod_1.z.lazy(() => exports.OrderProfileWithRelationsSchema).nullable(),
-    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array(),
-    orders: zod_1.z.lazy(() => exports.OrderWithRelationsSchema).array(),
-    pays: zod_1.z.lazy(() => exports.PayWithRelationsSchema).array(),
+    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array().openapi({ "model_name": "ProductSnapshot" }),
+    orders: zod_1.z.lazy(() => exports.OrderWithRelationsSchema).array().openapi({ "model_name": "Order" }),
+    pays: zod_1.z.lazy(() => exports.PayWithRelationsSchema).array().openapi({ "model_name": "Pay" }),
 }));
 /////////////////////////////////////////
 // USER PRE SIGNUP SCHEMA
@@ -6798,7 +6892,7 @@ exports.WeixinProfileSchema = zod_1.z.object({
     sex: zod_1.z.number().int().nullable(),
 }).openapi({ "primary_key": "id", "display_name": "微信用户信息", "display_column": "nickname" });
 exports.WeixinProfileWithRelationsSchema = exports.WeixinProfileSchema.merge(zod_1.z.object({
-    users: zod_1.z.lazy(() => exports.UserWithRelationsSchema).array(),
+    users: zod_1.z.lazy(() => exports.UserWithRelationsSchema).array().openapi({ "model_name": "User" }),
 }));
 /////////////////////////////////////////
 // ORDER PROFILE SCHEMA
@@ -6885,7 +6979,7 @@ exports.OrderWithRelationsSchema = exports.OrderSchema.merge(zod_1.z.object({
     user: zod_1.z.lazy(() => exports.UserWithRelationsSchema),
     tenant: zod_1.z.lazy(() => exports.TenantWithRelationsSchema),
     pay: zod_1.z.lazy(() => exports.PayWithRelationsSchema).nullable(),
-    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array(),
+    productSnapshots: zod_1.z.lazy(() => exports.ProductSnapshotWithRelationsSchema).array().openapi({ "model_name": "ProductSnapshot" }),
 }));
 /////////////////////////////////////////
 // PAY SCHEMA
@@ -6912,6 +7006,7 @@ exports.PayWithRelationsSchema = exports.PaySchema.merge(zod_1.z.object({
 exports.RequestErrorLogSchema = zod_1.z.object({
     id: zod_1.z.string().cuid(),
     createdAt: zod_1.z.date(),
+    isDeleted: zod_1.z.boolean(),
     requestId: zod_1.z.string(),
     tenantId: zod_1.z.number().int().nullable(),
     userId: zod_1.z.number().int().nullable(),

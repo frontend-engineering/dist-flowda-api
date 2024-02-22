@@ -319,6 +319,7 @@ exports.Prisma.PayScalarFieldEnum = {
 exports.Prisma.RequestErrorLogScalarFieldEnum = {
   id: 'id',
   createdAt: 'createdAt',
+  isDeleted: 'isDeleted',
   requestId: 'requestId',
   tenantId: 'tenantId',
   userId: 'userId',

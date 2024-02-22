@@ -138,8 +138,11 @@ model User {
 
   orderProfile OrderProfile?
 
+  /// @schema.model_name ProductSnapshot
   productSnapshots ProductSnapshot[]
+  /// @schema.model_name Order
   orders           Order[]
+  /// @schema.model_name Pay
   pays             Pay[]
 
   @@unique([tenantId, username])
@@ -322,6 +325,7 @@ model WeixinProfile {
   updatedAt DateTime @default(now()) @updatedAt
   isDeleted Boolean  @default(false)
 
+  /// @schema.model_name User
   users User[]
 
   unionOrOpenid String  @unique
@@ -456,8 +460,10 @@ model Order {
   status OrderStatus
 
   // Order 1-1 Pay? 这里必须?，Pay 里写上 order + orderId @unique
-  pay              Pay?
+  pay Pay?
   // Order 1-n ProductSnapshot，ProductSnapshot 写 order + orderId 不用 unique
+
+  /// @schema.model_name ProductSnapshot
   productSnapshots ProductSnapshot[]
 }
 
@@ -480,8 +486,9 @@ model Pay {
 }
 
 model RequestErrorLog {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now())
+  isDeleted Boolean  @default(false)
   requestId String
   tenantId  Int?
   userId    Int?
