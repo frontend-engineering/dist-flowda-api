@@ -771,7 +771,7 @@ let UserLocalStrategy = UserLocalStrategy_1 = class UserLocalStrategy extends (0
     }
     validate(username, password) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const ret = yield this.user.validate(username, password);
+            const ret = yield this.user.validate({ username, password });
             return ret.user;
         });
     }
@@ -1005,7 +1005,7 @@ let CustomerAuthV4Router = CustomerAuthV4Router_1 = class CustomerAuthV4Router {
                 rt: zod_1.z.string(),
             }))
                 .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.refreshToken(input.rt);
+                return this.userService.refreshToken(input);
             })),
             getUser: this.trpc.userProtectedProcedure.input(zod_1.z.object({})).query(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return ctx.user;
@@ -1295,7 +1295,6 @@ const inversify_1 = __webpack_require__("inversify");
 const common_1 = __webpack_require__("@nestjs/common");
 const flowda_shared_node_1 = __webpack_require__("../../libs/flowda-shared-node/src/index.ts");
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
-const consola_1 = tslib_1.__importDefault(__webpack_require__("consola"));
 // import { OpenApiMeta } from 'trpc-openapi'
 let TrpcService = TrpcService_1 = class TrpcService {
     constructor(userService, loggerFactory) {
@@ -1315,11 +1314,10 @@ let TrpcService = TrpcService_1 = class TrpcService {
                 : null;
             if (at) {
                 const { tid } = this.userService.verifyTenantAccessToken(at);
-                const tenant = yield this.userService.getTenantInfo(tid);
+                const tenant = yield this.userService.getTenantInfo(tid, ctx);
                 if (!tenant) {
                     throw new server_1.TRPCError({ code: 'UNAUTHORIZED' });
                 }
-                consola_1.default.info('tenant', tenant);
                 return opts.next({
                     ctx: Object.assign({ ctx }, { tenant }),
                 });
@@ -1388,11 +1386,11 @@ let UserRouter = UserRouter_1 = class UserRouter {
             getTenant: this.trpc.procedure.input(zod_1.z.object({ tid: zod_1.z.number() })).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.getTenantInfo(input.tid);
             })),
-            sendSmsVerifyCode: this.trpc.procedure.input(zod_1.z.object({ mobile: zod_1.z.string() })).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.sendSmsVerifyCode(input.mobile);
+            sendSmsVerifyCode: this.trpc.procedure.input(flowda_shared_types_1.sendSmsVerifyCodeSchema).mutation((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.sendSmsVerifyCode(opts.input, opts.ctx);
             })),
-            verifyMobile: this.trpc.procedure.input(flowda_shared_types_1.verifyMobileSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.verifyMobile(input);
+            verifyMobile: this.trpc.procedure.input(flowda_shared_types_1.verifyMobileSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.verifyMobile(input, ctx);
             })),
             accountExists: this.trpc.procedure.input(flowda_shared_types_1.accountExistsSchema).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.accountExists(input);
@@ -1428,32 +1426,27 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 });
                 return ret;
             })),
-            registerByUnionId: this.trpc.procedure.input(flowda_shared_types_1.registerByUnionIdSchema).mutation(({ input }) => {
-                return this.userService.registerByUnionId(input);
+            registerByUnionId: this.trpc.procedure.input(flowda_shared_types_1.registerByUnionIdSchema).mutation(opts => {
+                return this.userService.registerByUnionId(opts.input, opts.ctx);
             }),
             getTenantByName: this.trpc.procedure.input(flowda_shared_types_1.getTenantByNameSchema).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.getTenantByName(input);
             })),
-            validateTenant: this.trpc.procedure.input(flowda_shared_types_1.validateTenantSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.validateTenant(input);
+            validateTenant: this.trpc.procedure.input(flowda_shared_types_1.validateTenantSchema).mutation((opts) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.validateTenant(opts.input, opts.ctx);
             })),
             refreshTenantToken: this.trpc.procedure
                 .input(zod_1.z.object({
                 rt: zod_1.z.string(),
             }))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.refreshTenantToken(input.rt);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.refreshTenantToken(input.rt, ctx);
             })),
-            validate: this.trpc.procedure
-                .input(zod_1.z.object({
-                username: zod_1.z.string(),
-                password: zod_1.z.string(),
-            }))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.validate(input.username, input.password);
+            validate: this.trpc.procedure.input(flowda_shared_types_1.validateSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.validate(input);
             })),
-            validateByEmail: this.trpc.procedure.input(flowda_shared_types_1.validateByEmailSchema).query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.validateByEmail(input);
+            validateByEmail: this.trpc.procedure.input(flowda_shared_types_1.validateByEmailSchema).query(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.validateByEmail(input, ctx);
             })),
             findMany: this.trpc.procedure
                 .input(zod_1.z.object({
@@ -1504,13 +1497,13 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.verifyAccessToken(input.jwt);
             })),
-            createTenant: this.trpc.procedure.input(flowda_shared_types_1.appCreateV4Schema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.createTenant(input);
+            createTenant: this.trpc.procedure.input(flowda_shared_types_1.appCreateV4Schema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.createTenant(input, ctx);
             })),
             preSignup: this.trpc.procedure
                 .input(flowda_shared_types_1.customerPreSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.preSignup(input);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.preSignup(input, ctx);
             })),
             verifyAndSignup: this.trpc.procedure
                 .input(flowda_shared_types_1.customerSignupSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
@@ -1522,8 +1515,8 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.userService.wxValidateUser(input, ctx);
             })),
-            refreshToken: this.trpc.procedure.input(zod_1.z.object({ rt: zod_1.z.string() })).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.refreshToken(input.rt);
+            refreshToken: this.trpc.procedure.input(flowda_shared_types_1.refreshTokenSchema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.refreshToken(input, ctx);
             })),
             logout: this.trpc.procedure.input(flowda_shared_types_1.userJwtPayloadSchema).mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 return this.prisma.user.update({
@@ -1537,13 +1530,13 @@ let UserRouter = UserRouter_1 = class UserRouter {
             })),
             generateRecoveryCode: this.trpc.procedure
                 .input(flowda_shared_types_1.generateRecoveryCodeSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.generateRecoveryCode(input);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.generateRecoveryCode(input, ctx);
             })),
             resetPasswordWithRecoveryCode: this.trpc.procedure
                 .input(flowda_shared_types_1.resetPasswordWithRecoveryCodeSchema.merge(flowda_shared_types_1.tenantJwtPayloadSchema))
-                .mutation(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                return this.userService.resetPasswordWithRecoveryCode(input);
+                .mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                return this.userService.resetPasswordWithRecoveryCode(input, ctx);
             })),
             updatePaidProfile: this.trpc.procedure
                 .input(flowda_shared_types_1.updatePaidProfileSchema.merge(flowda_shared_types_1.userJwtPayloadSchema))
@@ -2969,26 +2962,35 @@ let UserService = UserService_1 = class UserService {
             });
         });
     }
-    validateByEmail(input) {
+    validateByEmail(input, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[validateByEmail]');
             const { tenantId, email, password } = input;
             const userRet = yield this.prisma.user.findFirstOrThrow({
                 where: {
                     email: email,
                     tenantId: tenantId,
                 },
+                select: {
+                    id: true,
+                    username: true,
+                },
             });
-            return this.validate(userRet.username, password);
+            (0, flowda_shared_node_1.diag)(ctx, 'user.findFirstOrThrow', userRet);
+            return this.validate({ username: userRet.username, password }, ctx);
         });
     }
-    validate(username, password) {
+    validate(input, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[validate]');
+            const { username, password } = input;
             const userRet = yield this.prisma.user.findFirst({
                 where: {
                     username: username,
                 },
                 select: exports.userSelect,
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'user.findFirst', userRet);
             if (!userRet) {
                 // https://docs.nestjs.com/exception-filters#built-in-http-exceptions
                 throw new common_1.UnauthorizedException(`User does not exist`);
@@ -3002,12 +3004,14 @@ let UserService = UserService_1 = class UserService {
             }
             const payload = { uid: userRet.id, tid: userRet.tenantId };
             const rtRet = yield generateUserRefreshToken(payload);
+            (0, flowda_shared_node_1.diag)(ctx, 'generateUserRefreshToken', rtRet);
             yield this.prisma.user.update({
                 where: { id: userRet.id },
                 data: {
                     hashedRefreshToken: rtRet.hash,
                 },
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'user.update', rtRet.hash);
             const at = generateJwt(payload, {
                 secret: flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_SECRET,
                 expires: flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_EXPIRE,
@@ -3020,7 +3024,7 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
-    validateTenant(dto) {
+    validateTenant(dto, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { name, password } = dto;
             const tenant = yield this.prisma.tenant.findFirst({
@@ -3029,6 +3033,7 @@ let UserService = UserService_1 = class UserService {
                 },
                 select: exports.tenantSelect,
             });
+            (0, flowda_shared_node_1.diag)(ctx, '(e)tenant.findFirst', tenant);
             if (tenant == null) {
                 throw new common_1.UnauthorizedException(`tenant does not exist`);
             }
@@ -3041,6 +3046,7 @@ let UserService = UserService_1 = class UserService {
             }
             const payload = { tid: tenant.id };
             const rtRet = yield generateTenantRefreshToken(payload);
+            (0, flowda_shared_node_1.diag)(ctx, '(e) generateTenantRefreshToken', payload);
             yield this.prisma.tenant.update({
                 where: { id: tenant.id },
                 data: {
@@ -3059,16 +3065,19 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
-    refreshTenantToken(rt) {
+    refreshTenantToken(rt, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[refreshTenantToken]');
             const decodedToken = jwt.verify(rt, flowda_env_1.FLOWDA_ENV.TENANT_REFRESH_TOKEN_SECRET);
             const tid = decodedToken['tid'];
+            (0, flowda_shared_node_1.diag)(ctx, 'jwt.verify', decodedToken);
             const tenant = yield this.prisma.tenant.findUniqueOrThrow({
                 where: {
                     id: tid,
                 },
                 select: exports.tenantSelect,
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'tenant.findUniqueOrThrow', tenant);
             if (tenant.hashedRefreshToken == null) {
                 throw new common_1.UnauthorizedException('tenant refresh token not exists');
             }
@@ -3094,18 +3103,18 @@ let UserService = UserService_1 = class UserService {
     }
     getUserInfo(uid, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            (0, flowda_shared_node_1.trace)(ctx, '[getUserInfo]');
+            (0, flowda_shared_node_1.diag)(ctx, '[getUserInfo]');
             const ret = yield this.prisma.user.findUniqueOrThrow({
                 where: {
                     id: uid,
                 },
                 select: exports.userSelect,
             });
-            (0, flowda_shared_node_1.trace)(ctx, 'user found', ret);
+            (0, flowda_shared_node_1.diag)(ctx, 'user found', ret);
             return _.omit(ret, ['hashedRefreshToken', 'hashedPassword']);
         });
     }
-    getTenantInfo(tid) {
+    getTenantInfo(tid, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const ret = yield this.prisma.tenant.findUniqueOrThrow({
                 where: {
@@ -3116,35 +3125,35 @@ let UserService = UserService_1 = class UserService {
             return _.omit(ret, ['hashedRefreshToken', 'hashedPassword']);
         });
     }
-    sendSmsVerifyCode(mobile) {
+    sendSmsVerifyCode(input, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, ['sendSmsVerifyCode']);
             const code = generateVerificationCode();
-            this.logger.debug(`[sendSmsVerifyCode] ${mobile} ${code}`);
+            (0, flowda_shared_node_1.diag)(ctx, 'generateVerificationCode', { code });
             try {
                 const res = yield this.smsClient.SendSms({
                     SmsSdkAppId: '1400886368',
-                    PhoneNumberSet: ['+86' + mobile],
+                    PhoneNumberSet: ['+86' + input.mobile],
                     TemplateId: '2062585',
                     SignName: '上海只冲网络科技有限公司',
                     TemplateParamSet: [code],
                 });
-                this.logger.debug('[sendSmsVerifyCode]');
-                console.log(res);
+                (0, flowda_shared_node_1.diag)(ctx, 'smsClient.SendSms', res);
             }
             catch (e) {
                 throw new Error(e);
-                console.error(e);
             }
             return this.prisma.sentSms.create({
                 data: {
-                    mobile,
+                    mobile: input.mobile,
                     code: code,
                 },
             });
         });
     }
-    verifyMobile(dto) {
+    verifyMobile(dto, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[verifyMobile]');
             const now = (0, dayjs_1.default)();
             const tenMinutesAgo = now.subtract(10, 'minute');
             yield this.prisma.sentSms.findFirstOrThrow({
@@ -3157,13 +3166,15 @@ let UserService = UserService_1 = class UserService {
                     },
                 },
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'called sentSms.findFirstOrThrow');
             yield this.prisma.user.findFirstOrThrow({
                 where: {
                     id: dto.uid,
                     tenantId: dto.tid,
                 },
             });
-            return this.prisma.user.update({
+            (0, flowda_shared_node_1.diag)(ctx, 'called user.findFirstOrThrow');
+            const ret = yield this.prisma.user.update({
                 where: {
                     id: dto.uid,
                 },
@@ -3175,6 +3186,8 @@ let UserService = UserService_1 = class UserService {
                     tenantId: true,
                 },
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'called user.update');
+            return ret;
         });
     }
     getTenantByName(dto) {
@@ -3210,7 +3223,7 @@ let UserService = UserService_1 = class UserService {
             return ret;
         });
     }
-    registerByUnionId(dto) {
+    registerByUnionId(dto, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const user = yield this.prisma.user.findFirst({
                 where: {
@@ -3220,6 +3233,7 @@ let UserService = UserService_1 = class UserService {
                     tenantId: dto.tenantId,
                 },
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'user.findFirst', user);
             if (user) {
                 throw new Error(`User exits with unionid: ${dto.unionid}`);
             }
@@ -3236,6 +3250,7 @@ let UserService = UserService_1 = class UserService {
                     unionid: dto.unionid,
                 },
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'weixinProfile.upsert', wxProfileRet);
             const aUser = yield this.prisma.user.create({
                 data: {
                     username: dto.unionid, // 后续可以判断如果 unionid === username 则可以改动一次用户名
@@ -3250,13 +3265,13 @@ let UserService = UserService_1 = class UserService {
     }
     wxValidateUser(dto, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            (0, flowda_shared_node_1.trace)(ctx, '[wxValidateUser]', dto);
+            (0, flowda_shared_node_1.diag)(ctx, '[wxValidateUser]', dto);
             const { tid, code } = dto;
-            (0, flowda_shared_node_1.trace)(ctx, 'call weixinLogin.getAccessToken', code);
+            (0, flowda_shared_node_1.diag)(ctx, 'call weixinLogin.getAccessToken', code);
             const wxRet = yield this.weixinLogin.getAccessToken(code);
-            (0, flowda_shared_node_1.trace)(ctx, 'called weixinLogin.getAccessToken', wxRet);
+            (0, flowda_shared_node_1.diag)(ctx, 'called weixinLogin.getAccessToken', wxRet);
             const wxUser = yield this.weixinLogin.getUser(wxRet.data.openid, wxRet.data.access_token);
-            (0, flowda_shared_node_1.trace)(ctx, 'called weixinLogin.getUser', wxUser);
+            (0, flowda_shared_node_1.diag)(ctx, 'called weixinLogin.getUser', wxUser);
             const wxProfileRet = yield this.prisma.weixinProfile.upsert({
                 where: {
                     unionOrOpenid: wxRet.data.unionid,
@@ -3276,8 +3291,8 @@ let UserService = UserService_1 = class UserService {
                     sex: wxUser.sex,
                 },
             });
-            (0, flowda_shared_node_1.trace)(ctx, 'called weixinProfile.upsert', wxProfileRet);
-            (0, flowda_shared_node_1.trace)(ctx, 'call user.findFirst', {
+            (0, flowda_shared_node_1.diag)(ctx, 'called weixinProfile.upsert', wxProfileRet);
+            (0, flowda_shared_node_1.diag)(ctx, 'call user.findFirst', {
                 unionid: wxRet.data.unionid,
                 tenantId: tid,
             });
@@ -3288,9 +3303,9 @@ let UserService = UserService_1 = class UserService {
                 },
                 select: exports.userSelect,
             });
-            (0, flowda_shared_node_1.trace)(ctx, 'userRet', userRet);
+            (0, flowda_shared_node_1.diag)(ctx, 'userRet', userRet);
             if (!userRet /* 不存在*/) {
-                (0, flowda_shared_node_1.trace)(ctx, 'wxProfileRet upsert', wxProfileRet);
+                (0, flowda_shared_node_1.diag)(ctx, 'wxProfileRet upsert', wxProfileRet);
                 userRet = yield this.prisma.user.create({
                     data: {
                         username: wxRet.data.unionid, // 后续可以判断如果 unionid === username 则可以改动一次用户名
@@ -3301,7 +3316,7 @@ let UserService = UserService_1 = class UserService {
                     },
                     select: exports.userSelect,
                 });
-                (0, flowda_shared_node_1.trace)(ctx, 'create userRet', userRet);
+                (0, flowda_shared_node_1.diag)(ctx, 'create userRet', userRet);
             }
             const payload = { uid: userRet.id, tid: userRet.tenantId };
             const at = generateJwt(payload, {
@@ -3316,7 +3331,7 @@ let UserService = UserService_1 = class UserService {
                     hashedRefreshToken: rtRet.hash,
                 },
             });
-            (0, flowda_shared_node_1.trace)(ctx, 'update rt');
+            (0, flowda_shared_node_1.diag)(ctx, 'update rt');
             return {
                 at: at,
                 rt: rtRet.rt,
@@ -3324,15 +3339,19 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
-    refreshToken(rt) {
+    refreshToken(input, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[refreshToken]');
+            const { rt } = input;
             const decodedToken = jwt.verify(rt, flowda_env_1.FLOWDA_ENV.REFRESH_TOKEN_SECRET);
+            (0, flowda_shared_node_1.diag)(ctx, 'jwt.verify', decodedToken);
             const userRet = yield this.prisma.user.findUniqueOrThrow({
                 where: {
                     id: decodedToken['uid'],
                 },
                 select: exports.userSelect,
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'user.findUniqueOrThrow', userRet);
             if (userRet.hashedRefreshToken == null) {
                 throw new common_1.UnauthorizedException(`user refresh token not exists`);
             }
@@ -3340,7 +3359,9 @@ let UserService = UserService_1 = class UserService {
             if (!match) {
                 throw new common_1.UnauthorizedException('user refresh token is invalid');
             }
-            const at = generateJwt({ tid: userRet.tenantId, uid: userRet.id }, {
+            const payload = { tid: userRet.tenantId, uid: userRet.id };
+            (0, flowda_shared_node_1.diag)(ctx, 'generateJwt', payload);
+            const at = generateJwt(payload, {
                 secret: flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_SECRET,
                 expires: flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_EXPIRE,
             });
@@ -3350,19 +3371,21 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
-    generateRecoveryCode(dto) {
+    generateRecoveryCode(dto, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[generateRecoveryCode]');
             const userRet = yield this.prisma.user.findUniqueOrThrow({
                 where: {
                     email: dto.email,
                 },
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'user.findUniqueOrThrow', userRet);
             const recoveryToken = generateRecoveryToken(dto.email, {
                 secret: flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_SECRET,
             });
-            this.logger.debug(`recoveryToken length, ${recoveryToken.length}`);
             // token 过长，关联一个 code 发到邮箱里
             const recoveryCode = _.uid(6).toUpperCase();
+            (0, flowda_shared_node_1.diag)(ctx, 'generateRecoveryToken', { recoveryToken, recoveryCode });
             yield this.prisma.user.update({
                 where: {
                     id: userRet.id,
@@ -3378,19 +3401,21 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
-    resetPasswordWithRecoveryCode(dto) {
+    resetPasswordWithRecoveryCode(dto, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[resetPasswordWithRecoveryCode]');
             const userRet = yield this.prisma.user.findFirstOrThrow({
                 where: {
                     tenantId: dto.tid,
                     recoveryCode: dto.recoveryCode,
                 },
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'user.findFirstOrThrow', userRet);
             if (userRet.recoveryToken == null) {
                 throw new common_1.ForbiddenException(`invalid recovery code`);
             }
             const decodeToken = verifyRecoveryToken(userRet.recoveryToken, { secret: flowda_env_1.FLOWDA_ENV.ACCESS_TOKEN_SECRET });
-            this.logger.debug(`decodeToken`, decodeToken);
+            (0, flowda_shared_node_1.diag)(ctx, 'decodeToken', decodeToken);
             if (!decodeToken['verificationToken']) {
                 throw new common_1.ForbiddenException('invalid recovery token');
             }
@@ -3497,11 +3522,13 @@ let UserService = UserService_1 = class UserService {
             };
         });
     }
-    createTenant(input) {
+    createTenant(input, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[createTenant]');
             const randomAppId = _.uid(4).toUpperCase();
             const randomAppToken = _.uid(24);
             const hashedPassword = yield bcrypt.hash(randomAppToken, 10);
+            (0, flowda_shared_node_1.diag)(ctx, 'tenant.create params', { randomAppId, randomAppToken });
             const ret = yield this.prisma.tenant.create({
                 data: {
                     name: randomAppId,
@@ -3510,6 +3537,7 @@ let UserService = UserService_1 = class UserService {
                 },
                 select: exports.tenantSelect,
             });
+            (0, flowda_shared_node_1.diag)(ctx, 'tenant.create');
             // appToken 虽然是密码，但是需要返回给前台
             return Object.assign({ appToken: randomAppToken }, _.omit(ret, ['hashedRefreshToken', 'hashedPassword']));
         });
@@ -3532,16 +3560,20 @@ let UserService = UserService_1 = class UserService {
             return Object.assign({ appToken: randomAppToken }, _.omit(ret, ['hashedRefreshToken', 'hashedPassword']));
         });
     }
-    preSignup(input) {
+    preSignup(input, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            (0, flowda_shared_node_1.diag)(ctx, '[preSignup]');
             const user = yield this.prisma.user.findUnique({
                 where: { email: input.email },
             });
             if (user) {
                 // https://docs.nestjs.com/exception-filters#built-in-http-exceptions
-                throw new common_1.ConflictException('Email already exists');
+                throw new common_1.ConflictException('Email already exists', {
+                    description: `userId:${user.id}`,
+                });
             }
             const randomCode = _.uid(6).toUpperCase();
+            (0, flowda_shared_node_1.diag)(ctx, 'verifyCode', { randomCode });
             yield this.prisma.userPreSignup.create({
                 data: {
                     tenantId: input.tid,
@@ -3557,7 +3589,7 @@ let UserService = UserService_1 = class UserService {
     }
     verifyAndSignup(input, ctx) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            (0, flowda_shared_node_1.trace)(ctx, '[verifyAndSignup]');
+            (0, flowda_shared_node_1.diag)(ctx, '[verifyAndSignup]');
             const ret = yield this.prisma.userPreSignup.findFirstOrThrow({
                 where: {
                     tenantId: input.tid,
@@ -3566,7 +3598,7 @@ let UserService = UserService_1 = class UserService {
                     isDeleted: false,
                 },
             });
-            (0, flowda_shared_node_1.trace)(ctx, 'userPreSignup found', ret);
+            (0, flowda_shared_node_1.diag)(ctx, 'userPreSignup found', ret);
             const hashedPassword = yield bcrypt.hash(input.password, 10);
             const [userRet] = yield this.prisma.$transaction([
                 this.prisma.user.create({
@@ -3588,7 +3620,7 @@ let UserService = UserService_1 = class UserService {
                     },
                 }),
             ]);
-            (0, flowda_shared_node_1.trace)(ctx, '$transaction complete', userRet);
+            (0, flowda_shared_node_1.diag)(ctx, '$transaction complete', userRet);
             return _.omit(userRet, ['hashedRefreshToken', 'hashedPassword']);
         });
     }
@@ -4240,7 +4272,7 @@ exports.TableFilterService = TableFilterService = TableFilterService_1 = tslib_1
 
 /// <reference types="@types/express-serve-static-core" />
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.trace = exports.createContext = exports.transformer = exports.errorFormatter = exports.transformHttpException = exports.logErrorEnd = exports.logErrorStart = exports.getErrorCodeFromKey = exports.getStatusKeyFromStatus = exports.logContext = exports.logOutputSerialize = exports.logInputSerialize = exports.ERROR_END = exports.REQ_END = void 0;
+exports.diag = exports.createContext = exports.transformer = exports.errorFormatter = exports.transformHttpException = exports.logErrorEnd = exports.logErrorStart = exports.getErrorCodeFromKey = exports.getStatusKeyFromStatus = exports.logContext = exports.logOutputSerialize = exports.logInputSerialize = exports.ERROR_END = exports.REQ_END = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const consola_1 = tslib_1.__importDefault(__webpack_require__("consola"));
 const _ = tslib_1.__importStar(__webpack_require__("radash"));
@@ -4425,10 +4457,13 @@ function createContext(opts) {
     });
 }
 exports.createContext = createContext;
-function trace(ctx, ...message) {
+/**
+ * 一个简单的基于 trpc ctx 的 诊断工具 报错之后会记录手动埋的路径，方便排查错误
+ */
+function diag(ctx, ...message) {
     (ctx === null || ctx === void 0 ? void 0 : ctx._trace) != null && ctx._trace.push(message);
 }
-exports.trace = trace;
+exports.diag = diag;
 
 
 /***/ }),
@@ -4527,8 +4562,8 @@ exports.createZodDto = createZodDto;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.updateFreeProfileSchema = exports.updatePaidProfileSchema = exports.SdkProductCreateManyItemDto = exports.productCreateManyItemSchema = exports.ResetPasswordDto = exports.resetPasswordWithRecoveryCodeTenantJwtSchemaDto = exports.resetPasswordWithRecoveryCodeSchemaDto = exports.resetPasswordWithRecoveryCodeSchema = exports.GenerateRecoveryCodeDto = exports.generateRecoveryCodeTenantJwtSchemaDto = exports.generateRecoveryCodeSchemaDto = exports.generateRecoveryCodeSchema = exports.wxValidateUserTenantJwtPayloadSchemaDto = exports.wxValidateUserSchema = exports.wxGetUserRes = exports.wxGetAccessTokenRes = exports.customerSignupTenantJwtPayloadSchemaDto = exports.customerSignupSchemaDto = exports.customerSignupSchema = exports.customerPreSignupTenantJwtPayloadSchemaDto = exports.customerPreSignupSchemaDto = exports.customerPreSignupSchema = exports.userJwtPayloadSchemaDto = exports.userJwtPayloadSchema = exports.tenantJwtPayloadSchema = exports.verifyMobileSchemaDto = exports.verifyMobileSchema = exports.resetPasswordSchemaDto = exports.resetPasswordSchema = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = exports.prismaFilterSchema = exports.agSortSchema = exports.agFilterSchema = exports.agFilter2Schema = exports.agFilter1Schema = exports.agFilterInner2Schema = exports.agFilterInnerSchema = exports.resourceSchema = exports.resourceColumnSchema = exports.resourceAssociationSchema = exports.selectOptionSchema = void 0;
-exports._resetTenantPasswordSchemaDto = exports._resetTenantPasswordSchema = exports.validateByEmailSchemaDto = exports.validateByEmailSchema = exports.validateTenantSchemaDto = exports.validateTenantSchema = exports.appCreateV4SchemaDto = exports.appCreateV4Schema = exports.createQuickOrderTenantJWTPayloadSchemaDto = exports.SdkCreateQuickOrderDto = exports.createQuickOrderSchema = exports.SdkCreateOrderInJSAPIDto = exports.createOrderJSAPISchema = exports.transactionsNativeSchemaDto = exports.transactionsNativeSchema = exports.createOrderUserJwtPayloadSchemaDto = exports.SdkCreateOrderDto = exports.createOrderSchema = exports.amountUpdateUserJwtPayloadSchemaDto = exports.amountUpdateSchemaDto = exports.amountUpdateSchema = exports.fwhLoginTenantJwtPayloadSchemaDto = exports.fwhLoginSchema = exports.wxPayQuerySchema = void 0;
+exports.SdkProductCreateManyItemDto = exports.productCreateManyItemSchema = exports.ResetPasswordDto = exports.resetPasswordWithRecoveryCodeTenantJwtSchemaDto = exports.resetPasswordWithRecoveryCodeSchemaDto = exports.resetPasswordWithRecoveryCodeSchema = exports.GenerateRecoveryCodeDto = exports.generateRecoveryCodeTenantJwtSchemaDto = exports.generateRecoveryCodeSchemaDto = exports.generateRecoveryCodeSchema = exports.wxValidateUserTenantJwtPayloadSchemaDto = exports.wxValidateUserSchema = exports.wxGetUserRes = exports.wxGetAccessTokenRes = exports.customerSignupTenantJwtPayloadSchemaDto = exports.customerSignupSchemaDto = exports.customerSignupSchema = exports.customerPreSignupTenantJwtPayloadSchemaDto = exports.customerPreSignupSchemaDto = exports.customerPreSignupSchema = exports.userJwtPayloadSchemaDto = exports.userJwtPayloadSchema = exports.tenantJwtPayloadSchema = exports.verifyMobileSchemaDto = exports.verifyMobileSchema = exports.resetPasswordSchemaDto = exports.resetPasswordSchema = exports.RegisterByUnionIdSchemaDto = exports.registerByUnionIdSchema = exports.FindByUnionIdAndTenantIdSchemaDto = exports.findByUnionIdAndTenantIdSchema = exports.GetTenantByNameSchemaDto = exports.getTenantByNameSchema = exports.validateSchemaDto = exports.validateSchema = exports.AccountExistsSchemaDto = exports.accountExistsSchema = exports.RegisterDto = exports.registerSchema = exports.prismaFilterSchema = exports.agSortSchema = exports.agFilterSchema = exports.agFilter2Schema = exports.agFilter1Schema = exports.agFilterInner2Schema = exports.agFilterInnerSchema = exports.resourceSchema = exports.resourceColumnSchema = exports.resourceAssociationSchema = exports.selectOptionSchema = void 0;
+exports.refreshTokenSchemaDto = exports.refreshTokenSchema = exports.sendSmsVerifyCodeSchemaDto = exports.sendSmsVerifyCodeSchema = exports.kanzhunDataSchema = exports.kanzhunItemSchemaDto = exports.kanzhunItemSchema = exports.kanzhunDetailSchemaDto = exports.kanzhunDetailSchema = exports.customerExtendDataSchemaDto = exports.customerExtendDataSchema = exports._resetTenantPasswordSchemaDto = exports._resetTenantPasswordSchema = exports.validateByEmailSchemaDto = exports.validateByEmailSchema = exports.validateTenantSchemaDto = exports.validateTenantSchema = exports.appCreateV4SchemaDto = exports.appCreateV4Schema = exports.createQuickOrderTenantJWTPayloadSchemaDto = exports.SdkCreateQuickOrderDto = exports.createQuickOrderSchema = exports.SdkCreateOrderInJSAPIDto = exports.createOrderJSAPISchema = exports.transactionsNativeSchemaDto = exports.transactionsNativeSchema = exports.createOrderUserJwtPayloadSchemaDto = exports.SdkCreateOrderDto = exports.createOrderSchema = exports.amountUpdateUserJwtPayloadSchemaDto = exports.amountUpdateSchemaDto = exports.amountUpdateSchema = exports.fwhLoginTenantJwtPayloadSchemaDto = exports.fwhLoginSchema = exports.wxPayQuerySchema = exports.updateFreeProfileSchema = exports.updatePaidProfileSchema = void 0;
 const zod_1 = __webpack_require__("zod");
 const zod_utils_1 = __webpack_require__("../../libs/flowda-shared-types/src/zod-utils.ts");
 exports.selectOptionSchema = zod_1.z.object({
@@ -4632,6 +4667,13 @@ exports.accountExistsSchema = zod_1.z.object({
 class AccountExistsSchemaDto extends (0, zod_utils_1.createZodDto)(exports.accountExistsSchema) {
 }
 exports.AccountExistsSchemaDto = AccountExistsSchemaDto;
+exports.validateSchema = zod_1.z.object({
+    username: zod_1.z.string(),
+    password: zod_1.z.string(),
+});
+class validateSchemaDto extends (0, zod_utils_1.createZodDto)(exports.validateSchema) {
+}
+exports.validateSchemaDto = validateSchemaDto;
 exports.getTenantByNameSchema = zod_1.z.object({
     tenantName: zod_1.z.string(),
 });
@@ -4872,6 +4914,59 @@ exports._resetTenantPasswordSchema = zod_1.z.object({
 class _resetTenantPasswordSchemaDto extends (0, zod_utils_1.createZodDto)(exports._resetTenantPasswordSchema) {
 }
 exports._resetTenantPasswordSchemaDto = _resetTenantPasswordSchemaDto;
+exports.customerExtendDataSchema = zod_1.z
+    .object({
+    raw_kanzhun: zod_1.z.any(),
+    biz: zod_1.z.string(),
+    icp: zod_1.z.string().nullable(),
+    contact: zod_1.z.object({
+        email: zod_1.z.string(),
+        phone: zod_1.z.string(),
+        address: zod_1.z.string(),
+    }),
+    companyName: zod_1.z.string(),
+    description: zod_1.z.string(),
+    _prev: zod_1.z.any(),
+})
+    .partial();
+class customerExtendDataSchemaDto extends (0, zod_utils_1.createZodDto)(exports.customerExtendDataSchema) {
+}
+exports.customerExtendDataSchemaDto = customerExtendDataSchemaDto;
+exports.kanzhunDetailSchema = zod_1.z
+    .object({
+    公司全称: zod_1.z.string(),
+    联系方式: zod_1.z.array(zod_1.z.string()),
+    地址: zod_1.z.string(),
+    简介: zod_1.z.string(),
+})
+    .partial();
+class kanzhunDetailSchemaDto extends (0, zod_utils_1.createZodDto)(exports.kanzhunDetailSchema) {
+}
+exports.kanzhunDetailSchemaDto = kanzhunDetailSchemaDto;
+exports.kanzhunItemSchema = zod_1.z
+    .object({
+    id: zod_1.z.number(),
+    name: zod_1.z.string(),
+    detail: exports.kanzhunDetailSchema,
+})
+    .partial();
+class kanzhunItemSchemaDto extends (0, zod_utils_1.createZodDto)(exports.kanzhunItemSchema) {
+}
+exports.kanzhunItemSchemaDto = kanzhunItemSchemaDto;
+exports.kanzhunDataSchema = zod_1.z
+    .object({
+    date: zod_1.z.string(),
+    data: zod_1.z.array(exports.kanzhunItemSchema),
+})
+    .partial();
+exports.sendSmsVerifyCodeSchema = zod_1.z.object({ mobile: zod_1.z.string() });
+class sendSmsVerifyCodeSchemaDto extends (0, zod_utils_1.createZodDto)(exports.sendSmsVerifyCodeSchema) {
+}
+exports.sendSmsVerifyCodeSchemaDto = sendSmsVerifyCodeSchemaDto;
+exports.refreshTokenSchema = zod_1.z.object({ rt: zod_1.z.string() });
+class refreshTokenSchemaDto extends (0, zod_utils_1.createZodDto)(exports.refreshTokenSchema) {
+}
+exports.refreshTokenSchemaDto = refreshTokenSchemaDto;
 
 
 /***/ }),
