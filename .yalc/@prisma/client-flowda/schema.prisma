@@ -478,3 +478,12 @@ model Pay {
   orderId       Int       @unique
   transactionId String
 }
+
+model RequestErrorLog {
+  id        String @id @default(cuid())
+  createdAt DateTime @default(now())
+  requestId String
+  tenantId  Int?
+  userId    Int?
+  log       Json
+}

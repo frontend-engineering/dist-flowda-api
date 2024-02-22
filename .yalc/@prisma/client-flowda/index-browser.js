@@ -316,6 +316,15 @@ exports.Prisma.PayScalarFieldEnum = {
   transactionId: 'transactionId'
 };
 
+exports.Prisma.RequestErrorLogScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  requestId: 'requestId',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  log: 'log'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -386,7 +395,8 @@ exports.Prisma.ModelName = {
   Product: 'Product',
   ProductSnapshot: 'ProductSnapshot',
   Order: 'Order',
-  Pay: 'Pay'
+  Pay: 'Pay',
+  RequestErrorLog: 'RequestErrorLog'
 };
 
 /**

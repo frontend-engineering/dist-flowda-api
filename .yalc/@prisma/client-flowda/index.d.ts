@@ -665,6 +665,25 @@ export type PayPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArg
  * 
  */
 export type Pay = runtime.Types.DefaultSelection<PayPayload>
+export type RequestErrorLogPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "RequestErrorLog"
+  objects: {}
+  scalars: $Extensions.GetResult<{
+    id: string
+    createdAt: Date
+    requestId: string
+    tenantId: number | null
+    userId: number | null
+    log: Prisma.JsonValue
+  }, ExtArgs["result"]["requestErrorLog"]>
+  composites: {}
+}
+
+/**
+ * Model RequestErrorLog
+ * 
+ */
+export type RequestErrorLog = runtime.Types.DefaultSelection<RequestErrorLogPayload>
 
 /**
  * Enums
@@ -1014,6 +1033,16 @@ export class PrismaClient<
     * ```
     */
   get pay(): Prisma.PayDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.requestErrorLog`: Exposes CRUD operations for the **RequestErrorLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RequestErrorLogs
+    * const requestErrorLogs = await prisma.requestErrorLog.findMany()
+    * ```
+    */
+  get requestErrorLog(): Prisma.RequestErrorLogDelegate<GlobalReject, ExtArgs>;
 }
 
 export namespace Prisma {
@@ -1514,7 +1543,8 @@ export namespace Prisma {
     Product: 'Product',
     ProductSnapshot: 'ProductSnapshot',
     Order: 'Order',
-    Pay: 'Pay'
+    Pay: 'Pay',
+    RequestErrorLog: 'RequestErrorLog'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1531,7 +1561,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     meta: {
-      modelProps: 'tenant' | 'taskFormRelation' | 'tableFilter' | 'user' | 'userPreSignup' | 'userProfile' | 'audits' | 'dynamicTableDef' | 'dynamicTableDefColumn' | 'dynamicTableData' | 'menu' | 'sentSms' | 'weixinProfile' | 'orderProfile' | 'product' | 'productSnapshot' | 'order' | 'pay'
+      modelProps: 'tenant' | 'taskFormRelation' | 'tableFilter' | 'user' | 'userPreSignup' | 'userProfile' | 'audits' | 'dynamicTableDef' | 'dynamicTableDefColumn' | 'dynamicTableData' | 'menu' | 'sentSms' | 'weixinProfile' | 'orderProfile' | 'product' | 'productSnapshot' | 'order' | 'pay' | 'requestErrorLog'
       txIsolationLevel: Prisma.TransactionIsolationLevel
     },
     model: {
@@ -2702,6 +2732,71 @@ export namespace Prisma {
           count: {
             args: Prisma.PayCountArgs<ExtArgs>,
             result: $Utils.Optional<PayCountAggregateOutputType> | number
+          }
+        }
+      }
+      RequestErrorLog: {
+        payload: RequestErrorLogPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.RequestErrorLogFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RequestErrorLogFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload>
+          }
+          findFirst: {
+            args: Prisma.RequestErrorLogFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RequestErrorLogFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload>
+          }
+          findMany: {
+            args: Prisma.RequestErrorLogFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload>[]
+          }
+          create: {
+            args: Prisma.RequestErrorLogCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload>
+          }
+          createMany: {
+            args: Prisma.RequestErrorLogCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.RequestErrorLogDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload>
+          }
+          update: {
+            args: Prisma.RequestErrorLogUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.RequestErrorLogDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RequestErrorLogUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.RequestErrorLogUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<RequestErrorLogPayload>
+          }
+          aggregate: {
+            args: Prisma.RequestErrorLogAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateRequestErrorLog>
+          }
+          groupBy: {
+            args: Prisma.RequestErrorLogGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<RequestErrorLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RequestErrorLogCountArgs<ExtArgs>,
+            result: $Utils.Optional<RequestErrorLogCountAggregateOutputType> | number
           }
         }
       }
@@ -21552,6 +21647,927 @@ export namespace Prisma {
 
 
   /**
+   * Model RequestErrorLog
+   */
+
+
+  export type AggregateRequestErrorLog = {
+    _count: RequestErrorLogCountAggregateOutputType | null
+    _avg: RequestErrorLogAvgAggregateOutputType | null
+    _sum: RequestErrorLogSumAggregateOutputType | null
+    _min: RequestErrorLogMinAggregateOutputType | null
+    _max: RequestErrorLogMaxAggregateOutputType | null
+  }
+
+  export type RequestErrorLogAvgAggregateOutputType = {
+    tenantId: number | null
+    userId: number | null
+  }
+
+  export type RequestErrorLogSumAggregateOutputType = {
+    tenantId: number | null
+    userId: number | null
+  }
+
+  export type RequestErrorLogMinAggregateOutputType = {
+    id: string | null
+    createdAt: Date | null
+    requestId: string | null
+    tenantId: number | null
+    userId: number | null
+  }
+
+  export type RequestErrorLogMaxAggregateOutputType = {
+    id: string | null
+    createdAt: Date | null
+    requestId: string | null
+    tenantId: number | null
+    userId: number | null
+  }
+
+  export type RequestErrorLogCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    requestId: number
+    tenantId: number
+    userId: number
+    log: number
+    _all: number
+  }
+
+
+  export type RequestErrorLogAvgAggregateInputType = {
+    tenantId?: true
+    userId?: true
+  }
+
+  export type RequestErrorLogSumAggregateInputType = {
+    tenantId?: true
+    userId?: true
+  }
+
+  export type RequestErrorLogMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    requestId?: true
+    tenantId?: true
+    userId?: true
+  }
+
+  export type RequestErrorLogMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    requestId?: true
+    tenantId?: true
+    userId?: true
+  }
+
+  export type RequestErrorLogCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    requestId?: true
+    tenantId?: true
+    userId?: true
+    log?: true
+    _all?: true
+  }
+
+  export type RequestErrorLogAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RequestErrorLog to aggregate.
+     */
+    where?: RequestErrorLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RequestErrorLogs to fetch.
+     */
+    orderBy?: Enumerable<RequestErrorLogOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RequestErrorLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RequestErrorLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RequestErrorLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RequestErrorLogs
+    **/
+    _count?: true | RequestErrorLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RequestErrorLogAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RequestErrorLogSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RequestErrorLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RequestErrorLogMaxAggregateInputType
+  }
+
+  export type GetRequestErrorLogAggregateType<T extends RequestErrorLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateRequestErrorLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRequestErrorLog[P]>
+      : GetScalarType<T[P], AggregateRequestErrorLog[P]>
+  }
+
+
+
+
+  export type RequestErrorLogGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: RequestErrorLogWhereInput
+    orderBy?: Enumerable<RequestErrorLogOrderByWithAggregationInput>
+    by: RequestErrorLogScalarFieldEnum[]
+    having?: RequestErrorLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RequestErrorLogCountAggregateInputType | true
+    _avg?: RequestErrorLogAvgAggregateInputType
+    _sum?: RequestErrorLogSumAggregateInputType
+    _min?: RequestErrorLogMinAggregateInputType
+    _max?: RequestErrorLogMaxAggregateInputType
+  }
+
+
+  export type RequestErrorLogGroupByOutputType = {
+    id: string
+    createdAt: Date
+    requestId: string
+    tenantId: number | null
+    userId: number | null
+    log: JsonValue
+    _count: RequestErrorLogCountAggregateOutputType | null
+    _avg: RequestErrorLogAvgAggregateOutputType | null
+    _sum: RequestErrorLogSumAggregateOutputType | null
+    _min: RequestErrorLogMinAggregateOutputType | null
+    _max: RequestErrorLogMaxAggregateOutputType | null
+  }
+
+  type GetRequestErrorLogGroupByPayload<T extends RequestErrorLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<RequestErrorLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RequestErrorLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RequestErrorLogGroupByOutputType[P]>
+            : GetScalarType<T[P], RequestErrorLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RequestErrorLogSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    requestId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    log?: boolean
+  }, ExtArgs["result"]["requestErrorLog"]>
+
+  export type RequestErrorLogSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    requestId?: boolean
+    tenantId?: boolean
+    userId?: boolean
+    log?: boolean
+  }
+
+
+  type RequestErrorLogGetPayload<S extends boolean | null | undefined | RequestErrorLogArgs> = $Types.GetResult<RequestErrorLogPayload, S>
+
+  type RequestErrorLogCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<RequestErrorLogFindManyArgs, 'select' | 'include'> & {
+      select?: RequestErrorLogCountAggregateInputType | true
+    }
+
+  export interface RequestErrorLogDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RequestErrorLog'], meta: { name: 'RequestErrorLog' } }
+    /**
+     * Find zero or one RequestErrorLog that matches the filter.
+     * @param {RequestErrorLogFindUniqueArgs} args - Arguments to find a RequestErrorLog
+     * @example
+     * // Get one RequestErrorLog
+     * const requestErrorLog = await prisma.requestErrorLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends RequestErrorLogFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, RequestErrorLogFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'RequestErrorLog'> extends True ? Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one RequestErrorLog that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {RequestErrorLogFindUniqueOrThrowArgs} args - Arguments to find a RequestErrorLog
+     * @example
+     * // Get one RequestErrorLog
+     * const requestErrorLog = await prisma.requestErrorLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends RequestErrorLogFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, RequestErrorLogFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first RequestErrorLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RequestErrorLogFindFirstArgs} args - Arguments to find a RequestErrorLog
+     * @example
+     * // Get one RequestErrorLog
+     * const requestErrorLog = await prisma.requestErrorLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends RequestErrorLogFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, RequestErrorLogFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'RequestErrorLog'> extends True ? Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first RequestErrorLog that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RequestErrorLogFindFirstOrThrowArgs} args - Arguments to find a RequestErrorLog
+     * @example
+     * // Get one RequestErrorLog
+     * const requestErrorLog = await prisma.requestErrorLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends RequestErrorLogFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, RequestErrorLogFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more RequestErrorLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RequestErrorLogFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RequestErrorLogs
+     * const requestErrorLogs = await prisma.requestErrorLog.findMany()
+     * 
+     * // Get first 10 RequestErrorLogs
+     * const requestErrorLogs = await prisma.requestErrorLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const requestErrorLogWithIdOnly = await prisma.requestErrorLog.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends RequestErrorLogFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, RequestErrorLogFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a RequestErrorLog.
+     * @param {RequestErrorLogCreateArgs} args - Arguments to create a RequestErrorLog.
+     * @example
+     * // Create one RequestErrorLog
+     * const RequestErrorLog = await prisma.requestErrorLog.create({
+     *   data: {
+     *     // ... data to create a RequestErrorLog
+     *   }
+     * })
+     * 
+    **/
+    create<T extends RequestErrorLogCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, RequestErrorLogCreateArgs<ExtArgs>>
+    ): Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many RequestErrorLogs.
+     *     @param {RequestErrorLogCreateManyArgs} args - Arguments to create many RequestErrorLogs.
+     *     @example
+     *     // Create many RequestErrorLogs
+     *     const requestErrorLog = await prisma.requestErrorLog.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends RequestErrorLogCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, RequestErrorLogCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a RequestErrorLog.
+     * @param {RequestErrorLogDeleteArgs} args - Arguments to delete one RequestErrorLog.
+     * @example
+     * // Delete one RequestErrorLog
+     * const RequestErrorLog = await prisma.requestErrorLog.delete({
+     *   where: {
+     *     // ... filter to delete one RequestErrorLog
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends RequestErrorLogDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, RequestErrorLogDeleteArgs<ExtArgs>>
+    ): Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one RequestErrorLog.
+     * @param {RequestErrorLogUpdateArgs} args - Arguments to update one RequestErrorLog.
+     * @example
+     * // Update one RequestErrorLog
+     * const requestErrorLog = await prisma.requestErrorLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends RequestErrorLogUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, RequestErrorLogUpdateArgs<ExtArgs>>
+    ): Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more RequestErrorLogs.
+     * @param {RequestErrorLogDeleteManyArgs} args - Arguments to filter RequestErrorLogs to delete.
+     * @example
+     * // Delete a few RequestErrorLogs
+     * const { count } = await prisma.requestErrorLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends RequestErrorLogDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, RequestErrorLogDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RequestErrorLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RequestErrorLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RequestErrorLogs
+     * const requestErrorLog = await prisma.requestErrorLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends RequestErrorLogUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, RequestErrorLogUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RequestErrorLog.
+     * @param {RequestErrorLogUpsertArgs} args - Arguments to update or create a RequestErrorLog.
+     * @example
+     * // Update or create a RequestErrorLog
+     * const requestErrorLog = await prisma.requestErrorLog.upsert({
+     *   create: {
+     *     // ... data to create a RequestErrorLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RequestErrorLog we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends RequestErrorLogUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, RequestErrorLogUpsertArgs<ExtArgs>>
+    ): Prisma__RequestErrorLogClient<$Types.GetResult<RequestErrorLogPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of RequestErrorLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RequestErrorLogCountArgs} args - Arguments to filter RequestErrorLogs to count.
+     * @example
+     * // Count the number of RequestErrorLogs
+     * const count = await prisma.requestErrorLog.count({
+     *   where: {
+     *     // ... the filter for the RequestErrorLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends RequestErrorLogCountArgs>(
+      args?: Subset<T, RequestErrorLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RequestErrorLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RequestErrorLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RequestErrorLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RequestErrorLogAggregateArgs>(args: Subset<T, RequestErrorLogAggregateArgs>): Prisma.PrismaPromise<GetRequestErrorLogAggregateType<T>>
+
+    /**
+     * Group by RequestErrorLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RequestErrorLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RequestErrorLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RequestErrorLogGroupByArgs['orderBy'] }
+        : { orderBy?: RequestErrorLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RequestErrorLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRequestErrorLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RequestErrorLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__RequestErrorLogClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * RequestErrorLog base type for findUnique actions
+   */
+  export type RequestErrorLogFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * Filter, which RequestErrorLog to fetch.
+     */
+    where: RequestErrorLogWhereUniqueInput
+  }
+
+  /**
+   * RequestErrorLog findUnique
+   */
+  export interface RequestErrorLogFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends RequestErrorLogFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * RequestErrorLog findUniqueOrThrow
+   */
+  export type RequestErrorLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * Filter, which RequestErrorLog to fetch.
+     */
+    where: RequestErrorLogWhereUniqueInput
+  }
+
+
+  /**
+   * RequestErrorLog base type for findFirst actions
+   */
+  export type RequestErrorLogFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * Filter, which RequestErrorLog to fetch.
+     */
+    where?: RequestErrorLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RequestErrorLogs to fetch.
+     */
+    orderBy?: Enumerable<RequestErrorLogOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RequestErrorLogs.
+     */
+    cursor?: RequestErrorLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RequestErrorLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RequestErrorLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RequestErrorLogs.
+     */
+    distinct?: Enumerable<RequestErrorLogScalarFieldEnum>
+  }
+
+  /**
+   * RequestErrorLog findFirst
+   */
+  export interface RequestErrorLogFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends RequestErrorLogFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * RequestErrorLog findFirstOrThrow
+   */
+  export type RequestErrorLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * Filter, which RequestErrorLog to fetch.
+     */
+    where?: RequestErrorLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RequestErrorLogs to fetch.
+     */
+    orderBy?: Enumerable<RequestErrorLogOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RequestErrorLogs.
+     */
+    cursor?: RequestErrorLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RequestErrorLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RequestErrorLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RequestErrorLogs.
+     */
+    distinct?: Enumerable<RequestErrorLogScalarFieldEnum>
+  }
+
+
+  /**
+   * RequestErrorLog findMany
+   */
+  export type RequestErrorLogFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * Filter, which RequestErrorLogs to fetch.
+     */
+    where?: RequestErrorLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RequestErrorLogs to fetch.
+     */
+    orderBy?: Enumerable<RequestErrorLogOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RequestErrorLogs.
+     */
+    cursor?: RequestErrorLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RequestErrorLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RequestErrorLogs.
+     */
+    skip?: number
+    distinct?: Enumerable<RequestErrorLogScalarFieldEnum>
+  }
+
+
+  /**
+   * RequestErrorLog create
+   */
+  export type RequestErrorLogCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * The data needed to create a RequestErrorLog.
+     */
+    data: XOR<RequestErrorLogCreateInput, RequestErrorLogUncheckedCreateInput>
+  }
+
+
+  /**
+   * RequestErrorLog createMany
+   */
+  export type RequestErrorLogCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RequestErrorLogs.
+     */
+    data: Enumerable<RequestErrorLogCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * RequestErrorLog update
+   */
+  export type RequestErrorLogUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * The data needed to update a RequestErrorLog.
+     */
+    data: XOR<RequestErrorLogUpdateInput, RequestErrorLogUncheckedUpdateInput>
+    /**
+     * Choose, which RequestErrorLog to update.
+     */
+    where: RequestErrorLogWhereUniqueInput
+  }
+
+
+  /**
+   * RequestErrorLog updateMany
+   */
+  export type RequestErrorLogUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RequestErrorLogs.
+     */
+    data: XOR<RequestErrorLogUpdateManyMutationInput, RequestErrorLogUncheckedUpdateManyInput>
+    /**
+     * Filter which RequestErrorLogs to update
+     */
+    where?: RequestErrorLogWhereInput
+  }
+
+
+  /**
+   * RequestErrorLog upsert
+   */
+  export type RequestErrorLogUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * The filter to search for the RequestErrorLog to update in case it exists.
+     */
+    where: RequestErrorLogWhereUniqueInput
+    /**
+     * In case the RequestErrorLog found by the `where` argument doesn't exist, create a new RequestErrorLog with this data.
+     */
+    create: XOR<RequestErrorLogCreateInput, RequestErrorLogUncheckedCreateInput>
+    /**
+     * In case the RequestErrorLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RequestErrorLogUpdateInput, RequestErrorLogUncheckedUpdateInput>
+  }
+
+
+  /**
+   * RequestErrorLog delete
+   */
+  export type RequestErrorLogDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+    /**
+     * Filter which RequestErrorLog to delete.
+     */
+    where: RequestErrorLogWhereUniqueInput
+  }
+
+
+  /**
+   * RequestErrorLog deleteMany
+   */
+  export type RequestErrorLogDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RequestErrorLogs to delete
+     */
+    where?: RequestErrorLogWhereInput
+  }
+
+
+  /**
+   * RequestErrorLog without action
+   */
+  export type RequestErrorLogArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RequestErrorLog
+     */
+    select?: RequestErrorLogSelect<ExtArgs> | null
+  }
+
+
+
+  /**
    * Enums
    */
 
@@ -21828,6 +22844,18 @@ export namespace Prisma {
   };
 
   export type PayScalarFieldEnum = (typeof PayScalarFieldEnum)[keyof typeof PayScalarFieldEnum]
+
+
+  export const RequestErrorLogScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    requestId: 'requestId',
+    tenantId: 'tenantId',
+    userId: 'userId',
+    log: 'log'
+  };
+
+  export type RequestErrorLogScalarFieldEnum = (typeof RequestErrorLogScalarFieldEnum)[keyof typeof RequestErrorLogScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -23094,6 +24122,57 @@ export namespace Prisma {
     status?: EnumPayStatusWithAggregatesFilter | PayStatus
     orderId?: IntWithAggregatesFilter | number
     transactionId?: StringWithAggregatesFilter | string
+  }
+
+  export type RequestErrorLogWhereInput = {
+    AND?: Enumerable<RequestErrorLogWhereInput>
+    OR?: Enumerable<RequestErrorLogWhereInput>
+    NOT?: Enumerable<RequestErrorLogWhereInput>
+    id?: StringFilter | string
+    createdAt?: DateTimeFilter | Date | string
+    requestId?: StringFilter | string
+    tenantId?: IntNullableFilter | number | null
+    userId?: IntNullableFilter | number | null
+    log?: JsonFilter
+  }
+
+  export type RequestErrorLogOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    requestId?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    log?: SortOrder
+  }
+
+  export type RequestErrorLogWhereUniqueInput = {
+    id?: string
+  }
+
+  export type RequestErrorLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    requestId?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    log?: SortOrder
+    _count?: RequestErrorLogCountOrderByAggregateInput
+    _avg?: RequestErrorLogAvgOrderByAggregateInput
+    _max?: RequestErrorLogMaxOrderByAggregateInput
+    _min?: RequestErrorLogMinOrderByAggregateInput
+    _sum?: RequestErrorLogSumOrderByAggregateInput
+  }
+
+  export type RequestErrorLogScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<RequestErrorLogScalarWhereWithAggregatesInput>
+    OR?: Enumerable<RequestErrorLogScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<RequestErrorLogScalarWhereWithAggregatesInput>
+    id?: StringWithAggregatesFilter | string
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    requestId?: StringWithAggregatesFilter | string
+    tenantId?: IntNullableWithAggregatesFilter | number | null
+    userId?: IntNullableWithAggregatesFilter | number | null
+    log?: JsonWithAggregatesFilter
   }
 
   export type TenantCreateInput = {
@@ -24588,6 +25667,69 @@ export namespace Prisma {
     transactionId?: StringFieldUpdateOperationsInput | string
   }
 
+  export type RequestErrorLogCreateInput = {
+    id?: string
+    createdAt?: Date | string
+    requestId: string
+    tenantId?: number | null
+    userId?: number | null
+    log: JsonNullValueInput | InputJsonValue
+  }
+
+  export type RequestErrorLogUncheckedCreateInput = {
+    id?: string
+    createdAt?: Date | string
+    requestId: string
+    tenantId?: number | null
+    userId?: number | null
+    log: JsonNullValueInput | InputJsonValue
+  }
+
+  export type RequestErrorLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    requestId?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableIntFieldUpdateOperationsInput | number | null
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    log?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type RequestErrorLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    requestId?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableIntFieldUpdateOperationsInput | number | null
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    log?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type RequestErrorLogCreateManyInput = {
+    id?: string
+    createdAt?: Date | string
+    requestId: string
+    tenantId?: number | null
+    userId?: number | null
+    log: JsonNullValueInput | InputJsonValue
+  }
+
+  export type RequestErrorLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    requestId?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableIntFieldUpdateOperationsInput | number | null
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    log?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type RequestErrorLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    requestId?: StringFieldUpdateOperationsInput | string
+    tenantId?: NullableIntFieldUpdateOperationsInput | number | null
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    log?: JsonNullValueInput | InputJsonValue
+  }
+
   export type IntFilter = {
     equals?: number
     in?: Enumerable<number> | number
@@ -25973,6 +27115,41 @@ export namespace Prisma {
     _count?: NestedIntFilter
     _min?: NestedEnumPayStatusFilter
     _max?: NestedEnumPayStatusFilter
+  }
+
+  export type RequestErrorLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    requestId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+    log?: SortOrder
+  }
+
+  export type RequestErrorLogAvgOrderByAggregateInput = {
+    tenantId?: SortOrder
+    userId?: SortOrder
+  }
+
+  export type RequestErrorLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    requestId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+  }
+
+  export type RequestErrorLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    requestId?: SortOrder
+    tenantId?: SortOrder
+    userId?: SortOrder
+  }
+
+  export type RequestErrorLogSumOrderByAggregateInput = {
+    tenantId?: SortOrder
+    userId?: SortOrder
   }
 
   export type MenuCreateNestedOneWithoutTenantInput = {
