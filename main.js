@@ -1415,6 +1415,7 @@ const db = tslib_1.__importStar(__webpack_require__("@prisma/client-flowda"));
 const _ = tslib_1.__importStar(__webpack_require__("radash"));
 const flowda_services_1 = __webpack_require__("../../libs/flowda-services/src/index.ts");
 const dayjs_1 = tslib_1.__importDefault(__webpack_require__("dayjs"));
+const flowda_shared_node_1 = __webpack_require__("../../libs/flowda-shared-node/src/index.ts");
 let UserRouter = UserRouter_1 = class UserRouter {
     constructor(trpc, userService, prisma, loggerFactory) {
         this.trpc = trpc;
@@ -1532,7 +1533,8 @@ let UserRouter = UserRouter_1 = class UserRouter {
                 .input(zod_1.z.object({
                 jwt: zod_1.z.string(),
             }))
-                .query(({ input }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                .query(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                (0, flowda_shared_node_1.diag)(ctx, ['verifyAccessToken']);
                 return this.userService.verifyAccessToken(input.jwt);
             })),
             createTenant: this.trpc.procedure.input(flowda_shared_types_1.appCreateV4Schema).mutation(({ input, ctx }) => tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -3876,8 +3878,7 @@ function verifyRecoveryToken(at, options) {
     return jwt.verify(at, options.secret);
 }
 function generateJwt(payload, options) {
-    const exp0 = Date.now() + options.expires * 1000;
-    const token = jwt.sign(Object.assign(Object.assign({}, payload), { exp0 }), options.secret, {
+    const token = jwt.sign(payload, options.secret, {
         expiresIn: `${options.expires}s`,
     });
     const decode = jwt.decode(token);
@@ -4580,7 +4581,7 @@ function errorFormatter(opts, handlers) {
         };
         json = Object.assign(json, json2);
         const ret = transformHttpException(opts, json2);
-        if (typeof handlers.log === 'function') {
+        if (typeof (handlers === null || handlers === void 0 ? void 0 : handlers.log) === 'function') {
             handlers.log({
                 requestId,
                 tenantId,
@@ -4596,7 +4597,7 @@ function errorFormatter(opts, handlers) {
             message: opts.error.message,
             stack: opts.error.stack,
         });
-        if (typeof handlers.log === 'function') {
+        if (typeof (handlers === null || handlers === void 0 ? void 0 : handlers.log) === 'function') {
             handlers.log({
                 requestId,
                 tenantId,
