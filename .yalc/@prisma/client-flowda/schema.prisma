@@ -1,0 +1,498 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  //  output        = "../../../node_modules/@prisma/client-flowda"
+  output        = "../../../.yalc/@prisma/client-flowda"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+// generator dbml {
+//   provider = "npx prisma-dbml-generator"
+// }
+
+generator zod {
+  provider                  = "node ../../node_modules/zod-prisma-types/dist/bin.js" // npx zod-prisma-types 如果无法生成可以改成 node ../../node_modules/zod-prisma-types/dist/bin.js 会有错误堆栈
+  createModelTypes          = true
+  createInputTypes          = false
+  addInputTypeValidation    = false
+  addIncludeType            = true
+  addSelectType             = false
+  coerceDate                = false
+  createRelationValuesTypes = true
+  output                    = "../../../libs/prisma-flowda/src/zod"
+  prismaClientPath          = "@prisma/client-flowda"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  // 用的不是很熟
+  // relationMode = "prisma"
+}
+
+/// @schema.display_name 租户信息
+/// @schema.display_column name
+model Tenant {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  /// @schema.title 租户唯一名称
+  name String @unique()
+
+  hashedPassword     String?
+  hashedRefreshToken String?
+
+  /// @schema.title 租户显示名称
+  displayName String?
+
+  menu Menu?
+
+  /// @schema.model_name User
+  users                  User[]
+  /// @schema.model_name DynamicTableDef
+  dynamicTableDefs       DynamicTableDef[]
+  /// @schema.model_name DynamicTableDefColumn
+  dynamicTableDefColumns DynamicTableDefColumn[]
+  /// @schema.model_name DynamicTableData
+  dynamicTableData       DynamicTableData[]
+  /// @schema.model_name UserPreSignup
+  userPreSignup          UserPreSignup[]
+  /// @schema.model_name OrderProfile
+  orderProfile           OrderProfile[]
+  /// @schema.model_name UserProfile
+  userProfile            UserProfile[]
+  /// @schema.model_name ProductSnapshot
+  productSnapshots       ProductSnapshot[]
+  /// @schema.model_name Order
+  orders                 Order[]
+  /// @schema.model_name Pay
+  pays                   Pay[]
+  /// @schema.model_name Product
+  products               Product[]
+}
+
+/// @schema.display_name 节点和表单关联关系
+model TaskFormRelation {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  taskDefinitionKey String @unique
+  formKey           String
+}
+
+/// @schema.display_name 表和查询条件的关系
+model TableFilter {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  path       String
+  name       String
+  filterJSON String
+}
+
+// todo: 一个用户可能属于多个租户
+
+/// @schema.display_name 员工
+/// @schema.display_column username
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  username           String
+  hashedPassword     String?
+  hashedRefreshToken String?
+  recoveryCode       String?
+  recoveryToken      String? @db.VarChar(250)
+
+  /// @schema.title 邮箱
+  email String? @unique()
+
+  /// @schema.title 手机号
+  mobile String? @unique()
+
+  /// @schema.title 快捷创建
+  anonymousCustomerToken String? @unique()
+
+  /// @schema.title 头像
+  image String?
+
+  /// @schema.reference Tenant
+  tenantId Int
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  profile UserProfile?
+
+  weixinProfile   WeixinProfile? @relation(fields: [weixinProfileId], references: [id])
+  /// @schema.reference WeixinProfile
+  weixinProfileId Int?
+
+  orderProfile OrderProfile?
+
+  /// @schema.model_name ProductSnapshot
+  productSnapshots ProductSnapshot[]
+  /// @schema.model_name Order
+  orders           Order[]
+  /// @schema.model_name Pay
+  pays             Pay[]
+
+  @@unique([tenantId, username])
+  @@unique([tenantId, mobile])
+  @@unique([tenantId, email])
+}
+
+// todo 目前是从 v1-sdk 迁移过来的（v1 仅支持 email）后续可以增加 mobile
+/// @schema.display_name 用户预注册表
+/// @schema.display_column email
+model UserPreSignup {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  email      String
+  verifyCode String
+
+  /// @schema.reference Tenant
+  tenantId Int
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// user -> user profile 1-1
+// https://www.prisma.io/docs/concepts/components/prisma-schema/relations/one-to-one-relations
+// 主要关注点：选择那一侧是可选的
+model UserProfile {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  fullName String
+
+  /// @schema.reference Tenant
+  tenantId Int
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+/// @schema.display_name 审计日志
+model Audits {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  /// @schema.title 关联 id
+  auditId      Int
+  /// @schema.title 审计类型(关联 schema)
+  auditType    String
+  /// @schema.title 用户 id
+  userId       String
+  /// @schema.title 用户名
+  username     String?
+  /// @schema.title 动作(e.g. update)
+  action       String
+  /// @schema.title 变化
+  auditChanges String  @db.Text
+  /// @schema.title 版本
+  version      Int
+}
+
+/// @schema.display_name 动态表定义
+/// @schema.display_column name
+model DynamicTableDef {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  /// @schema.title 表英文名
+  name String
+
+  /// @schema.title 表扩展
+  extendedSchema Json?
+
+  /// @schema.model_name DynamicTableDefColumn
+  dynamicTableDefColumns DynamicTableDefColumn[]
+
+  /// @schema.model_name DynamicTableData
+  dynamicTableData DynamicTableData[]
+
+  /// @schema.reference Tenant
+  tenantId Int    @default(0)
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+/// @schema.display_name 动态表列定义
+/// @schema.display_column name
+model DynamicTableDefColumn {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  /// @schema.reference DynamicTableDef
+  dynamicTableDefId Int
+  dynamicTableDef   DynamicTableDef @relation(fields: [dynamicTableDefId], references: [id])
+
+  /// @schema.title 列名
+  name String
+  /// @schema.title 类型
+  type DynamicColumnType @default(string)
+
+  /// @schema.title 列扩展
+  extendedSchema Json?
+
+  /// @schema.reference Tenant
+  tenantId Int    @default(0)
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+enum DynamicColumnType {
+  string
+  textarea
+  integer
+  boolean
+  datetime
+  tag
+  reference
+}
+
+/// @schema.display_name 动态表数据
+model DynamicTableData {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  /// @schema.reference DynamicTableDef
+  dynamicTableDefId Int
+  dynamicTableDef   DynamicTableDef @relation(fields: [dynamicTableDefId], references: [id])
+
+  // todo: 关于 json 索引 https://planetscale.com/blog/indexing-json-in-mysql
+
+  /// @schema.title 数据
+  data Json
+
+  /// @schema.reference Tenant
+  tenantId Int    @default(0)
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+/// @schema.display_name 菜单
+/// @schema.display_column name
+model Menu {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  /// @schema.title 菜单树
+  treeData Json
+
+  /// @schema.reference Tenant
+  tenantId Int    @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+/// @schema.display_name 已发送短信
+/// @schema.display_column name
+model SentSms {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  mobile String
+  code   String
+}
+
+/// @schema.primary_key id
+/// @schema.display_name 微信用户信息
+/// @schema.display_column nickname
+model WeixinProfile {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+
+  /// @schema.model_name User
+  users User[]
+
+  unionOrOpenid String  @unique
+  /// @schema.title 微信 unionid
+  unionid       String? @unique
+  /// @schema.title 微信 openid
+  loginOpenid   String? @unique
+
+  headimgurl String?
+  nickname   String?
+  sex        Int?
+}
+
+/// @schema.primary_key id
+/// @schema.display_name 用户订单信息
+/// @schema.display_column productType
+model OrderProfile {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @unique
+
+  productType ProductType @default(PLAN)
+
+  plan     Int?
+  /// @schema.title 额度
+  amount   Int?
+  expireAt DateTime?
+}
+
+enum ProductType {
+  AMOUNT
+  PLAN
+}
+
+enum OrderStatus {
+  INITIALIZED
+  PAY_ASSOCIATED
+  FREE_DEAL
+  CANCELED
+}
+
+enum PayStatus {
+  UNPAIED
+  PAIED
+  REFUND
+}
+
+/// @schema.primary_key id
+/// @schema.searchable_columns id,name
+/// @schema.display_name 产品
+/// @schema.display_column name
+model Product {
+  id        Int      @id @default(autoincrement())
+  uid       String   @unique @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  /// @schema.title 产品名
+  name  String
+  /// @schema.title 价格
+  /// @schema.override_type integer
+  price Decimal
+
+  productType ProductType @default(PLAN)
+  plan        Int?
+  /// @schema.title 额度
+  // 根据 productType 判断
+  amount      Int         @default(0)
+
+  extendedDescriptionData Json?
+  fileSize                String? // 单文件大小上限
+  storeDuration           Int? // 存储时长，单位月
+  /// @schema.title 广告
+  hasAds                  String? // 是否有广告
+  /// @schema.title 技术支持
+  tecSupport              String?
+  /// @schema.model_name ProductSnapshot
+  /// @schema.foreign_key productId
+  /// @schema.primary_key id
+  productSnapshots        ProductSnapshot[] // 先手动定义，确保前端链路通，后面再看直接解析 prisma
+  /// @schema.title 有效期/天
+  validityPeriod          Int?
+
+  restricted Int @default(0) // 是否限购，默认0为不限购
+}
+
+model ProductSnapshot {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  snapshotPrice Decimal
+  order         Order   @relation(fields: [orderId], references: [id])
+  orderId       Int
+  product       Product @relation(fields: [productId], references: [id])
+  productId     Int
+}
+
+/// @schema.primary_key id
+/// @schema.display_name 订单
+/// @schema.display_primary_key true
+model Order {
+  id        Int      @id @default(autoincrement())
+  uid       String   @unique @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  serial Int
+  status OrderStatus
+
+  // Order 1-1 Pay? 这里必须?，Pay 里写上 order + orderId @unique
+  pay Pay?
+  // Order 1-n ProductSnapshot，ProductSnapshot 写 order + orderId 不用 unique
+
+  /// @schema.model_name ProductSnapshot
+  productSnapshots ProductSnapshot[]
+}
+
+model Pay {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  isDeleted Boolean  @default(false)
+  /// @schema.reference User
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  /// @schema.reference Tenant
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  status        PayStatus @default(UNPAIED)
+  Order         Order     @relation(fields: [orderId], references: [id])
+  orderId       Int       @unique
+  transactionId String
+}
+
+model RequestErrorLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  isDeleted Boolean  @default(false)
+  requestId String
+  tenantId  Int?
+  userId    Int?
+  log       Json
+}
