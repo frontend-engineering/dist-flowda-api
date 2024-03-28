@@ -7,6 +7,7 @@
   "name": "@flowda-projects/flowda-api",
   "dependencies": {
     "@anatine/zod-openapi": "file:.yalc/@anatine/zod-openapi",
+    "@flowda/nx-plugin": "file:.yalc/@flowda/nx-plugin",
     "@flowda/schema": "file:.yalc/@flowda/schema",
     "@flowda/types": "file:.yalc/@flowda/types",
     "@nestjs/common": "^9.0.0",

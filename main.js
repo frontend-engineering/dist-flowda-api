@@ -6580,7 +6580,7 @@ let SchemaService = SchemaService_1 = class SchemaService {
             const e = this.czt[k];
             if (['ZodObject'].indexOf(e.constructor.name) > -1) {
                 const transformer = this.modelSchemaFactory(e);
-                acc[k] = transformer.buildSchema().toSchema();
+                acc[k] = transformer.buildSchema().toSchema(k);
             }
             else {
                 this.logger.error('Wrong type', k);
@@ -6646,17 +6646,17 @@ let SchemaTransformer = SchemaTransformer_1 = class SchemaTransformer {
         this.jsonschema = (0, schema_1.zodToOpenAPI)(this.zodType);
         return this;
     }
-    toSchema() {
+    toSchema(schemaName) {
         var _a, _b;
         const json = new schema_1.SchemaTransformer().set(this.jsonschema).toJSON();
         //    ^?
         if (!json.slug)
             throw new Error(`no slug, ${JSON.stringify(json)}`);
-        return Object.assign(Object.assign({}, json), { schema_name: (0, matchPath_1.toSchemaName)(json.slug), columns: (_a = json.columns) === null || _a === void 0 ? void 0 : _a.filter(f => f.name !== 'isDeleted').map(col => {
+        return Object.assign(Object.assign({}, json), { schema_name: schemaName, columns: (_a = json.columns) === null || _a === void 0 ? void 0 : _a.filter(f => f.name !== 'isDeleted').map(col => {
                 var _a;
                 return Object.assign(Object.assign(Object.assign({}, col), col['x-legacy']), { 'x-legacy': undefined, prisma: ((_a = col === null || col === void 0 ? void 0 : col['x-legacy']) === null || _a === void 0 ? void 0 : _a.prisma) && col['x-legacy'].prisma === 'false' ? false : undefined });
             }), associations: (_b = json.associations) === null || _b === void 0 ? void 0 : _b.map(ass => {
-                return Object.assign(Object.assign({}, ass), { schema_name: (0, matchPath_1.toSchemaName)(ass.slug) });
+                return Object.assign(Object.assign({}, ass), { schema_name: (0, matchPath_1.modelNameToSchemaName)(ass.model_name) });
             }) });
     }
 };
@@ -6825,7 +6825,7 @@ exports.getServices = getServices;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.matchPath = exports.toSchemaName = exports.toPath = exports.toModelName = exports.isLikeNumber = void 0;
+exports.matchPath = exports.modelNameToSchemaName = exports.toSchemaName = exports.toPath = exports.toModelName = exports.isLikeNumber = void 0;
 const tslib_1 = __webpack_require__("tslib");
 const plur = tslib_1.__importStar(__webpack_require__("pluralize"));
 const _ = tslib_1.__importStar(__webpack_require__("lodash"));
@@ -6851,11 +6851,21 @@ function toPath(modelName) {
     return plur.plural(_.snakeCase(modelName));
 }
 exports.toPath = toPath;
+/**
+ * @deprecated slug 转成 ResourceSchema 不准确
+ * @see modelNameToSchemaName
+ * @param slug
+ */
 function toSchemaName(slug) {
     const p = plur.singular(slug);
     return toModelName(p) + 'ResourceSchema';
 }
 exports.toSchemaName = toSchemaName;
+function modelNameToSchemaName(modelName) {
+    const p = plur.singular(modelName);
+    return p + 'ResourceSchema';
+}
+exports.modelNameToSchemaName = modelNameToSchemaName;
 function matchPath(path) {
     const ret1 = path.match(REG);
     // console.log(ret1)
