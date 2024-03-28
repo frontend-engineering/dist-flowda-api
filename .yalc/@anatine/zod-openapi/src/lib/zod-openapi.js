@@ -4,8 +4,9 @@ exports.generateSchema = exports.extendApi = void 0;
 const ts_deepmerge_1 = require("ts-deepmerge");
 const zod_1 = require("zod");
 function extendApi(schema, SchemaObject = {}) {
-    schema.metaOpenApi = Object.assign(schema.metaOpenApi || {}, SchemaObject);
-    return schema;
+    const openapi = Object.assign(Object.assign({}, schema._def.openapi), SchemaObject);
+    const newSchema = new schema.constructor(Object.assign(Object.assign({}, schema._def), { openapi: openapi /* for zod-openapi */ }));
+    return newSchema;
 }
 exports.extendApi = extendApi;
 function iterateZodObject({ zodRef, useOutput, }) {
@@ -257,10 +258,10 @@ const workerMap = {
     ZodVoid: catchAllParser,
 };
 function generateSchema(zodRef, useOutput) {
-    const { metaOpenApi = {} } = zodRef;
+    const { openapi = {} } = zodRef._def;
     const schemas = [
         zodRef.isNullable && zodRef.isNullable() ? { nullable: true } : {},
-        ...(Array.isArray(metaOpenApi) ? metaOpenApi : [metaOpenApi]),
+        ...(Array.isArray(openapi) ? openapi : [openapi]),
     ];
     try {
         const typeName = zodRef._def.typeName;
